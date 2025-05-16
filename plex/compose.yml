@@ -1,0 +1,38 @@
+name: plex
+
+services:
+  plex:
+    image: lscr.io/linuxserver/plex:latest
+    container_name: plex
+    restart: unless-stopped
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Paris
+      - VERSION=docker
+    volumes:
+      - /usr/local/plex/library:/config
+      - /mnt/tv-shows:/tv
+      - /mnt/movies:/movies
+    labels:
+      - "traefik.enable=true"
+
+      # Entrypoint
+      - "traefik.http.routers.plex.entrypoints=websecure"
+
+      # Router
+      - "traefik.http.routers.plex.rule=Host(`plex.battistella.ovh`)"
+
+      # Service
+      - "traefik.http.services.plex.loadBalancer.server.port=8080"
+      
+      # Watchtower automatic update
+      - com.centurylinklabs.watchtower.enable=true
+
+    networks:
+      lan:
+
+
+networks:
+  lan:
+    external: true
