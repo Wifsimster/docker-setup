@@ -1,0 +1,153 @@
+---
+# For configuration options and examples, please see:
+# https://gethomepage.dev/configs/services/
+
+- Media:
+    - Overseerr:
+        icon: overseerr.png
+        href: https://overseerr.battistella.ovh/
+        ping: https://overseerr.battistella.ovh/
+        widget:
+          type: overseerr
+          url: https://overseerr.battistella.ovh
+          key: MY_KEY
+    - Sonarr:
+        icon: sonarr.png
+        href: https://sonarr.battistella.ovh/
+        ping: https://sonarr.battistella.ovh/
+        description: Series management
+        widget:
+          type: sonarr
+          url: https://sonarr.battistella.ovh
+          key: MY_KEY
+    - Radarr:
+        icon: radarr.png
+        href: https://radarr.battistella.ovh/
+        ping: https://radarr.battistella.ovh/
+        description: Movies management
+        widget:
+          type: radarr
+          url: https://radarr.battistella.ovh
+          key: MY_KEY
+    - Lidarr:
+        icon: lidarr.png
+        href: https://lidarr.battistella.ovh/
+        ping: https://lidarr.battistella.ovh/
+        description: Music management
+        widget:
+          type: lidarr
+          url: https://lidarr.battistella.ovh
+          key: MY_KEY
+    - Prowlarr:
+        icon: prowlarr.png
+        href: https://prowlarr.battistella.ovh/
+        ping: https://prowlarr.battistella.ovh/
+        description: Indexers management
+        widget:
+            type: prowlarr
+            url: https://prowlarr.battistella.ovh
+            key: a7629b60fd084f44b6f045b55f5005dc
+    - Plex:
+        icon: plex.png
+        href: https://app.plex.tv/desktop/#!/
+        ping: https://192.168.0.237:32400
+        description: Plex Media Server
+        widget:
+            type: plex
+            url: https://192.168.0.237:32400
+            key: MY_KEY
+    - Tautulli:
+        icon: tautulli.png
+        href: https://tautulli.battistella.ovh/
+        ping: https://tautulli.battistella.ovh/
+        description: Tracker for Plex Media Server
+        widget:
+            type: tautulli
+            url: https://tautulli.battistella.ovh
+            key: MY_KEY
+            enableUser: true # optional, defaults to false
+            showEpisodeNumber: true # optional, defaults to false
+            expandOneStreamToTwoRows: false # optional, defaults to true
+
+- Infra:
+    - Traefik:
+        icon: traefik.png
+        href: https://proxy.battistella.ovh/
+        ping: https://proxy.battistella.ovh/
+        widget:
+            type: traefik
+            url: https://proxy.battistella.ovh
+    - Portainer:
+        icon: portainer.png
+        href: https://portainer.battistella.ovh/
+        ping: https://portainer.battistella.ovh/
+        widget:
+            type: portainer
+            url: https://portainer.battistella.ovh
+            env: 2
+            key: MY_KEY
+    - Netdata:
+        icon: netdata.png
+        href: https://netdata.battistella.ovh/
+        ping: https://netdata.battistella.ovh/
+        widget:
+            type: netdata
+            url: https://netdata.battistella.ovh
+    - Pi-hole:
+        icon: pi-hole.png
+        href: https://pihole.battistella.ovh/admin/
+        ping: https://pihole.battistella.ovh/
+    - Infisical:
+        icon: infisical.png
+        href: https://infisical.battistella.ovh
+        ping: https://infisical.battistella.ovh
+    - Unraid:
+        icon: unraid.png
+        href: http://gjallarhorn.local/
+    - Dozzle:
+        icon: dozzle.png
+        href: https://dozzle.battistella.ovh/
+        ping: https://dozzle.battistella.ovh/
+    - Unifi Network:
+        icon: unifi.png
+        href: https://192.168.0.224:8443/
+        ping: https://192.168.0.224:8443/
+
+- Services:
+    - Transmission:
+        icon: transmission.png
+        href: https://transmission.battistella.ovh/
+        ping: https://transmission.battistella.ovh/
+        widget:
+            type: transmission
+            url: https://transmission.battistella.ovh
+            username: TRANSMISSION_USER
+            password: TRANSMISSION_PASSWORD
+    - Immich:
+        icon: immich.png
+        href: https://immich.battistella.ovh/
+        ping: https://immich.battistella.ovh/
+        widget:
+            type: immich
+            url: https://immich.battistella.ovh
+            key: MY_KEY
+            version: 2 # optional, default is 1
+    - Vaultwarden:
+        icon: vaultwarden.png
+        href: https://vaultwarden.battistella.ovh/
+        ping: https://vaultwarden.battistella.ovh/
+    - Home Assistant:
+        icon: home-assistant.png
+        href: http://homeassistant.local:8123/
+        ping: http://homeassistant.local:8123
+
+- Development:
+    - Haptic:
+        icon: haptic.png
+        href: https://haptic.battistella.ovh/
+        ping: https://haptic.battistella.ovh/
+    - It Tools:
+        icon: it-tools.png
+        href: https://ittools.battistella.ovh/
+        ping: https://ittools.battistella.ovh/
+
