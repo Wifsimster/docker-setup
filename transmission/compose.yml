@@ -1,0 +1,45 @@
+name: transmission
+
+services:
+  transmission:
+    image: lscr.io/linuxserver/transmission:latest
+    container_name: transmission
+    restart: unless-stopped
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Paris
+      - USER=${TRANSMISSION_USER}
+      - PASS=${TRANSMISSION_PASSWORD}
+      - WHITELIST=*
+    volumes:
+      - /usr/local/transmission/data:/config
+      - /mnt/downloads:/downloads
+      - /mnt/incompletes:/incompletes
+      - /mnt/downloads:/watch
+    ports:
+      - 51413:51413
+      - 51413:51413/udp
+      - 9091:9091 # Enable local access
+    labels:
+      - "traefik.enable=true"
+
+      # Entrypoint
+      - "traefik.http.routers.transmission.entrypoints=websecure"
+
+      # Router
+      - "traefik.http.routers.transmission.rule=Host(`transmission.battistella.ovh`)"
+
+      # Service
+      - "traefik.http.services.transmission.loadBalancer.server.port=9091"
+
+      # Watchtower automatic update
+      - "com.centurylinklabs.watchtower.enable=true"
+
+    networks:
+      lan:
+
+
+networks:
+  lan:
+    external: true
