@@ -1,0 +1,34 @@
+name: prowlarr
+
+services:
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:latest
+    container_name: prowlarr
+    restart: unless-stopped
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Paris
+    volumes:
+      - /usr/local/prowlarr/data:/config
+    labels:
+      - "traefik.enable=true"
+
+      # Entrypoint
+      - "traefik.http.routers.prowlarr.entrypoints=websecure"
+
+      # Router
+      - "traefik.http.routers.prowlarr.rule=Host(`prowlarr.battistella.ovh`)"
+
+      # Service
+      - "traefik.http.services.prowlarr.loadBalancer.server.port=9696"
+      
+      # Watchtower automatic update
+      - com.centurylinklabs.watchtower.enable=true
+
+    networks:
+      lan:
+
+networks:
+  lan:
+    external: true
