@@ -24,7 +24,7 @@ services:
       - "traefik.http.services.prowlarr.loadBalancer.server.port=9696"
       
       # Watchtower automatic update
-      - com.centurylinklabs.watchtower.enable=true
+      - "com.centurylinklabs.watchtower.enable=true"
 
     networks:
       lan:
