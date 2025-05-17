@@ -11,7 +11,7 @@ services:
       - TZ=Europe/Paris
     volumes:
       - /usr/local/lidarr/config:/config
-      - /mnt/musics:/musics
+      - /mnt/music:/music
       - /mnt/downloads:/downloads
     labels:
       - "traefik.enable=true"
@@ -26,7 +26,7 @@ services:
       - "traefik.http.services.lidarr.loadBalancer.server.port=8686"
       
       # Watchtower automatic update
-      - com.centurylinklabs.watchtower.enable=true
+      - "com.centurylinklabs.watchtower.enable=true"
 
     networks:
       lan:
