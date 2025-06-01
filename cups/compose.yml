@@ -1,0 +1,37 @@
+name: cups
+
+services:
+  cups:
+    image: anujdatar/cups
+    container_name: cups
+    restart: unless-stopped
+    devices:
+      - /dev/bus/usb
+    environment:
+      - CUPSADMIN=${CUPSADMIN}
+      - CUPSPASSWORD=${CUPSPASSWORD}
+      - TZ=Europe/Paris
+    volumes:
+      - /usr/local/cups/cups_config:/etc/cups
+    labels:
+      - "traefik.enable=true"
+
+      # Entrypoint
+      - "traefik.http.routers.cups.entrypoints=websecure"
+
+      # Router
+      - "traefik.http.routers.cups.rule=Host(`cups.battistella.ovh`)"
+
+      # Service
+      - "traefik.http.services.cups.loadBalancer.server.port=631"
+
+      # Watchtower automatic update
+      - "com.centurylinklabs.watchtower.enable=true"
+
+    networks:
+      lan:
+
+
+networks:
+  lan:
+    external: true
