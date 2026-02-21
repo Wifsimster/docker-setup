@@ -103,6 +103,8 @@ services:
       - PLEX_CLAIM=${PLEX_CLAIM}
     devices:
       - /dev/dri:/dev/dri  # For hardware transcoding
+    tmpfs:
+      - /transcode  # RAM-based temp storage for transcoding
     volumes:
       - ${PLEX_CONFIG_PATH}:/config
       - ${TV_SHOWS_LOCATION}:/data/tv
