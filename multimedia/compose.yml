@@ -11,9 +11,8 @@ services:
       - TZ=${TZ}
     volumes:
       - ${BAZARR_CONFIG_PATH}:/config
-      - ${TV_SHOWS_LOCATION}:/data/tv
-      - ${MOVIES_LOCATION}:/data/movies
-      - ${DOWNLOADS_LOCATION}:/data/downloads
+      - ${TV_SHOWS_LOCATION}:/tv
+      - ${MOVIES_LOCATION}:/movies
     labels:
       - "traefik.enable=true"
 
@@ -42,8 +41,8 @@ services:
       - TZ=${TZ}
     volumes:
       - ${LIDARR_CONFIG_PATH}:/config
-      - ${MUSIC_LOCATION}:/data/music
-      - ${DOWNLOADS_LOCATION}:/data/downloads
+      - ${MUSIC_LOCATION}:/music
+      - ${DOWNLOADS_LOCATION}:/downloads
     labels:
       - "traefik.enable=true"
 
@@ -62,27 +61,28 @@ services:
     networks:
       lan:
 
-  overseerr:
-    image: lscr.io/linuxserver/overseerr:latest
-    container_name: overseerr
+  seerr:
+    image: ghcr.io/hotio/seerr:latest
+    container_name: seerr
     restart: unless-stopped
     environment:
       - PUID=${PUID}
       - PGID=${PGID}
+      - UMASK=002
       - TZ=${TZ}
     volumes:
-      - ${OVERSEERR_CONFIG_PATH}:/config
+      - ${SEERR_CONFIG_PATH}:/config
     labels:
       - "traefik.enable=true"
 
       # Entrypoint
-      - "traefik.http.routers.overseerr.entrypoints=websecure"
+      - "traefik.http.routers.seerr.entrypoints=websecure"
 
       # Router
-      - "traefik.http.routers.overseerr.rule=Host(`overseerr.${DOMAIN}`)"
+      - "traefik.http.routers.seerr.rule=Host(`seerr.${DOMAIN}`)"
 
       # Service
-      - "traefik.http.services.overseerr.loadBalancer.server.port=5055"
+      - "traefik.http.services.seerr.loadBalancer.server.port=5055"
 
       # Watchtower automatic update
       - "com.centurylinklabs.watchtower.enable=true"
@@ -109,17 +109,6 @@ services:
       - ${MOVIES_LOCATION}:/movies
       - ${MUSIC_LOCATION}:/musics
     labels:
-      - "traefik.enable=true"
-
-      # Entrypoint
-      - "traefik.http.routers.plex.entrypoints=websecure"
-
-      # Router
-      - "traefik.http.routers.plex.rule=Host(`plex.${DOMAIN}`)"
-
-      # Service
-      - "traefik.http.services.plex.loadBalancer.server.port=8080"
-
       # Watchtower automatic update
       - "com.centurylinklabs.watchtower.enable=true"
 
@@ -227,8 +216,8 @@ services:
       - TZ=${TZ}
     volumes:
       - ${RADARR_CONFIG_PATH}:/config
-      - ${MOVIES_LOCATION}:/data/movies
-      - ${DOWNLOADS_LOCATION}:/data/downloads
+      - ${MOVIES_LOCATION}:/movies
+      - ${DOWNLOADS_LOCATION}:/downloads
     labels:
       - "traefik.enable=true"
 
@@ -257,8 +246,8 @@ services:
       - TZ=${TZ}
     volumes:
       - ${SONARR_CONFIG_PATH}:/config
-      - ${TV_SHOWS_LOCATION}:/data/tv
-      - ${DOWNLOADS_LOCATION}:/data/downloads
+      - ${TV_SHOWS_LOCATION}:/tv
+      - ${DOWNLOADS_LOCATION}:/downloads
     labels:
       - "traefik.enable=true"
 
@@ -287,6 +276,7 @@ services:
       - TZ=${TZ}
     volumes:
       - ${TAUTULLI_CONFIG_PATH}:/config
+      - ${PLEX_CONFIG_PATH}/Library/Application Support/Plex Media Server/Logs:/logs:ro
     labels:
       - "traefik.enable=true"
 
