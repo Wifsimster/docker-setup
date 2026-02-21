@@ -11,8 +11,8 @@ services:
       - TZ=${TZ}
     volumes:
       - ${BAZARR_CONFIG_PATH}:/config
-      - ${TV_SHOWS_LOCATION}:/tv
-      - ${MOVIES_LOCATION}:/movies
+      - ${TV_SHOWS_LOCATION}:/data/tv
+      - ${MOVIES_LOCATION}:/data/movies
     labels:
       - "traefik.enable=true"
 
@@ -41,8 +41,8 @@ services:
       - TZ=${TZ}
     volumes:
       - ${LIDARR_CONFIG_PATH}:/config
-      - ${MUSIC_LOCATION}:/music
-      - ${DOWNLOADS_LOCATION}:/downloads
+      - ${MUSIC_LOCATION}:/data/music
+      - ${DOWNLOADS_LOCATION}:/data/downloads
     labels:
       - "traefik.enable=true"
 
@@ -105,9 +105,9 @@ services:
       - /dev/dri:/dev/dri  # For hardware transcoding
     volumes:
       - ${PLEX_CONFIG_PATH}:/config
-      - ${TV_SHOWS_LOCATION}:/tv
-      - ${MOVIES_LOCATION}:/movies
-      - ${MUSIC_LOCATION}:/musics
+      - ${TV_SHOWS_LOCATION}:/data/tv
+      - ${MOVIES_LOCATION}:/data/movies
+      - ${MUSIC_LOCATION}:/data/music
     labels:
       # Watchtower automatic update
       - "com.centurylinklabs.watchtower.enable=true"
@@ -216,8 +216,8 @@ services:
       - TZ=${TZ}
     volumes:
       - ${RADARR_CONFIG_PATH}:/config
-      - ${MOVIES_LOCATION}:/movies
-      - ${DOWNLOADS_LOCATION}:/downloads
+      - ${MOVIES_LOCATION}:/data/movies
+      - ${DOWNLOADS_LOCATION}:/data/downloads
     labels:
       - "traefik.enable=true"
 
@@ -246,8 +246,8 @@ services:
       - TZ=${TZ}
     volumes:
       - ${SONARR_CONFIG_PATH}:/config
-      - ${TV_SHOWS_LOCATION}:/tv
-      - ${DOWNLOADS_LOCATION}:/downloads
+      - ${TV_SHOWS_LOCATION}:/data/tv
+      - ${DOWNLOADS_LOCATION}:/data/downloads
     labels:
       - "traefik.enable=true"
 
