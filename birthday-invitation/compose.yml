@@ -1,0 +1,47 @@
+name: birthday-invitation
+
+services:
+  birthday-invitation:
+    image: wifsimster/birthday-invitation:latest
+    container_name: birthday-invitation
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+    environment:
+      - NODE_ENV=production
+      - BIRTHDAY_PERSON=${BIRTHDAY_PERSON}
+      - BIRTHDAY_AGE=${BIRTHDAY_AGE}
+      - EVENT_DATE=${EVENT_DATE}
+      - EVENT_TIME=${EVENT_TIME}
+      - EVENT_TOWN=${EVENT_TOWN}
+      - EVENT_LOCATION=${EVENT_LOCATION}
+      - DRESS_CODE=${DRESS_CODE}
+      - DB_PATH=/app/data/rsvp.db
+    volumes:
+      - birthday_db:/app/data
+    labels:
+      - "traefik.enable=true"
+
+      # Entrypoint
+      - "traefik.http.routers.birthday-invitation.entrypoints=websecure"
+
+      # Router
+      - "traefik.http.routers.birthday-invitation.rule=Host(`leo-birthday.battistella.ovh`)"
+
+      # Service
+      - "traefik.http.services.birthday-invitation.loadBalancer.server.port=3000"
+
+      # Watchtower automatic update
+      - "com.centurylinklabs.watchtower.enable=true"
+
+    networks:
+      lan:
+
+
+volumes:
+  birthday_db:
+    driver: local
+
+networks:
+  lan:
+    external: true

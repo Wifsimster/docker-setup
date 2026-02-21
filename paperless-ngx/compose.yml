@@ -1,0 +1,132 @@
+name: paperless-ngx
+
+services:
+  db:
+    container_name: paperless-db
+    image: postgres:16-alpine
+    restart: unless-stopped
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: paperless
+      POSTGRES_USER: paperless
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-paperless}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U paperless -d paperless"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - lan
+
+  redis:
+    container_name: paperless-redis
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    command: redis-server --maxmemory 512mb --maxmemory-policy allkeys-lru
+    networks:
+      - lan
+
+  gotenberg:
+    container_name: paperless-gotenberg
+    image: gotenberg/gotenberg:7
+    restart: unless-stopped
+    environment:
+      - GOTENBERG_API_DISABLE_ROUTE_LISTING=true
+    networks:
+      - lan
+
+  tika:
+    container_name: paperless-tika
+    image: apache/tika:latest
+    restart: unless-stopped
+    networks:
+      - lan
+
+  protonmail-bridge:
+    container_name: protonmail-bridge
+    image: shenxn/protonmail-bridge:latest
+    ports:
+      - 1025:25/tcp
+      - 1143:143/tcp
+    restart: unless-stopped
+    volumes:
+      - proton_bridge_data:/root
+    networks:
+      - lan
+
+  webserver:
+    container_name: paperless-webserver
+    image: ghcr.io/paperless-ngx/paperless-ngx:latest
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      gotenberg:
+        condition: service_started
+      tika:
+        condition: service_started
+      protonmail-bridge:
+        condition: service_started
+    volumes:
+      - /mnt/documents:/usr/src/paperless/data
+      - paperless_media:/usr/src/paperless/media
+      - paperless_export:/usr/src/paperless/export
+      - paperless_consume:/usr/src/paperless/consume
+    environment:
+      - USERMAP_UID=1000
+      - USERMAP_GID=1000
+      - PAPERLESS_URL=https://paperless.battistella.ovh
+      - PAPERLESS_SECRET_KEY=${PAPERLESS_SECRET_KEY}
+      - PAPERLESS_OCR_LANGUAGE=fra+eng
+      - PAPERLESS_TIME_ZONE=Europe/Paris
+      - PAPERLESS_DBHOST=db
+      - PAPERLESS_DBNAME=paperless
+      - PAPERLESS_DBUSER=paperless
+      - PAPERLESS_DBPASS=${POSTGRES_PASSWORD}
+      - PAPERLESS_REDIS=redis://redis:6379
+      - PAPERLESS_TIKA_ENABLED=1
+      - PAPERLESS_TIKA_GOTENBERG_ENDPOINT=http://gotenberg:3000
+      - PAPERLESS_TIKA_ENDPOINT=http://tika:9998
+    labels:
+      - "traefik.enable=true"
+
+      # Entrypoint
+      - "traefik.http.routers.paperless.entrypoints=websecure"
+
+      # Router
+      - "traefik.http.routers.paperless.rule=Host(`paperless.battistella.ovh`)"
+
+      # Service
+      - "traefik.http.services.paperless.loadBalancer.server.port=8000"
+      
+      # Watchtower automatic update
+      - "com.centurylinklabs.watchtower.enable=true"
+
+    networks:
+      - lan
+
+volumes:
+  pg_data:
+    driver: local
+  redis_data:
+    driver: local
+  paperless_data:
+    driver: local
+  paperless_media:
+    driver: local
+  paperless_export:
+    driver: local
+  paperless_consume:
+    driver: local
+  proton_bridge_data:
+    driver: local
+
+networks:
+  lan:
+    external: true
+

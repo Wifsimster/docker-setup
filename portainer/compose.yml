@@ -1,0 +1,30 @@
+name: portainer
+
+services:
+  portainer:
+    container_name: portainer
+    image: portainer/portainer-ce:latest
+    restart: unless-stopped
+    volumes:
+      - ./data:/data
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - "9000:9000"
+    labels:
+      - "traefik.enable=true"
+
+      # Entrypoint
+      - "traefik.http.routers.portainer.entrypoints=websecure"
+
+      # Router
+      - "traefik.http.routers.portainer.rule=Host(`portainer.battistella.ovh`)"
+
+      # Service
+      - "traefik.http.services.portainer.loadBalancer.server.port=9000"
+
+    networks:
+      lan:
+
+networks:
+  lan:
+    external: true

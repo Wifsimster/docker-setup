@@ -1,0 +1,82 @@
+name: gramps
+
+services:
+  grampsweb_redis:
+    image: docker.io/library/redis:7.2.4-alpine
+    container_name: grampsweb-redis
+    restart: unless-stopped
+    volumes:
+      - gramps_redis_data:/data
+    networks:
+      - lan
+
+  grampsweb:
+    image: ghcr.io/gramps-project/grampsweb:latest
+    container_name: grampsweb
+    restart: unless-stopped
+    depends_on:
+      - grampsweb_redis
+    environment:
+      GRAMPSWEB_TREE: "Gramps Web"
+      GRAMPSWEB_CELERY_CONFIG__broker_url: "redis://grampsweb_redis:6379/0"
+      GRAMPSWEB_CELERY_CONFIG__result_backend: "redis://grampsweb_redis:6379/0"
+      GRAMPSWEB_RATELIMIT_STORAGE_URI: "redis://grampsweb_redis:6379/1"
+    volumes:
+      - ./users:/app/users
+      - ./indexdir:/app/indexdir
+      - ./thumbnail_cache:/app/thumbnail_cache
+      - ./cache:/app/cache
+      - ./secret:/app/secret
+      - ./grampsdb:/root/.gramps/grampsdb
+      - ./media:/app/media
+      - ./tmp:/tmp
+    labels:
+      - "traefik.enable=true"
+
+      # Entrypoint
+      - "traefik.http.routers.gramps.entrypoints=websecure"
+
+      # Router
+      - "traefik.http.routers.gramps.rule=Host(`gramps.battistella.ovh`)"
+
+      # Service
+      - "traefik.http.services.gramps.loadBalancer.server.port=5000"
+
+      # Watchtower automatic update
+      - "com.centurylinklabs.watchtower.enable=true"
+
+    networks:
+      - lan
+
+  grampsweb_celery:
+    image: ghcr.io/gramps-project/grampsweb:latest
+    container_name: grampsweb-celery
+    restart: unless-stopped
+    depends_on:
+      - grampsweb
+      - grampsweb_redis
+    command: celery -A gramps_webapi.celery worker --loglevel=INFO --concurrency=2
+    environment:
+      GRAMPSWEB_TREE: "Gramps Web"
+      GRAMPSWEB_CELERY_CONFIG__broker_url: "redis://grampsweb_redis:6379/0"
+      GRAMPSWEB_CELERY_CONFIG__result_backend: "redis://grampsweb_redis:6379/0"
+      GRAMPSWEB_RATELIMIT_STORAGE_URI: "redis://grampsweb_redis:6379/1"
+    volumes:
+      - ./users:/app/users
+      - ./indexdir:/app/indexdir
+      - ./thumbnail_cache:/app/thumbnail_cache
+      - ./cache:/app/cache
+      - ./secret:/app/secret
+      - ./grampsdb:/root/.gramps/grampsdb
+      - ./media:/app/media
+      - ./tmp:/tmp
+    networks:
+      - lan
+
+volumes:
+  gramps_redis_data:
+    driver: local
+
+networks:
+  lan:
+    external: true

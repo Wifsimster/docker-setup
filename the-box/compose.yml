@@ -1,0 +1,110 @@
+name: the-box
+
+services:
+  the-box:
+    image: wifsimster/the-box:latest
+    container_name: the-box
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 30s
+      retries: 3
+    env_file:
+      - .env
+    environment:
+      # System
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Paris
+      - NODE_ENV=production
+      - PORT=80
+      
+      # Database & Cache (REQUIRED)
+      - DATABASE_URL=postgresql://${DB_USER:-thebox}:${DB_PASSWORD:-thebox}@the-box-postgres:5432/${DB_NAME:-thebox}
+      - REDIS_URL=redis://the-box-redis:6379
+      
+      # Authentication (REQUIRED - Generate with: openssl rand -base64 32)
+      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
+      
+      # URLs (REQUIRED)
+      - API_URL=https://the-box.battistella.ovh
+      - CORS_ORIGIN=https://the-box.battistella.ovh
+      
+      # Email (Optional - for password reset)
+      - RESEND_API_KEY=${RESEND_API_KEY:-}
+      - EMAIL_FROM=${EMAIL_FROM:-noreply@battistella.ovh}
+      
+      # RAWG API (Optional - for game imports)
+      - RAWG_API_KEY=${RAWG_API_KEY:-}
+    volumes:
+      - uploads:/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=lan"
+
+      # Entrypoint
+      - "traefik.http.routers.the-box.entrypoints=websecure"
+
+      # Router
+      - "traefik.http.routers.the-box.rule=Host(`the-box.battistella.ovh`)"
+      - "traefik.http.routers.the-box.tls=true"
+      - "traefik.http.routers.the-box.tls.certresolver=letsencrypt"
+
+      # Service
+      - "traefik.http.services.the-box.loadBalancer.server.port=80"
+
+      # Watchtower automatic update
+      - com.centurylinklabs.watchtower.enable=true
+
+    networks:
+      lan:
+
+  redis:
+    image: redis:alpine
+    container_name: the-box-redis
+    restart: unless-stopped
+    volumes:
+      - redis-data:/data
+    networks:
+      lan:
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: the-box-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=${DB_USER:-thebox}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-thebox}
+      - POSTGRES_DB=${DB_NAME:-thebox}
+      - PGDATA=/var/lib/postgresql/data/pgdata
+      - TZ=Europe/Paris
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      lan:
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-thebox}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  uploads:
+  redis-data:
+  postgres-data:
+
+networks:
+  lan:
+    external: true

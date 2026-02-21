@@ -1,0 +1,33 @@
+name: vaultwarden
+
+services:
+  vaultwarden:
+    image: vaultwarden/server:latest
+    container_name: vaultwarden
+    restart: unless-stopped
+    environment:
+      - DOMAIN=https://vaultwarden.battistella.ovh
+      - EXPERIMENTAL_CLIENT_FEATURE_FLAGS=ssh-key-vault-item,ssh-agent
+    volumes:
+      - ./data:/data/
+    labels:
+      - "traefik.enable=true"
+
+      # Entrypoint
+      - "traefik.http.routers.vaultwarden.entrypoints=websecure"
+
+      # Router
+      - "traefik.http.routers.vaultwarden.rule=Host(`vaultwarden.battistella.ovh`)"
+
+      # Service
+      - "traefik.http.services.vaultwarden.loadBalancer.server.port=80"
+
+      # Watchtower automatic update
+      - "com.centurylinklabs.watchtower.enable=true"
+
+    networks:
+      lan:
+
+networks:
+  lan:
+    external: true

@@ -1,0 +1,72 @@
+name: copro-pilot
+
+services:
+  copro-pilot:
+    image: wifsimster/copro-pilot:latest
+    container_name: copro-pilot
+    restart: unless-stopped
+    user: root
+    healthcheck:
+      disable: true
+    env_file:
+      - .env
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - NODE_ENV=production
+      - POSTGRES_URI=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@copro-pilot-postgres:5432/${POSTGRES_DB}
+      - BASE_URL=${BASE_URL}
+      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=lan"
+
+      # Entrypoint
+      - "traefik.http.routers.copro-pilot.entrypoints=websecure"
+
+      # Router
+      - "traefik.http.routers.copro-pilot.rule=Host(`copro-pilot.battistella.ovh`)"
+      - "traefik.http.routers.copro-pilot.tls=true"
+      - "traefik.http.routers.copro-pilot.tls.certresolver=letsencrypt"
+
+      # Service
+      - "traefik.http.services.copro-pilot.loadBalancer.server.port=3001"
+      
+      # Watchtower automatic update
+      - com.centurylinklabs.watchtower.enable=true
+    volumes:
+      - uploads:/app/apps/backend/uploads
+
+    networks:
+      lan:
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: copro-pilot-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - PGDATA=/var/lib/postgresql/data/pgdata
+      - TZ=Europe/Paris
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      lan:
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres-data:
+  uploads:
+
+networks:
+  lan:
+    external: true

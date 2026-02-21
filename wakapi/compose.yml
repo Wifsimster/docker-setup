@@ -1,0 +1,34 @@
+services:
+  wakapi:
+    image: ghcr.io/muety/wakapi:latest
+    container_name: wakapi
+    restart: unless-stopped
+    environment:
+      - WAKAPI_PASSWORD_SALT=${WAKAPI_PASSWORD_SALT}
+      - WAKAPI_PUBLIC_URL=https://wakapi.battistella.ovh
+      - WAKAPI_ALLOW_SIGNUP=true
+    volumes:
+      - ./data:/data
+    labels:
+      - "traefik.enable=true"
+
+      # Entrypoint
+      - "traefik.http.routers.wakapi.entrypoints=websecure"
+
+      # Router
+      - "traefik.http.routers.wakapi.rule=Host(`wakapi.battistella.ovh`)"
+      - "traefik.http.routers.wakapi.tls=true"
+      - "traefik.http.routers.wakapi.tls.certresolver=letsencrypt"
+
+      # Service
+      - "traefik.http.services.wakapi.loadBalancer.server.port=3000"
+
+      # Watchtower automatic update
+      - "com.centurylinklabs.watchtower.enable=true"
+
+    networks:
+      lan:
+
+networks:
+  lan:
+    external: true

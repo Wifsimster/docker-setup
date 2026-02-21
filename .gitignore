@@ -1,0 +1,8 @@
+# Ignore everything
+*
+
+# But not these
+!.gitignore
+!*/
+!**/compose.yml
+!**/hwaccel.*.yml

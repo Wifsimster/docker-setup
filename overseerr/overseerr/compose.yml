@@ -1,0 +1,33 @@
+name: overseerr
+
+services:
+  overseerr:
+    image: lscr.io/linuxserver/overseerr:latest
+    container_name: overseerr
+    restart: unless-stopped
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Paris
+    volumes:
+      - ./data:/config
+    labels:
+      - "traefik.enable=true"
+
+      # Entrypoint
+      - "traefik.http.routers.overseerr.entrypoints=websecure"
+
+      # Router
+      - "traefik.http.routers.overseerr.rule=Host(`overseerr.battistella.ovh`)"
+
+      # Service
+      - "traefik.http.services.overseerr.loadBalancer.server.port=5055"
+
+      # Watchtower automatic update
+      - com.centurylinklabs.watchtower.enable=true
+    networks:
+      lan:
+
+networks:
+  lan:
+    external: true

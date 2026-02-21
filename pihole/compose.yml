@@ -1,0 +1,40 @@
+name: pihole
+
+services:
+  pihole:
+    container_name: pihole
+    image: pihole/pihole:latest
+    restart: unless-stopped
+    # For DHCP it is recommended to remove these ports and instead add: network_mode: "host"
+    ports:
+      - "53:53/tcp"
+      - "53:53/udp"
+    environment:
+      - "TZ=Europe/Paris"
+      - "WEBPASSWORD="
+      - "DNSMASQ_LISTENING=all"
+    # Volumes store your data between container upgrades
+    volumes:
+      - "./pihole:/etc/pihole"
+      - "./dnsmasq.d:/etc/dnsmasq.d"
+    labels:
+      - "traefik.enable=true"
+
+      # Entrypoint
+      - "traefik.http.routers.pihole.entrypoints=websecure"
+
+      # Router
+      - "traefik.http.routers.pihole.rule=Host(`pihole.battistella.ovh`)"
+
+      # Service
+      - "traefik.http.services.pihole.loadBalancer.server.port=80"
+
+      # Watchtower automatic update
+      - com.centurylinklabs.watchtower.enable=true
+
+    networks:
+      lan:
+
+networks:
+  lan:
+    external: true

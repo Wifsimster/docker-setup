@@ -1,0 +1,37 @@
+name: bazarr
+
+services:
+  bazarr:
+    image: lscr.io/linuxserver/bazarr:latest
+    container_name: bazarr
+    restart: unless-stopped
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Paris
+    volumes:
+      - ./data:/config
+      - /mnt/tv-shows:/tv
+      - /mnt/movies:/movies
+      - /mnt/downloads:/downloads
+    labels:
+      - "traefik.enable=true"
+
+      # Entrypoint
+      - "traefik.http.routers.bazarr.entrypoints=websecure"
+
+      # Router
+      - "traefik.http.routers.bazarr.rule=Host(`bazarr.battistella.ovh`)"
+
+      # Service
+      - "traefik.http.services.bazarr.loadBalancer.server.port=6767"
+
+      # Watchtower automatic update
+      - "com.centurylinklabs.watchtower.enable=true"
+
+    networks:
+      lan:
+
+networks:
+  lan:
+    external: true

@@ -1,0 +1,78 @@
+name: Home Assistant
+
+services:
+  homeassistant:
+    container_name: homeassistant
+    image: ghcr.io/home-assistant/home-assistant:stable
+    depends_on:
+      - mosquitto
+      - matter-server
+    volumes:
+      - /opt/docker/home-assistant/config:/config
+      - /etc/localtime:/etc/localtime:ro
+      - /run/dbus:/run/dbus:ro
+      - /dev/ttyUSB0:/dev/ttyUSB0
+    devices:
+      - /dev/hci0:/dev/hci0
+    restart: unless-stopped
+    privileged: true
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+      - SYS_ADMIN
+    environment:
+      TZ: ${TZ}
+    labels:
+      - "traefik.enable=true"
+
+      # Entrypoint
+      - "traefik.http.routers.home-assistant.entrypoints=websecure"
+
+      # Router
+      - "traefik.http.routers.home-assistant.rule=Host(`home-assistant.${DOMAIN}`)"
+
+      # Service
+      - "traefik.http.services.home-assistant.loadBalancer.server.port=8123"
+
+      # Watchtower automatic update
+      - com.centurylinklabs.watchtower.enable=true
+
+    networks:
+      lan:
+
+
+  mosquitto:
+    container_name: mosquitto
+    image: eclipse-mosquitto
+    restart: always
+    ports:
+      - 1883:1883
+      - 1884:1884
+    volumes:
+      - /opt/docker/home-assistant/mosquitto/config:/mosquitto/config
+      - /opt/docker/home-assistant/mosquitto/data:/mosquitto/data
+      - /opt/docker/home-assistant/mosquitto/log:/mosquitto/log
+    environment:
+      TZ: ${TZ}
+    networks:
+      lan:
+
+
+  matter-server:
+    image: ghcr.io/home-assistant-libs/python-matter-server:stable
+    container_name: matter-server
+    restart: unless-stopped
+    security_opt:
+      - apparmor:unconfined # Needed for Bluetooth via dbus
+    volumes:
+      - /opt/docker/home-assistant/matter-server/data:/data/
+      - /run/dbus:/run/dbus:ro
+
+    # Required for mDNS to work correctly
+    network_mode: host
+    
+    # Accessible at http://192.168.0.237:5580/
+
+networks:
+  lan:
+    external: true

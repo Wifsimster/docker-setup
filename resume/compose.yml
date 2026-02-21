@@ -1,0 +1,38 @@
+name: resume
+
+services:
+  resume:
+    image: wifsimster/resume:latest
+    container_name: resume
+    restart: unless-stopped
+    healthcheck:
+      disable: true
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Paris
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=lan"
+
+      # Entrypoint
+      - "traefik.http.routers.resume.entrypoints=websecure"
+
+      # Router
+      - "traefik.http.routers.resume.rule=Host(`cv.battistella.ovh`)"
+      - "traefik.http.routers.resume.tls=true"
+      - "traefik.http.routers.resume.tls.certresolver=letsencrypt"
+
+      # Service
+      - "traefik.http.services.resume.loadBalancer.server.port=80"
+      
+      # Watchtower automatic update
+      - com.centurylinklabs.watchtower.enable=true
+
+    networks:
+      lan:
+
+networks:
+  lan:
+    external: true
+

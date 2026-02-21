@@ -1,0 +1,111 @@
+name: traefik
+
+services:
+    traefik:
+        container_name: traefik
+        image: traefik:latest
+        restart: unless-stopped
+        command:
+            # Enables the web UI and tells Traefik to listen to docker
+            # - "--api.insecure=true"
+            - "--api.dashboard=true"
+
+            # Log
+            - "--log.level=WARN"
+            - "--log.format=json"
+            - "--log.filepath=/logs/traefik.json"
+            - "--accesslog=true"
+            - "--accesslog.format=json"
+            - "--accesslog.filepath=/logs/access.json"
+            - "--accesslog.bufferingsize=100"
+            - "--accesslog.filters.statuscodes=400-599"
+
+            # HTTP entrypoint
+            - "--entrypoints.web.address=:80"
+            - "--entryPoints.web.http.redirections.entryPoint.to=websecure"
+            - "--entryPoints.web.http.redirections.entryPoint.scheme=https"
+
+            # HTTPS entrypoint
+            - "--entrypoints.websecure.address=:443"
+            - "--entrypoints.websecure.http.tls.certresolver=letsencrypt"
+            # TLS domains are automatically discovered from service labels
+            # - "--entrypoints.websecure.http.tls.domains[0].main=${DOMAIN}"
+            # - "--entrypoints.websecure.http.tls.domains[0].sans=*.${DOMAIN}"
+
+            # Let's Encrypt
+            - "--certificatesresolvers.letsencrypt.acme.dnsChallenge.provider=ovh"
+            # - "--certificatesresolvers.letsencrypt.acme.caServer=https://acme-staging-v02.api.letsencrypt.org/directory"
+            - "--certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL}"
+            - "--certificatesresolvers.letsencrypt.acme.storage=/etc/traefik/acme/letsencrypt.json"
+
+            # ZeroSSL
+            # - "--certificatesresolvers.zerossl.acme.dnsChallenge.provider=ovh"
+            # - "--certificatesresolvers.zerossl.acme.caServer=https://acme.zerossl.com/v2/DV90"
+            # - "--certificatesresolvers.zerossl.acme.email=${ACME_EMAIL}"
+            # - "--certificatesresolvers.zerossl.acme.storage=/etc/traefik/acme/zerossl.json"
+            # - "--certificatesresolvers.zerossl.acme.eab.kid=${ZEROSSL_KID}"
+            # - "--certificatesresolvers.zerossl.acme.eab.hmacEncoded=${ZEROSSL_HMAC}"
+
+            # Expose Docker in a network nammed lan
+            - "--providers.docker=true"
+            - "--providers.docker.exposedbydefault=false"
+            - "--providers.docker.network=lan"
+
+            # Enable the file provider
+            - "--providers.file.directory=/etc/traefik/config"
+            - "--providers.file.watch=true"
+
+        environment:
+            # OVH DNS Provider Environment Variables
+            - OVH_APPLICATION_KEY=${OVH_APPLICATION_KEY}
+            - OVH_APPLICATION_SECRET=${OVH_APPLICATION_SECRET}
+            - OVH_CONSUMER_KEY=${OVH_CONSUMER_KEY}
+            - OVH_ENDPOINT=${OVH_ENDPOINT}
+            # ACME
+            - ACME_EMAIL=${ACME_EMAIL}
+            # ZeroSSL
+            - ZEROSSL_KID=${ZEROSSL_KID}
+            - ZEROSSL_HMAC=${ZEROSSL_HMAC}
+            # Domain name
+            - DOMAIN=${DOMAIN}
+
+        ports:
+            - "80:80"
+            - "443:443"
+            - "8081:8080" # Traefik dashboard
+
+        volumes:
+            - "./acme:/etc/traefik/acme"
+            - "/var/run/docker.sock:/var/run/docker.sock:ro"
+            - "./logs:/logs"
+            - "./certs:/certs"
+            - "./config:/etc/traefik/config"
+
+        labels:
+            - "traefik.enable=true"
+
+            # Entrypoints
+            - "traefik.http.routers.api.entrypoints=websecure"
+
+            # Routers
+            - "traefik.http.routers.api.rule=Host(`proxy.${DOMAIN}`)"
+            - "traefik.http.routers.api.service=api@internal"
+            - "traefik.http.routers.api.tls=true"
+            - "traefik.http.routers.api.tls.certresolver=letsencrypt"
+
+            # Middlewares (security headers)
+            - "traefik.http.middlewares.secHeaders.headers.browserXssFilter=true"
+            - "traefik.http.middlewares.secHeaders.headers.contentTypeNosniff=true"
+            - "traefik.http.middlewares.secHeaders.headers.forceSTSHeader=true"
+            - "traefik.http.middlewares.secHeaders.headers.stsIncludeSubdomains=true"
+            - "traefik.http.middlewares.secHeaders.headers.stsPreload=true"
+            - "traefik.http.middlewares.secHeaders.headers.stsSeconds=31536000"
+            - "traefik.http.routers.api.middlewares=secHeaders@docker"
+
+        networks:
+            lan:
+
+networks:
+    lan:
+        name: lan
+        external: true

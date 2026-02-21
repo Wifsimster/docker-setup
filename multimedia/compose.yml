@@ -1,0 +1,310 @@
+name: multimedia
+
+services:
+  bazarr:
+    image: lscr.io/linuxserver/bazarr:latest
+    container_name: bazarr
+    restart: unless-stopped
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - ${BAZARR_CONFIG_PATH}:/config
+      - ${TV_SHOWS_LOCATION}:/data/tv
+      - ${MOVIES_LOCATION}:/data/movies
+      - ${DOWNLOADS_LOCATION}:/data/downloads
+    labels:
+      - "traefik.enable=true"
+
+      # Entrypoint
+      - "traefik.http.routers.bazarr.entrypoints=websecure"
+
+      # Router
+      - "traefik.http.routers.bazarr.rule=Host(`bazarr.${DOMAIN}`)"
+
+      # Service
+      - "traefik.http.services.bazarr.loadBalancer.server.port=6767"
+
+      # Watchtower automatic update
+      - "com.centurylinklabs.watchtower.enable=true"
+
+    networks:
+      lan:
+
+  lidarr:
+    image: lscr.io/linuxserver/lidarr:latest
+    container_name: lidarr
+    restart: unless-stopped
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - ${LIDARR_CONFIG_PATH}:/config
+      - ${MUSIC_LOCATION}:/data/music
+      - ${DOWNLOADS_LOCATION}:/data/downloads
+    labels:
+      - "traefik.enable=true"
+
+      # Entrypoint
+      - "traefik.http.routers.lidarr.entrypoints=websecure"
+
+      # Router
+      - "traefik.http.routers.lidarr.rule=Host(`lidarr.${DOMAIN}`)"
+
+      # Service
+      - "traefik.http.services.lidarr.loadBalancer.server.port=8686"
+
+      # Watchtower automatic update
+      - "com.centurylinklabs.watchtower.enable=true"
+
+    networks:
+      lan:
+
+  overseerr:
+    image: lscr.io/linuxserver/overseerr:latest
+    container_name: overseerr
+    restart: unless-stopped
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - ${OVERSEERR_CONFIG_PATH}:/config
+    labels:
+      - "traefik.enable=true"
+
+      # Entrypoint
+      - "traefik.http.routers.overseerr.entrypoints=websecure"
+
+      # Router
+      - "traefik.http.routers.overseerr.rule=Host(`overseerr.${DOMAIN}`)"
+
+      # Service
+      - "traefik.http.services.overseerr.loadBalancer.server.port=5055"
+
+      # Watchtower automatic update
+      - "com.centurylinklabs.watchtower.enable=true"
+
+    networks:
+      lan:
+
+  plex:
+    image: lscr.io/linuxserver/plex:latest
+    container_name: plex
+    restart: unless-stopped
+    network_mode: host  # Container joins host's network stack
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+      - VERSION=${PLEX_VERSION}  # Use 'public' for free version, 'plexpass' for Plex Pass version
+      - PLEX_CLAIM=${PLEX_CLAIM}
+    devices:
+      - /dev/dri:/dev/dri  # For hardware transcoding
+    volumes:
+      - ${PLEX_CONFIG_PATH}:/config
+      - ${TV_SHOWS_LOCATION}:/tv
+      - ${MOVIES_LOCATION}:/movies
+      - ${MUSIC_LOCATION}:/musics
+    labels:
+      - "traefik.enable=true"
+
+      # Entrypoint
+      - "traefik.http.routers.plex.entrypoints=websecure"
+
+      # Router
+      - "traefik.http.routers.plex.rule=Host(`plex.${DOMAIN}`)"
+
+      # Service
+      - "traefik.http.services.plex.loadBalancer.server.port=8080"
+
+      # Watchtower automatic update
+      - "com.centurylinklabs.watchtower.enable=true"
+
+    # networks:
+    #   lan:
+
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:latest
+    container_name: prowlarr
+    restart: unless-stopped
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - ${PROWLARR_CONFIG_PATH}:/config
+    labels:
+      - "traefik.enable=true"
+
+      # Entrypoint
+      - "traefik.http.routers.prowlarr.entrypoints=websecure"
+
+      # Router
+      - "traefik.http.routers.prowlarr.rule=Host(`indexer.${DOMAIN}`)"
+
+      # Service
+      - "traefik.http.services.prowlarr.loadBalancer.server.port=9696"
+
+      # Watchtower automatic update
+      - "com.centurylinklabs.watchtower.enable=true"
+
+    networks:
+      lan:
+
+  qbittorrent:
+    image: ghcr.io/hotio/qbittorrent:latest
+    container_name: qbittorrent
+    hostname: qbittorrent.internal
+    restart: unless-stopped
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - UMASK=${UMASK}
+      - TZ=${TZ}
+      - WEBUI_PORTS=${WEBUI_PORTS}
+      - LIBTORRENT=${LIBTORRENT}
+      # VPN Configuration
+      - VPN_ENABLED=${VPN_ENABLED}
+      - VPN_CONF=${VPN_CONF}
+      - VPN_PROVIDER=${VPN_PROVIDER}
+      - VPN_LAN_NETWORK=${VPN_LAN_NETWORK}
+      - VPN_LAN_LEAK_ENABLED=${VPN_LAN_LEAK_ENABLED:-false}
+      - VPN_EXPOSE_PORTS_ON_LAN=${VPN_EXPOSE_PORTS_ON_LAN:-}
+      - VPN_AUTO_PORT_FORWARD=${VPN_AUTO_PORT_FORWARD}
+      - VPN_AUTO_PORT_FORWARD_TO_PORTS=${VPN_AUTO_PORT_FORWARD_TO_PORTS:-}
+      - VPN_FIREWALL_TYPE=${VPN_FIREWALL_TYPE:-auto}
+      - VPN_HEALTHCHECK_ENABLED=${VPN_HEALTHCHECK_ENABLED}
+      - VPN_NAMESERVERS=${VPN_NAMESERVERS:-}
+    volumes:
+      - ${CONFIG_LOCATION}:/config
+      - ${DOWNLOADS_LOCATION}:/data/downloads
+      - ./wireguard:/config/wireguard
+    ports:
+      - "${BT_PORT}:6881"
+      - "${BT_PORT}:6881/udp"
+    cap_add:
+      - NET_ADMIN
+    sysctls:
+      - net.ipv4.conf.all.src_valid_mark=1
+      - net.ipv6.conf.all.disable_ipv6=1
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    labels:
+      - "traefik.enable=true"
+
+      # Entrypoint
+      - "traefik.http.routers.qbittorrent.entrypoints=websecure"
+
+      # Router
+      - "traefik.http.routers.qbittorrent.rule=Host(`qbittorrent.${DOMAIN}`)"
+
+      # Service
+      - "traefik.http.services.qbittorrent.loadBalancer.server.port=8080"
+
+      # Watchtower automatic update
+      - "com.centurylinklabs.watchtower.enable=true"
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider http://localhost:8080 || exit 1
+      interval: 15s
+      timeout: 3s
+      retries: 3
+      start_period: 60s
+      start_interval: 5s
+
+    networks:
+      lan:
+
+  radarr:
+    image: lscr.io/linuxserver/radarr:latest
+    container_name: radarr
+    restart: unless-stopped
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - ${RADARR_CONFIG_PATH}:/config
+      - ${MOVIES_LOCATION}:/data/movies
+      - ${DOWNLOADS_LOCATION}:/data/downloads
+    labels:
+      - "traefik.enable=true"
+
+      # Entrypoint
+      - "traefik.http.routers.radarr.entrypoints=websecure"
+
+      # Router
+      - "traefik.http.routers.radarr.rule=Host(`radarr.${DOMAIN}`)"
+
+      # Service
+      - "traefik.http.services.radarr.loadBalancer.server.port=7878"
+
+      # Watchtower automatic update
+      - "com.centurylinklabs.watchtower.enable=true"
+
+    networks:
+      lan:
+
+  sonarr:
+    image: lscr.io/linuxserver/sonarr:latest
+    container_name: sonarr
+    restart: unless-stopped
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - ${SONARR_CONFIG_PATH}:/config
+      - ${TV_SHOWS_LOCATION}:/data/tv
+      - ${DOWNLOADS_LOCATION}:/data/downloads
+    labels:
+      - "traefik.enable=true"
+
+      # Entrypoint
+      - "traefik.http.routers.sonarr.entrypoints=websecure"
+
+      # Router
+      - "traefik.http.routers.sonarr.rule=Host(`sonarr.${DOMAIN}`)"
+
+      # Service
+      - "traefik.http.services.sonarr.loadBalancer.server.port=8989"
+
+      # Watchtower automatic update
+      - "com.centurylinklabs.watchtower.enable=true"
+
+    networks:
+      lan:
+
+  tautulli:
+    image: lscr.io/linuxserver/tautulli:latest
+    container_name: tautulli
+    restart: unless-stopped
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - ${TAUTULLI_CONFIG_PATH}:/config
+    labels:
+      - "traefik.enable=true"
+
+      # Entrypoint
+      - "traefik.http.routers.tautulli.entrypoints=websecure"
+
+      # Router
+      - "traefik.http.routers.tautulli.rule=Host(`tautulli.${DOMAIN}`)"
+
+      # Service
+      - "traefik.http.services.tautulli.loadBalancer.server.port=8181"
+
+      # Watchtower automatic update
+      - "com.centurylinklabs.watchtower.enable=true"
+
+    networks:
+      lan:
+
+networks:
+  lan:
+    external: true

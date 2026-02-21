@@ -1,0 +1,31 @@
+name: techney
+
+services:
+  techney:
+    image: wifsimster/techney:latest
+    container_name: techney
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    labels:
+      - "traefik.enable=true"
+
+      # Entrypoint
+      - "traefik.http.routers.techney.entrypoints=websecure"
+
+      # Router
+      - "traefik.http.routers.techney.rule=Host(`techney.battistella.ovh`)"
+
+      # Service
+      - "traefik.http.services.techney.loadBalancer.server.port=3000"
+      
+      # Watchtower automatic update
+      - "com.centurylinklabs.watchtower.enable=true"
+
+    networks:
+      - lan
+
+networks:
+  lan:
+    external: true
+

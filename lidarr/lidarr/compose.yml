@@ -1,0 +1,36 @@
+name: lidarr
+
+services:
+  lidarr:
+    image: lscr.io/linuxserver/lidarr:latest
+    container_name: lidarr
+    restart: unless-stopped
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Paris
+    volumes:
+      - ./config:/config
+      - /mnt/music:/music
+      - /mnt/downloads:/downloads
+    labels:
+      - "traefik.enable=true"
+
+      # Entrypoint
+      - "traefik.http.routers.lidarr.entrypoints=websecure"
+
+      # Router
+      - "traefik.http.routers.lidarr.rule=Host(`lidarr.battistella.ovh`)"
+
+      # Service
+      - "traefik.http.services.lidarr.loadBalancer.server.port=8686"
+
+      # Watchtower automatic update
+      - "com.centurylinklabs.watchtower.enable=true"
+
+    networks:
+      lan:
+
+networks:
+  lan:
+    external: true

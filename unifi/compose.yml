@@ -1,0 +1,33 @@
+name: Unifi Controller
+services:
+  unifi:
+    image: jacobalberty/unifi
+    container_name: unifi
+    restart: unless-stopped
+    init: true
+    user: unifi
+    ports:
+      - 3478:3478/udp # STUN
+      - 5514:5514/udp # Remote logging
+      - 6789:6789/tcp # Speed test
+      - 8080:8080/tcp # Device communication
+      - 8443:8443/tcp # Controller GUI/API
+      - 10001:10001/udp # AP discovery
+      - 1900:1900/udp # L2 discovery
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Paris
+    volumes:
+      - /opt/docker/unifi:/unifi
+    labels:
+      # Watchtower automatic update
+      - "com.centurylinklabs.watchtower.enable=true"
+
+    networks:
+      lan:
+      
+networks:
+  lan:
+    external: true
+

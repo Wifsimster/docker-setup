@@ -1,0 +1,32 @@
+name: dozzle
+
+services:
+  dozzle:
+    container_name: dozzle
+    image: amir20/dozzle:latest
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+        - "8082:8080"
+    labels:
+      - "traefik.enable=true"
+
+      # Entrypoint
+      - "traefik.http.routers.dozzle.entrypoints=websecure"
+
+      # Router
+      - "traefik.http.routers.dozzle.rule=Host(`dozzle.battistella.ovh`)"
+
+      # Service
+      - "traefik.http.services.dozzle.loadBalancer.server.port=8080"
+      
+      # Watchtower automatic update
+      - com.centurylinklabs.watchtower.enable=true
+
+    networks:
+      lan:
+      
+networks:
+  lan:
+    external: true

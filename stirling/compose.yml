@@ -1,0 +1,48 @@
+name: Stirling-PDF
+
+services:
+  stirling-pdf:
+    container_name: stirling-pdf
+    image: docker.stirlingpdf.com/stirlingtools/stirling-pdf:latest
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+    volumes:
+      - ./data:/usr/share/tessdata:rw
+      - ./config:/configs:rw
+      - ./logs:/logs:rw
+    environment:
+      DOCKER_ENABLE_SECURITY: "false"
+      SECURITY_ENABLELOGIN: "false"
+      LANGS: "en_GB,en_US,ar_AR,de_DE,fr_FR,es_ES,zh_CN,zh_TW,ca_CA,it_IT,sv_SE,pl_PL,ro_RO,ko_KR,pt_BR,ru_RU,el_GR,hi_IN,hu_HU,tr_TR,id_ID"
+      SYSTEM_DEFAULTLOCALE: fr-FR
+      UI_APPNAME: Stirling-PDF
+      UI_HOMEDESCRIPTION: Stirling-PDF
+      UI_APPNAMENAVBAR: Stirling-PDF
+      SYSTEM_MAXFILESIZE: "100"
+      METRICS_ENABLED: "false"
+      SYSTEM_GOOGLEVISIBILITY: "false"
+      SHOW_SURVEY: "true"
+    restart: on-failure:5
+    labels:
+      - "traefik.enable=true"
+
+      # Entrypoint
+      - "traefik.http.routers.stirling.entrypoints=websecure"
+
+      # Router
+      - "traefik.http.routers.stirling.rule=Host(`stirling.battistella.ovh`)"
+
+      # Service
+      - "traefik.http.services.stirling.loadBalancer.server.port=8080"
+
+      # Watchtower automatic update
+      - "com.centurylinklabs.watchtower.enable=true"
+
+    networks:
+      lan:
+
+networks:
+  lan:
+    external: true

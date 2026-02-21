@@ -1,0 +1,27 @@
+name: watchtower
+
+services:
+  watchtower:
+    image: containrrr/watchtower
+    container_name: watchtower
+    restart: unless-stopped
+    environment:
+      - TZ=Europe/Paris
+      - DOCKER_API_VERSION=1.44
+      - WATCHTOWER_SCHEDULE= 0 0 6 * * *
+      - WATCHTOWER_LABEL_ENABLE=true
+      - WATCHTOWER_CLEANUP=true
+      - WATCHTOWER_REMOVE_VOLUMES=true
+      - WATCHTOWER_NOTIFICATIONS_LEVEL=debug
+      - WATCHTOWER_NOTIFICATIONS=slack
+      - WATCHTOWER_NOTIFICATION_SLACK_IDENTIFIER=${DISCORD_WEBHOOK_ID}
+      - WATCHTOWER_NOTIFICATION_SLACK_HOOK_URL=${DISCORD_WEBHOOK_URL}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      lan:
+
+
+networks:
+  lan:
+    external: true
