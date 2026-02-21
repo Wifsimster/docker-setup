@@ -2,9 +2,9 @@
 
 Self-hosted services running on a home server, orchestrated with Docker Compose and exposed via Traefik reverse proxy with automatic HTTPS (Let's Encrypt / OVH DNS challenge).
 
-**Host:** Debian-based server at `192.168.0.237`  
-**Domain:** `*.battistella.ovh`  
-**Storage:** Unraid NAS at `192.168.0.240` via NFS mounts under `/mnt/`
+**Host:** Debian-based server  
+**Domain:** `*.example.com`  
+**Storage:** Unraid NAS via NFS mounts under `/mnt/`
 
 ## Architecture
 
@@ -12,7 +12,7 @@ Self-hosted services running on a home server, orchestrated with Docker Compose 
 Internet
    │
    ▼
-[ Traefik ] ─── HTTPS *.battistella.ovh
+[ Traefik ] ─── HTTPS *.example.com
    │
    ├── lan (Docker bridge network, shared by most services)
    │
@@ -84,7 +84,7 @@ The multimedia stack is a single compose project grouping all media-related serv
 
 ## Storage
 
-Media is stored on an Unraid NAS (`192.168.0.240`) and mounted via NFS:
+Media is stored on an Unraid NAS and mounted via NFS:
 
 | Host mount | NFS share | Purpose |
 |---|---|---|
@@ -125,7 +125,7 @@ Currently, each media type (downloads, movies, tv-shows, music) is exported as a
 
 3. **On Docker host:** Replace individual NFS mounts with one:
    ```
-   192.168.0.240:/mnt/user/data  /mnt/data  nfs4  defaults,_netdev  0  0
+   <NAS_IP>:/mnt/user/data  /mnt/data  nfs4  defaults,_netdev  0  0
    ```
 
 4. **In `.env`:** Update paths to use the unified mount:
@@ -151,7 +151,7 @@ Currently, each media type (downloads, movies, tv-shows, music) is exported as a
 - Most services join the `lan` external Docker bridge network
 - Traefik discovers services via Docker labels
 - Plex uses `network_mode: host` for DLNA/discovery
-- qBittorrent routes traffic through a WireGuard VPN (ProtonVPN) with `NET_ADMIN` capability
+- qBittorrent routes traffic through a WireGuard VPN with `NET_ADMIN` capability
 - Inter-container DNS uses the `.internal` suffix (e.g., `qbittorrent.internal`)
 
 ## Git
