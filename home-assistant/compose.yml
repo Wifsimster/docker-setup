@@ -5,8 +5,10 @@ services:
     container_name: homeassistant
     image: ghcr.io/home-assistant/home-assistant:stable
     depends_on:
-      - mosquitto
-      - matter-server
+      mosquitto:
+        condition: service_healthy
+      matter-server:
+        condition: service_started
     volumes:
       - /opt/docker/home-assistant/config:/config
       - /etc/localtime:/etc/localtime:ro
@@ -22,6 +24,12 @@ services:
       - SYS_ADMIN
     environment:
       TZ: ${TZ}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8123/api/health"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
     labels:
       - "traefik.enable=true"
 
@@ -43,17 +51,26 @@ services:
 
   mosquitto:
     container_name: mosquitto
-    image: eclipse-mosquitto
-    restart: always
+    image: eclipse-mosquitto:2
+    restart: unless-stopped
+    user: "1883:1883"
+    security_opt:
+      - no-new-privileges:true
     ports:
       - 1883:1883
       - 1884:1884
     volumes:
-      - /opt/docker/home-assistant/mosquitto/config:/mosquitto/config
+      - /opt/docker/home-assistant/mosquitto/config:/mosquitto/config:ro
       - /opt/docker/home-assistant/mosquitto/data:/mosquitto/data
       - /opt/docker/home-assistant/mosquitto/log:/mosquitto/log
     environment:
       TZ: ${TZ}
+    healthcheck:
+      test: ["CMD-SHELL", "mosquitto_pub -h localhost -t health/check -m ok || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
     networks:
       lan:
 

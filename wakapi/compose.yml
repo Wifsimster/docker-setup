@@ -1,3 +1,5 @@
+name: wakapi
+
 services:
   wakapi:
     image: ghcr.io/muety/wakapi:latest
@@ -6,9 +8,15 @@ services:
     environment:
       - WAKAPI_PASSWORD_SALT=${WAKAPI_PASSWORD_SALT}
       - WAKAPI_PUBLIC_URL=https://wakapi.battistella.ovh
-      - WAKAPI_ALLOW_SIGNUP=true
+      - WAKAPI_ALLOW_SIGNUP=false
     volumes:
       - ./data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
     labels:
       - "traefik.enable=true"
 
@@ -17,8 +25,6 @@ services:
 
       # Router
       - "traefik.http.routers.wakapi.rule=Host(`wakapi.battistella.ovh`)"
-      - "traefik.http.routers.wakapi.tls=true"
-      - "traefik.http.routers.wakapi.tls.certresolver=letsencrypt"
 
       # Service
       - "traefik.http.services.wakapi.loadBalancer.server.port=3000"

@@ -26,15 +26,28 @@ services:
     volumes:
       - redis_data:/data
     command: redis-server --maxmemory 512mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - lan
 
   gotenberg:
     container_name: paperless-gotenberg
-    image: gotenberg/gotenberg:7
+    image: gotenberg/gotenberg:8
     restart: unless-stopped
-    environment:
-      - GOTENBERG_API_DISABLE_ROUTE_LISTING=true
+    command:
+      - "gotenberg"
+      - "--chromium-disable-javascript=true"
+      - "--chromium-allow-list=file:///tmp/.*"
+      - "--api-timeout=60s"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
     networks:
       - lan
 
@@ -65,9 +78,9 @@ services:
       db:
         condition: service_healthy
       redis:
-        condition: service_started
+        condition: service_healthy
       gotenberg:
-        condition: service_started
+        condition: service_healthy
       tika:
         condition: service_started
       protonmail-bridge:
@@ -84,14 +97,16 @@ services:
       - PAPERLESS_SECRET_KEY=${PAPERLESS_SECRET_KEY}
       - PAPERLESS_OCR_LANGUAGE=fra+eng
       - PAPERLESS_TIME_ZONE=Europe/Paris
-      - PAPERLESS_DBHOST=db
+      - PAPERLESS_DBHOST=paperless-db
       - PAPERLESS_DBNAME=paperless
       - PAPERLESS_DBUSER=paperless
       - PAPERLESS_DBPASS=${POSTGRES_PASSWORD}
-      - PAPERLESS_REDIS=redis://redis:6379
+      - PAPERLESS_REDIS=redis://paperless-redis:6379
       - PAPERLESS_TIKA_ENABLED=1
-      - PAPERLESS_TIKA_GOTENBERG_ENDPOINT=http://gotenberg:3000
-      - PAPERLESS_TIKA_ENDPOINT=http://tika:9998
+      - PAPERLESS_TIKA_GOTENBERG_ENDPOINT=http://paperless-gotenberg:3000
+      - PAPERLESS_TIKA_ENDPOINT=http://paperless-tika:9998
+      - PAPERLESS_TASK_WORKERS=2
+      - PAPERLESS_WEBSERVER_WORKERS=2
     labels:
       - "traefik.enable=true"
 

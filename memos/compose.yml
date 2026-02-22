@@ -5,10 +5,14 @@ services:
     image: neosmemo/memos:stable
     container_name: memos
     restart: unless-stopped
-    ports:
-      - "5230:5230"
     volumes:
-      - ~/.memos:/var/opt/memos
+      - ./data:/var/opt/memos
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:5230/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
     labels:
       - "traefik.enable=true"
 
