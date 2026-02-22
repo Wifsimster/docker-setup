@@ -1,3 +1,4 @@
+name: infisical
 
 services:
   backend:
@@ -7,7 +8,7 @@ services:
       db:
         condition: service_healthy
       redis:
-        condition: service_started
+        condition: service_healthy
     image: infisical/infisical:latest-postgres
     pull_policy: always
     env_file: .env
@@ -31,18 +32,18 @@ services:
       - com.centurylinklabs.watchtower.enable=true
 
   redis:
-    image: redis
-    container_name: infisical-dev-redis
-    env_file: .env
+    image: redis:7-alpine
+    container_name: infisical-redis
     restart: always
-    environment:
-      - ALLOW_EMPTY_PASSWORD=yes
-    ports:
-      - 6379:6379
     networks:
       - lan
     volumes:
       - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   db:
     container_name: infisical-db

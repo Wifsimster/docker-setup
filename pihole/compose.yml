@@ -9,14 +9,23 @@ services:
     ports:
       - "53:53/tcp"
       - "53:53/udp"
+    cap_add:
+      - NET_ADMIN
+      - SYS_NICE
     environment:
-      - "TZ=Europe/Paris"
-      - "WEBPASSWORD="
-      - "DNSMASQ_LISTENING=all"
+      - TZ=Europe/Paris
+      # Pi-hole v6: WEBPASSWORD is deprecated, use FTLCONF_webserver_api_password
+      - FTLCONF_webserver_api_password=${PIHOLE_PASSWORD:-}
+      - FTLCONF_dns_listeningMode=all
     # Volumes store your data between container upgrades
     volumes:
       - "./pihole:/etc/pihole"
-      - "./dnsmasq.d:/etc/dnsmasq.d"
+    healthcheck:
+      test: ["CMD", "dig", "+short", "+norecurse", "+retry=0", "@127.0.0.1", "pi.hole"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
     labels:
       - "traefik.enable=true"
 

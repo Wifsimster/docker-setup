@@ -7,6 +7,11 @@ services:
     restart: unless-stopped
     volumes:
       - gramps_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - lan
 
@@ -15,7 +20,8 @@ services:
     container_name: grampsweb
     restart: unless-stopped
     depends_on:
-      - grampsweb_redis
+      grampsweb_redis:
+        condition: service_healthy
     environment:
       GRAMPSWEB_TREE: "Gramps Web"
       GRAMPSWEB_CELERY_CONFIG__broker_url: "redis://grampsweb_redis:6379/0"
@@ -30,6 +36,12 @@ services:
       - ./grampsdb:/root/.gramps/grampsdb
       - ./media:/app/media
       - ./tmp:/tmp
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/metadata/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
     labels:
       - "traefik.enable=true"
 

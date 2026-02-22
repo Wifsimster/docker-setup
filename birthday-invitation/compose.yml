@@ -5,8 +5,6 @@ services:
     image: wifsimster/birthday-invitation:latest
     container_name: birthday-invitation
     restart: unless-stopped
-    ports:
-      - "3306:3306"
     environment:
       - NODE_ENV=production
       - BIRTHDAY_PERSON=${BIRTHDAY_PERSON}
