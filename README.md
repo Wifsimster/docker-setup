@@ -1,167 +1,222 @@
-# Docker Infrastructure
+# Home Server Platform
 
-Self-hosted services running on a home server, orchestrated with Docker Compose and exposed via Traefik reverse proxy with automatic HTTPS (Let's Encrypt / OVH DNS challenge).
+A self-hosted personal cloud running ~30 services on a Debian home server, providing media streaming, smart home control, document management, photo storage, and more — all accessible via `*.battistella.ovh` with automatic HTTPS.
 
-**Host:** Debian-based server  
-**Domain:** `*.example.com`  
-**Storage:** Unraid NAS via NFS mounts under `/mnt/`
+## Platform Overview
 
-## Architecture
+```mermaid
+graph TB
+    Internet((Internet)) -->|HTTPS| Traefik[Traefik Reverse Proxy]
+    Traefik --> Media[Media & Entertainment]
+    Traefik --> Home[Smart Home]
+    Traefik --> Docs[Photos & Documents]
+    Traefik --> Apps[Web Applications]
+    Traefik --> Tools[Productivity Tools]
+    Traefik --> Sec[Security]
+    Traefik --> Ops[Operations]
 
-```
-Internet
-   │
-   ▼
-[ Traefik ] ─── HTTPS *.example.com
-   │
-   ├── lan (Docker bridge network, shared by most services)
-   │
-   ├── Multimedia stack (single compose)
-   │     qBittorrent (VPN) → Prowlarr → Radarr / Sonarr / Lidarr → Plex
-   │     + Bazarr, Seerr, Tautulli, Trotarr
-   │
-   ├── Home Automation
-   │     Home Assistant, Matter Server, Mosquitto (MQTT)
-   │
-   ├── Productivity / Tools
-   │     Paperless-ngx, Stirling PDF, Memos, Wakapi, Gramps Web
-   │
-   ├── Web Apps
-   │     Personal Blog, Resume, Birthday Invitation, Copro-Pilot, The Box
-   │
-   └── Infrastructure
-         Portainer, Pi-hole (DNS), Watchtower, Dozzle, Netdata, Homepage
-         Infisical (secrets), Vaultwarden (passwords), Unifi (network)
+    NAS[(Unraid NAS)] -.->|NFS| Media
+    NAS -.->|NFS| Docs
+
+    style Internet fill:#f9f,stroke:#333
+    style Traefik fill:#2196F3,color:#fff,stroke:#333
+    style NAS fill:#FF9800,color:#fff,stroke:#333
+    style Media fill:#E91E63,color:#fff
+    style Home fill:#4CAF50,color:#fff
+    style Docs fill:#9C27B0,color:#fff
+    style Apps fill:#00BCD4,color:#fff
+    style Tools fill:#FFC107,color:#000
+    style Sec fill:#F44336,color:#fff
+    style Ops fill:#607D8B,color:#fff
 ```
 
-## Stacks
+## Media & Entertainment
 
-Each directory contains a `compose.yml` and optionally a `.env` file (gitignored).
+Stream movies, TV shows, and music. Discover and request new content. Everything is automated — from search to download to subtitles.
 
-| Stack | Description | Traefik |
-|---|---|:---:|
-| **traefik** | Reverse proxy, TLS termination, Let's Encrypt via OVH DNS | -- |
-| **multimedia** | Unified media stack (see below) | Yes |
-| **home-assistant** | Home automation + Matter + Mosquitto MQTT | Yes |
-| **immich-app** | Photo/video management with ML | Yes |
-| **paperless-ngx** | Document management & OCR | Yes |
-| **pihole** | DNS ad-blocking | Yes |
-| **vaultwarden** | Bitwarden-compatible password manager | Yes |
-| **infisical** | Secrets management | Yes |
-| **portainer** | Docker management UI | Yes |
-| **dozzle** | Real-time Docker log viewer | Yes |
-| **netdata** | System monitoring | Yes |
-| **watchtower** | Automatic container updates | -- |
-| **homepage** | Dashboard | Yes |
-| **gramps** | Genealogy web app | Yes |
-| **memos** | Note-taking | Yes |
-| **wakapi** | Coding time tracking | Yes |
-| **stirling** | PDF tools | Yes |
-| **personal-blog** | Blog | Yes |
-| **resume** | Online resume | Yes |
-| **birthday-invitation** | Event invitation app | Yes |
-| **copro-pilot** | Co-ownership management app (+ Postgres) | Yes |
-| **the-box** | Web app (+ Postgres, Redis) | Yes |
-| **techney** | Tech-related web app | Yes |
-| **unifi** | Unifi network controller | Yes |
+```mermaid
+graph LR
+    User([User]) -->|Request content| Seerr
+    Seerr -->|TV shows| Sonarr
+    Seerr -->|Movies| Radarr
+    Sonarr --> Prowlarr[Prowlarr<br>Indexer]
+    Radarr --> Prowlarr
+    Lidarr[Lidarr<br>Music] --> Prowlarr
+    Prowlarr -->|Search| qBit[qBittorrent<br>+ VPN]
+    qBit -->|Downloaded| Sonarr
+    qBit -->|Downloaded| Radarr
+    qBit -->|Downloaded| Lidarr
+    Sonarr -->|Organized| Plex
+    Radarr -->|Organized| Plex
+    Lidarr -->|Organized| Plex
+    Bazarr -.->|Subtitles| Sonarr
+    Bazarr -.->|Subtitles| Radarr
+    Tautulli -.->|Analytics| Plex
+    User -->|Watch| Plex
 
-### Multimedia Stack
+    style User fill:#fff,stroke:#333
+    style Plex fill:#E5A00D,color:#000
+    style Seerr fill:#2196F3,color:#fff
+    style qBit fill:#F44336,color:#fff
+```
 
-The multimedia stack is a single compose project grouping all media-related services. NFS-mounted storage from the Unraid NAS is used for media and downloads.
-
-**Services:** qBittorrent (with WireGuard VPN), Prowlarr, Radarr, Sonarr, Lidarr, Bazarr, Seerr (Overseerr), Plex, Tautulli, Trotarr
-
-**Volume convention:** All containers follow the `/data/` path convention per [Servarr Docker Guide](https://wiki.servarr.com/docker-guide) and [TRaSH Guides](https://trash-guides.info/Hardlinks/How-to-setup-for/Docker/):
-
-| Container | Internal paths |
-|---|---|
-| qBittorrent | `/data/downloads` |
-| Radarr | `/data/movies`, `/data/downloads` |
-| Sonarr | `/data/tv`, `/data/downloads` |
-| Lidarr | `/data/music`, `/data/downloads` |
-| Bazarr | `/data/tv`, `/data/movies` |
-| Plex | `/data/tv`, `/data/movies`, `/data/music` |
-
-## Storage
-
-Media is stored on an Unraid NAS and mounted via NFS:
-
-| Host mount | NFS share | Purpose |
+| Service | What it does | URL |
 |---|---|---|
-| `/mnt/downloads` | `/mnt/user/downloads` | Torrent downloads |
-| `/mnt/movies` | `/mnt/user/movies` | Movie library |
-| `/mnt/tv-shows` | `/mnt/user/tv-shows` | TV show library |
-| `/mnt/musics` | `/mnt/user/musics` | Music library |
-| `/mnt/photos` | `/mnt/user/photos` | Photo library (Immich) |
-| `/mnt/documents` | `/mnt/user/documents` | Documents (Paperless) |
-| `/mnt/data` | `/mnt/user/data` | General data |
+| **Plex** | Stream movies, TV shows, and music | `plex.battistella.ovh` |
+| **Seerr** | Request and discover new content | `seerr.battistella.ovh` |
+| **Sonarr** | Automate TV show acquisition | `sonarr.battistella.ovh` |
+| **Radarr** | Automate movie acquisition | `radarr.battistella.ovh` |
+| **Lidarr** | Automate music acquisition | `lidarr.battistella.ovh` |
+| **Bazarr** | Automatic subtitle downloads | `bazarr.battistella.ovh` |
+| **Prowlarr** | Manage search indexers | `indexer.battistella.ovh` |
+| **qBittorrent** | Download client (VPN-protected) | `qbittorrent.battistella.ovh` |
+| **Tautulli** | Plex usage analytics and stats | `tautulli.battistella.ovh` |
 
-## TODO: Enable Hardlinks & Atomic Moves on Unraid
+## Smart Home
 
-Currently, each media type (downloads, movies, tv-shows, music) is exported as a **separate NFS share** from Unraid. This means hardlinks and atomic moves between downloads and media libraries **do not work** -- files are copied + deleted instead, which is slower and doubles disk usage temporarily.
+Control and automate home devices through a central hub supporting Matter, MQTT, Zigbee, and more.
 
-### Why it matters
+```mermaid
+graph TB
+    HA[Home Assistant] --> Matter[Matter Server]
+    HA --> MQTT[Mosquitto MQTT]
+    Matter --> Devices1([Matter Devices])
+    MQTT --> Devices2([MQTT Devices])
+    HA --> Devices3([Zigbee / Other])
 
-- **Hardlinks** allow a file to exist in both the download client directory and the media library without using extra disk space
-- **Atomic moves** (instant file moves on the same filesystem) eliminate the slow copy+delete cycle
-- Both require the source and destination to be on the **same filesystem**
-
-### How to fix
-
-1. **On Unraid:** Create a unified share structure under a single parent, for example `/mnt/user/data/`:
-   ```
-   /mnt/user/data/
-   ├── torrents/
-   │   ├── movies/
-   │   ├── tv/
-   │   └── music/
-   └── media/
-       ├── movies/
-       ├── tv/
-       └── music/
-   ```
-
-2. **On Unraid:** Export a single NFS share: `/mnt/user/data`
-
-3. **On Docker host:** Replace individual NFS mounts with one:
-   ```
-   <NAS_IP>:/mnt/user/data  /mnt/data  nfs4  defaults,_netdev  0  0
-   ```
-
-4. **In `.env`:** Update paths to use the unified mount:
-   ```env
-   DOWNLOADS_LOCATION=/mnt/data/torrents
-   TV_SHOWS_LOCATION=/mnt/data/media/tv
-   MOVIES_LOCATION=/mnt/data/media/movies
-   MUSIC_LOCATION=/mnt/data/media/music
-   ```
-
-5. **In qBittorrent UI:** Set download path to `/data/torrents`
-
-6. **In Radarr/Sonarr/Lidarr UI:** Root folders become `/data/media/movies`, `/data/media/tv`, `/data/media/music`
-
-### References
-
-- [Servarr Docker Guide](https://wiki.servarr.com/docker-guide)
-- [TRaSH Guides - Hardlinks & Atomic Moves](https://trash-guides.info/Hardlinks/Hardlinks-and-Instant-Moves/)
-- [TRaSH Guides - Docker Setup](https://trash-guides.info/Hardlinks/How-to-setup-for/Docker/)
-
-## Networking
-
-- Most services join the `lan` external Docker bridge network
-- Traefik discovers services via Docker labels
-- Plex uses `network_mode: host` for DLNA/discovery
-- qBittorrent routes traffic through a WireGuard VPN with `NET_ADMIN` capability
-- Inter-container DNS uses the `.internal` suffix (e.g., `qbittorrent.internal`)
-
-## Git
-
-The `.gitignore` tracks only compose files and hardware acceleration configs. All runtime data, configs, secrets, and `.env` files are excluded.
-
-```gitignore
-*
-!.gitignore
-!*/
-!**/compose.yml
-!**/hwaccel.*.yml
+    style HA fill:#18BCF2,color:#fff
+    style Matter fill:#4CAF50,color:#fff
+    style MQTT fill:#8BC34A,color:#fff
 ```
+
+| Service | What it does | URL |
+|---|---|---|
+| **Home Assistant** | Smart home hub and automation | `home-assistant.battistella.ovh` |
+| **Mosquitto** | MQTT message broker for IoT devices | _internal_ |
+| **Matter Server** | Matter protocol support | _internal_ |
+
+## Photos & Documents
+
+Store and organize photos with AI-powered search and face recognition. Manage paperwork with OCR and automated sorting.
+
+```mermaid
+graph LR
+    Photos([Photos]) -->|Upload| Immich
+    Immich -->|ML| Recognition[Face Recognition<br>& Smart Search]
+    Documents([Documents]) -->|Scan / Import| Paperless[Paperless-ngx]
+    Paperless -->|OCR| Classified[Auto-classified<br>& Searchable]
+    Email([ProtonMail]) -.->|Import| Paperless
+
+    style Immich fill:#9C27B0,color:#fff
+    style Paperless fill:#4CAF50,color:#fff
+    style Recognition fill:#E1BEE7
+    style Classified fill:#C8E6C9
+```
+
+| Service | What it does | URL |
+|---|---|---|
+| **Immich** | Photo & video management with AI | `immich.battistella.ovh` |
+| **Paperless-ngx** | Document management with OCR | `paperless.battistella.ovh` |
+
+## Web Applications
+
+Custom-built web apps for personal use.
+
+| Service | What it does | URL |
+|---|---|---|
+| **Personal Blog** | Blog | `blog.battistella.ovh` |
+| **Resume** | Online CV | `cv.battistella.ovh` |
+| **Copro-Pilot** | Co-ownership management | `copro-pilot.battistella.ovh` |
+| **The Box** | Game collection manager | `the-box.battistella.ovh` |
+| **Techney** | Tech documentation site | `techney.battistella.ovh` |
+| **Birthday Invitation** | Event invitations with RSVP | `leo-birthday.battistella.ovh` |
+
+## Productivity Tools
+
+| Service | What it does | URL |
+|---|---|---|
+| **Stirling PDF** | PDF manipulation tools (merge, split, convert…) | `stirling.battistella.ovh` |
+| **Memos** | Quick notes and snippets | `memos.battistella.ovh` |
+| **Wakapi** | Coding time tracking | `wakapi.battistella.ovh` |
+| **Gramps Web** | Genealogy and family tree | `gramps.battistella.ovh` |
+
+## Security
+
+| Service | What it does | URL |
+|---|---|---|
+| **Vaultwarden** | Password manager (Bitwarden-compatible) | `vaultwarden.battistella.ovh` |
+| **Infisical** | Secrets and environment variable management | `infisical.battistella.ovh` |
+| **Pi-hole** | Network-wide DNS ad-blocking | `pihole.battistella.ovh` |
+
+## Operations & Monitoring
+
+```mermaid
+graph LR
+    Homepage[Homepage<br>Dashboard] -->|Overview| Services([All Services])
+    Watchtower -->|Daily auto-updates| Services
+    Watchtower -->|Notifications| Discord([Discord])
+    Portainer -->|Container management| Services
+    Dozzle -->|Live logs| Services
+    Netdata -->|System metrics| Server([Server Health])
+    Unifi -->|Network management| Network([WiFi & Network])
+
+    style Homepage fill:#2196F3,color:#fff
+    style Watchtower fill:#4CAF50,color:#fff
+    style Discord fill:#5865F2,color:#fff
+```
+
+| Service | What it does | URL |
+|---|---|---|
+| **Homepage** | Central dashboard for all services | `homepage.battistella.ovh` |
+| **Portainer** | Docker container management UI | `portainer.battistella.ovh` |
+| **Dozzle** | Real-time container log viewer | `dozzle.battistella.ovh` |
+| **Netdata** | Server performance monitoring | `netdata.battistella.ovh` |
+| **Watchtower** | Automatic daily container updates (→ Discord alerts) | _background_ |
+| **Unifi** | Network controller (WiFi, switches) | _local access_ |
+
+## How It All Connects
+
+```mermaid
+graph TB
+    subgraph External
+        Internet((Internet))
+        LetsEncrypt[Let's Encrypt]
+        OVH[OVH DNS]
+    end
+
+    subgraph Server [Debian Home Server]
+        Traefik[Traefik<br>Reverse Proxy]
+        subgraph Services [~30 Containers]
+            S1[Media Stack]
+            S2[Smart Home]
+            S3[Photos & Docs]
+            S4[Web Apps]
+            S5[Tools]
+            S6[Monitoring]
+        end
+    end
+
+    subgraph Storage [Unraid NAS]
+        Movies[(Movies)]
+        TV[(TV Shows)]
+        Music[(Music)]
+        Photos[(Photos)]
+        Docs[(Documents)]
+    end
+
+    Internet -->|HTTPS| Traefik
+    LetsEncrypt -.->|TLS Certs| Traefik
+    OVH -.->|DNS Challenge| LetsEncrypt
+    Traefik --> Services
+    Storage -.->|NFS| Services
+
+    style Internet fill:#f9f,stroke:#333
+    style Traefik fill:#2196F3,color:#fff
+    style Server fill:#E3F2FD,stroke:#2196F3
+    style Storage fill:#FFF3E0,stroke:#FF9800
+    style Services fill:#E8EAF6,stroke:#3F51B5
+```
+
+## Roadmap
+
+- **Unified NAS storage** — Consolidate NFS mounts into a single share to enable hardlinks and instant file moves (faster imports, no temporary disk usage doubling)
