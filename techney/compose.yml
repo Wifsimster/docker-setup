@@ -5,8 +5,6 @@ services:
     image: wifsimster/techney:latest
     container_name: techney
     restart: unless-stopped
-    ports:
-      - "3000:3000"
     labels:
       - "traefik.enable=true"
 

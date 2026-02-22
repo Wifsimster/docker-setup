@@ -1,11 +1,17 @@
 name: Unifi Controller
 services:
   unifi:
-    image: jacobalberty/unifi
+    image: jacobalberty/unifi:v10.0
     container_name: unifi
     restart: unless-stopped
     init: true
     user: unifi
+    healthcheck:
+      test: ["CMD-SHELL", "curl --max-time 5 -kILs --fail https://localhost:8443"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
     ports:
       - 3478:3478/udp # STUN
       - 5514:5514/udp # Remote logging
