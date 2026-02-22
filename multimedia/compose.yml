@@ -9,10 +9,17 @@ services:
       - PUID=${PUID}
       - PGID=${PGID}
       - TZ=${TZ}
+      - UMASK=002
     volumes:
       - ${BAZARR_CONFIG_PATH}:/config
       - ${TV_SHOWS_LOCATION}:/data/tv
       - ${MOVIES_LOCATION}:/data/movies
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6767"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
     labels:
       - "traefik.enable=true"
 
@@ -39,10 +46,17 @@ services:
       - PUID=${PUID}
       - PGID=${PGID}
       - TZ=${TZ}
+      - UMASK=002
     volumes:
       - ${LIDARR_CONFIG_PATH}:/config
       - ${MUSIC_LOCATION}:/data/music
       - ${DOWNLOADS_LOCATION}:/data/downloads
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8686/ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
     labels:
       - "traefik.enable=true"
 
@@ -72,6 +86,12 @@ services:
       - TZ=${TZ}
     volumes:
       - ${SEERR_CONFIG_PATH}:/config
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:5055 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
     labels:
       - "traefik.enable=true"
 
@@ -99,17 +119,26 @@ services:
       - PUID=${PUID}
       - PGID=${PGID}
       - TZ=${TZ}
-      - VERSION=${PLEX_VERSION}  # Use 'public' for free version, 'plexpass' for Plex Pass version
+      - VERSION=docker
       - PLEX_CLAIM=${PLEX_CLAIM}
+      - UMASK=002
+    security_opt:
+      - no-new-privileges:true
     devices:
       - /dev/dri:/dev/dri  # For hardware transcoding
     tmpfs:
-      - /transcode  # RAM-based temp storage for transcoding
+      - /transcode:size=8g  # RAM-based temp storage for transcoding
     volumes:
       - ${PLEX_CONFIG_PATH}:/config
-      - ${TV_SHOWS_LOCATION}:/data/tv
-      - ${MOVIES_LOCATION}:/data/movies
-      - ${MUSIC_LOCATION}:/data/music
+      - ${TV_SHOWS_LOCATION}:/data/tv:ro
+      - ${MOVIES_LOCATION}:/data/movies:ro
+      - ${MUSIC_LOCATION}:/data/music:ro
+    healthcheck:
+      test: ["CMD", "curl", "--connect-timeout", "15", "--silent", "--show-error", "--fail", "http://localhost:32400/identity"]
+      interval: 60s
+      timeout: 30s
+      retries: 3
+      start_period: 120s
     labels:
       # Watchtower automatic update
       - "com.centurylinklabs.watchtower.enable=true"
@@ -125,8 +154,15 @@ services:
       - PUID=${PUID}
       - PGID=${PGID}
       - TZ=${TZ}
+      - UMASK=002
     volumes:
       - ${PROWLARR_CONFIG_PATH}:/config
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9696/ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
     labels:
       - "traefik.enable=true"
 
@@ -216,10 +252,17 @@ services:
       - PUID=${PUID}
       - PGID=${PGID}
       - TZ=${TZ}
+      - UMASK=002
     volumes:
       - ${RADARR_CONFIG_PATH}:/config
       - ${MOVIES_LOCATION}:/data/movies
       - ${DOWNLOADS_LOCATION}:/data/downloads
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7878/ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
     labels:
       - "traefik.enable=true"
 
@@ -246,10 +289,17 @@ services:
       - PUID=${PUID}
       - PGID=${PGID}
       - TZ=${TZ}
+      - UMASK=002
     volumes:
       - ${SONARR_CONFIG_PATH}:/config
       - ${TV_SHOWS_LOCATION}:/data/tv
       - ${DOWNLOADS_LOCATION}:/data/downloads
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8989/ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
     labels:
       - "traefik.enable=true"
 
@@ -276,9 +326,16 @@ services:
       - PUID=${PUID}
       - PGID=${PGID}
       - TZ=${TZ}
+      - UMASK=002
     volumes:
       - ${TAUTULLI_CONFIG_PATH}:/config
       - ${PLEX_CONFIG_PATH}/Library/Application Support/Plex Media Server/Logs:/logs:ro
+    healthcheck:
+      test: ["CMD", "curl", "-ILfs", "http://localhost:8181/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
     labels:
       - "traefik.enable=true"
 
