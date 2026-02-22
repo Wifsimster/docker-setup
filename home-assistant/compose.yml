@@ -14,8 +14,6 @@ services:
       - /etc/localtime:/etc/localtime:ro
       - /run/dbus:/run/dbus:ro
       - /dev/ttyUSB0:/dev/ttyUSB0
-    devices:
-      - /dev/hci0:/dev/hci0
     restart: unless-stopped
     privileged: true
     cap_add:
