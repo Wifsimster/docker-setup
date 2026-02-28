@@ -1,222 +1,242 @@
 # Home Server Platform
 
-A self-hosted personal cloud running ~30 services on a Debian home server, providing media streaming, smart home control, document management, photo storage, and more — all accessible via `*.battistella.ovh` with automatic HTTPS.
+Plateforme personnelle auto-hébergée offrant ~30 services sur un serveur Debian. Streaming multimédia, domotique, gestion de documents, stockage photo et outils de productivité — le tout accessible via `*.battistella.ovh` avec HTTPS automatique.
 
-## Platform Overview
+## Table des matières
+
+- [À quoi sert ce produit ?](#à-quoi-sert-ce-produit-)
+- [Fonctionnalités principales](#fonctionnalités-principales)
+- [Comment ça fonctionne](#comment-ça-fonctionne)
+- [Média et divertissement](#média-et-divertissement)
+- [Domotique](#domotique)
+- [Photos et documents](#photos-et-documents)
+- [Applications web](#applications-web)
+- [Outils de productivité](#outils-de-productivité)
+- [Sécurité](#sécurité)
+- [Opérations et supervision](#opérations-et-supervision)
+- [Environnements](#environnements)
+- [Déploiement](#déploiement)
+- [Stack technique](#stack-technique)
+- [Feuille de route](#feuille-de-route)
+- [Documentation complémentaire](#documentation-complémentaire)
+
+### Documentation technique
+
+| Document | Description |
+|----------|-------------|
+| [Stack Multimédia](multimedia/README.md) | Architecture et configuration de la pile multimédia |
+| [Traefik](docs/traefik.md) | Proxy inverse, routage, certificats TLS et middlewares |
+| [Stockage NFS](docs/stockage-nfs.md) | Architecture de stockage, montages Unraid et limitations |
+| [Ajout d'un service](docs/ajout-service.md) | Guide pas à pas pour ajouter un nouveau service |
+| [Bases de données](docs/bases-de-donnees.md) | Configuration PostgreSQL et Redis/Valkey |
+
+## À quoi sert ce produit ?
+
+- **Regarder vos films et séries** en streaming depuis n'importe quel appareil
+- **Automatiser l'acquisition de contenu** multimédia (films, séries, musique, sous-titres)
+- **Contrôler votre maison connectée** via un hub domotique centralisé
+- **Stocker et retrouver vos photos** grâce à la reconnaissance faciale et la recherche intelligente
+- **Numériser et classer vos documents** avec OCR et tri automatique
+- **Gérer vos mots de passe, notes et outils** de productivité au quotidien
+
+## Fonctionnalités principales
+
+- **Streaming multimédia complet** — Films, séries et musique via Plex, avec recherche et téléchargement automatisés
+- **Requêtes de contenu** — Les utilisateurs demandent des films ou séries via Seerr, le reste est automatique
+- **Domotique centralisée** — Pilotage des appareils Matter, MQTT et Zigbee depuis Home Assistant
+- **Galerie photo intelligente** — Immich organise vos photos avec reconnaissance faciale et recherche par contenu
+- **Gestion documentaire** — Paperless-ngx numérise, classe et rend cherchables tous vos documents papier
+- **Sécurité des accès** — Mots de passe via Vaultwarden, secrets applicatifs via Infisical, blocage publicitaire via Pi-hole
+- **Supervision complète** — Tableau de bord centralisé, logs en temps réel, métriques système et mises à jour automatiques
+- **Applications personnelles** — Blog, CV en ligne, gestion de copropriété, collection de jeux, généalogie
+
+## Comment ça fonctionne
 
 ```mermaid
 graph TB
-    Internet((Internet)) -->|HTTPS| Traefik[Traefik Reverse Proxy]
-    Traefik --> Media[Media & Entertainment]
-    Traefik --> Home[Smart Home]
-    Traefik --> Docs[Photos & Documents]
-    Traefik --> Apps[Web Applications]
-    Traefik --> Tools[Productivity Tools]
-    Traefik --> Sec[Security]
-    Traefik --> Ops[Operations]
+    Internet((Internet)) -->|HTTPS| Traefik[Traefik - Proxy inverse]
+    Traefik --> Media[Média et divertissement]
+    Traefik --> Domo[Domotique]
+    Traefik --> Docs[Photos et documents]
+    Traefik --> Apps[Applications web]
+    Traefik --> Outils[Outils de productivité]
+    Traefik --> Secu[Sécurité]
+    Traefik --> Ops[Supervision]
 
-    NAS[(Unraid NAS)] -.->|NFS| Media
+    NAS[(NAS Unraid)] -.->|NFS| Media
     NAS -.->|NFS| Docs
-
-    style Internet fill:#f9f,stroke:#333
-    style Traefik fill:#2196F3,color:#fff,stroke:#333
-    style NAS fill:#FF9800,color:#fff,stroke:#333
-    style Media fill:#E91E63,color:#fff
-    style Home fill:#4CAF50,color:#fff
-    style Docs fill:#9C27B0,color:#fff
-    style Apps fill:#00BCD4,color:#fff
-    style Tools fill:#FFC107,color:#000
-    style Sec fill:#F44336,color:#fff
-    style Ops fill:#607D8B,color:#fff
 ```
 
-## Media & Entertainment
+Les utilisateurs accèdent à tous les services via leur navigateur en HTTPS. Traefik sert de point d'entrée unique et route chaque sous-domaine vers le bon conteneur. Les certificats TLS sont générés automatiquement via Let's Encrypt et le challenge DNS OVH. Le stockage multimédia et les photos sont hébergés sur un NAS Unraid, monté via NFS.
 
-Stream movies, TV shows, and music. Discover and request new content. Everything is automated — from search to download to subtitles.
+## Média et divertissement
+
+Regardez vos films, séries et écoutez votre musique. Découvrez et demandez du contenu. Tout est automatisé — de la recherche au téléchargement, en passant par les sous-titres.
 
 ```mermaid
 graph LR
-    User([User]) -->|Request content| Seerr
-    Seerr -->|TV shows| Sonarr
-    Seerr -->|Movies| Radarr
-    Sonarr --> Prowlarr[Prowlarr<br>Indexer]
+    U[Utilisateur] -->|Demande du contenu| Seerr
+    Seerr -->|Séries| Sonarr
+    Seerr -->|Films| Radarr
+    Sonarr --> Prowlarr[Prowlarr - Indexeur]
     Radarr --> Prowlarr
-    Lidarr[Lidarr<br>Music] --> Prowlarr
-    Prowlarr -->|Search| qBit[qBittorrent<br>+ VPN]
-    qBit -->|Downloaded| Sonarr
-    qBit -->|Downloaded| Radarr
-    qBit -->|Downloaded| Lidarr
-    Sonarr -->|Organized| Plex
-    Radarr -->|Organized| Plex
-    Lidarr -->|Organized| Plex
-    Bazarr -.->|Subtitles| Sonarr
-    Bazarr -.->|Subtitles| Radarr
-    Tautulli -.->|Analytics| Plex
-    User -->|Watch| Plex
-
-    style User fill:#fff,stroke:#333
-    style Plex fill:#E5A00D,color:#000
-    style Seerr fill:#2196F3,color:#fff
-    style qBit fill:#F44336,color:#fff
+    Lidarr[Lidarr - Musique] --> Prowlarr
+    Prowlarr -->|Recherche| qBit[qBittorrent + VPN]
+    qBit -->|Téléchargé| Plex[Plex - Lecture]
+    Bazarr -.->|Sous-titres| Plex
+    Tautulli -.->|Statistiques| Plex
+    U -->|Regarde| Plex
 ```
 
-| Service | What it does | URL |
+L'utilisateur demande un contenu via Seerr. Les gestionnaires (Sonarr, Radarr, Lidarr) interrogent les indexeurs via Prowlarr, puis lancent le téléchargement via qBittorrent (protégé par VPN). Le contenu est ensuite disponible dans Plex. Bazarr ajoute les sous-titres et Tautulli fournit les statistiques d'utilisation.
+
+| Service | Fonction | URL |
 |---|---|---|
-| **Plex** | Stream movies, TV shows, and music | `plex.battistella.ovh` |
-| **Seerr** | Request and discover new content | `seerr.battistella.ovh` |
-| **Sonarr** | Automate TV show acquisition | `sonarr.battistella.ovh` |
-| **Radarr** | Automate movie acquisition | `radarr.battistella.ovh` |
-| **Lidarr** | Automate music acquisition | `lidarr.battistella.ovh` |
-| **Bazarr** | Automatic subtitle downloads | `bazarr.battistella.ovh` |
-| **Prowlarr** | Manage search indexers | `indexer.battistella.ovh` |
-| **qBittorrent** | Download client (VPN-protected) | `qbittorrent.battistella.ovh` |
-| **Tautulli** | Plex usage analytics and stats | `tautulli.battistella.ovh` |
+| **Plex** | Streaming films, séries et musique | `plex.battistella.ovh` |
+| **Seerr** | Demande et découverte de contenu | `seerr.battistella.ovh` |
+| **Sonarr** | Gestion automatisée des séries | `sonarr.battistella.ovh` |
+| **Radarr** | Gestion automatisée des films | `radarr.battistella.ovh` |
+| **Lidarr** | Gestion automatisée de la musique | `lidarr.battistella.ovh` |
+| **Bazarr** | Téléchargement automatique de sous-titres | `bazarr.battistella.ovh` |
+| **Prowlarr** | Gestion des indexeurs de recherche | `indexer.battistella.ovh` |
+| **qBittorrent** | Client de téléchargement (protégé par VPN) | `qbittorrent.battistella.ovh` |
+| **Tautulli** | Statistiques d'utilisation de Plex | `tautulli.battistella.ovh` |
 
-## Smart Home
+## Domotique
 
-Control and automate home devices through a central hub supporting Matter, MQTT, Zigbee, and more.
+Pilotez et automatisez vos appareils connectés via un hub centralisé. Compatible Matter, MQTT, Zigbee et bien d'autres protocoles.
 
 ```mermaid
 graph TB
-    HA[Home Assistant] --> Matter[Matter Server]
+    HA[Home Assistant] --> Matter[Serveur Matter]
     HA --> MQTT[Mosquitto MQTT]
-    Matter --> Devices1([Matter Devices])
-    MQTT --> Devices2([MQTT Devices])
-    HA --> Devices3([Zigbee / Other])
-
-    style HA fill:#18BCF2,color:#fff
-    style Matter fill:#4CAF50,color:#fff
-    style MQTT fill:#8BC34A,color:#fff
+    Matter --> D1([Appareils Matter])
+    MQTT --> D2([Appareils MQTT])
+    HA --> D3([Zigbee et autres])
 ```
 
-| Service | What it does | URL |
+Home Assistant centralise le contrôle de tous vos appareils connectés. Le serveur Matter gère les appareils compatibles avec ce standard. Mosquitto sert de broker MQTT pour les capteurs et actionneurs IoT.
+
+| Service | Fonction | URL |
 |---|---|---|
-| **Home Assistant** | Smart home hub and automation | `home-assistant.battistella.ovh` |
-| **Mosquitto** | MQTT message broker for IoT devices | _internal_ |
-| **Matter Server** | Matter protocol support | _internal_ |
+| **Home Assistant** | Hub domotique et automatisations | `home-assistant.battistella.ovh` |
+| **Mosquitto** | Broker de messages MQTT pour objets connectés | _interne_ |
+| **Matter Server** | Support du protocole Matter | _interne_ |
 
-## Photos & Documents
+## Photos et documents
 
-Store and organize photos with AI-powered search and face recognition. Manage paperwork with OCR and automated sorting.
+Stockez et organisez vos photos avec recherche intelligente et reconnaissance faciale. Gérez vos documents avec OCR et classement automatique.
 
 ```mermaid
 graph LR
-    Photos([Photos]) -->|Upload| Immich
-    Immich -->|ML| Recognition[Face Recognition<br>& Smart Search]
+    Photos([Photos]) -->|Import| Immich
+    Immich -->|IA| Reco[Reconnaissance faciale et recherche]
     Documents([Documents]) -->|Scan / Import| Paperless[Paperless-ngx]
-    Paperless -->|OCR| Classified[Auto-classified<br>& Searchable]
+    Paperless -->|OCR| Classe[Classement automatique]
     Email([ProtonMail]) -.->|Import| Paperless
-
-    style Immich fill:#9C27B0,color:#fff
-    style Paperless fill:#4CAF50,color:#fff
-    style Recognition fill:#E1BEE7
-    style Classified fill:#C8E6C9
 ```
 
-| Service | What it does | URL |
+Immich permet d'importer vos photos et vidéos, puis les analyse automatiquement grâce à l'intelligence artificielle. Paperless-ngx numérise vos documents papier, les rend cherchables par OCR et les classe automatiquement. Un pont ProtonMail permet l'import de documents par e-mail.
+
+| Service | Fonction | URL |
 |---|---|---|
-| **Immich** | Photo & video management with AI | `immich.battistella.ovh` |
-| **Paperless-ngx** | Document management with OCR | `paperless.battistella.ovh` |
+| **Immich** | Gestion de photos et vidéos avec IA | `immich.battistella.ovh` |
+| **Paperless-ngx** | Gestion documentaire avec OCR | `paperless.battistella.ovh` |
 
-## Web Applications
+## Applications web
 
-Custom-built web apps for personal use.
+Applications personnalisées développées sur mesure.
 
-| Service | What it does | URL |
+| Service | Fonction | URL |
 |---|---|---|
-| **Personal Blog** | Blog | `blog.battistella.ovh` |
-| **Resume** | Online CV | `cv.battistella.ovh` |
-| **Copro-Pilot** | Co-ownership management | `copro-pilot.battistella.ovh` |
-| **The Box** | Game collection manager | `the-box.battistella.ovh` |
-| **Techney** | Tech documentation site | `techney.battistella.ovh` |
-| **Birthday Invitation** | Event invitations with RSVP | `leo-birthday.battistella.ovh` |
+| **Blog personnel** | Blog | `blog.battistella.ovh` |
+| **CV en ligne** | Curriculum vitae interactif | `cv.battistella.ovh` |
+| **Copro-Pilot** | Gestion de copropriété | `copro-pilot.battistella.ovh` |
+| **The Box** | Gestionnaire de collection de jeux | `the-box.battistella.ovh` |
+| **Techney** | Site de documentation technique | `techney.battistella.ovh` |
+| **Invitation anniversaire** | Invitations avec RSVP | `leo-birthday.battistella.ovh` |
 
-## Productivity Tools
+## Outils de productivité
 
-| Service | What it does | URL |
+| Service | Fonction | URL |
 |---|---|---|
-| **Stirling PDF** | PDF manipulation tools (merge, split, convert…) | `stirling.battistella.ovh` |
-| **Memos** | Quick notes and snippets | `memos.battistella.ovh` |
-| **Wakapi** | Coding time tracking | `wakapi.battistella.ovh` |
-| **Gramps Web** | Genealogy and family tree | `gramps.battistella.ovh` |
+| **Stirling PDF** | Outils de manipulation PDF (fusion, découpe, conversion) | `stirling.battistella.ovh` |
+| **Memos** | Prise de notes rapide | `memos.battistella.ovh` |
+| **Wakapi** | Suivi du temps de développement | `wakapi.battistella.ovh` |
+| **Gramps Web** | Généalogie et arbre familial | `gramps.battistella.ovh` |
 
-## Security
+## Sécurité
 
-| Service | What it does | URL |
+| Service | Fonction | URL |
 |---|---|---|
-| **Vaultwarden** | Password manager (Bitwarden-compatible) | `vaultwarden.battistella.ovh` |
-| **Infisical** | Secrets and environment variable management | `infisical.battistella.ovh` |
-| **Pi-hole** | Network-wide DNS ad-blocking | `pihole.battistella.ovh` |
+| **Vaultwarden** | Gestionnaire de mots de passe (compatible Bitwarden) | `vaultwarden.battistella.ovh` |
+| **Infisical** | Gestion des secrets et variables d'environnement | `infisical.battistella.ovh` |
+| **Pi-hole** | Blocage publicitaire DNS sur tout le réseau | `pihole.battistella.ovh` |
 
-## Operations & Monitoring
+## Opérations et supervision
 
 ```mermaid
 graph LR
-    Homepage[Homepage<br>Dashboard] -->|Overview| Services([All Services])
-    Watchtower -->|Daily auto-updates| Services
+    Homepage[Homepage - Tableau de bord] -->|Vue d'ensemble| Services([Tous les services])
+    Watchtower -->|Mises à jour quotidiennes| Services
     Watchtower -->|Notifications| Discord([Discord])
-    Portainer -->|Container management| Services
-    Dozzle -->|Live logs| Services
-    Netdata -->|System metrics| Server([Server Health])
-    Unifi -->|Network management| Network([WiFi & Network])
-
-    style Homepage fill:#2196F3,color:#fff
-    style Watchtower fill:#4CAF50,color:#fff
-    style Discord fill:#5865F2,color:#fff
+    Portainer -->|Gestion des conteneurs| Services
+    Dozzle -->|Logs en direct| Services
+    Netdata -->|Métriques système| Serveur([Santé du serveur])
 ```
 
-| Service | What it does | URL |
-|---|---|---|
-| **Homepage** | Central dashboard for all services | `homepage.battistella.ovh` |
-| **Portainer** | Docker container management UI | `portainer.battistella.ovh` |
-| **Dozzle** | Real-time container log viewer | `dozzle.battistella.ovh` |
-| **Netdata** | Server performance monitoring | `netdata.battistella.ovh` |
-| **Watchtower** | Automatic daily container updates (→ Discord alerts) | _background_ |
-| **Unifi** | Network controller (WiFi, switches) | _local access_ |
+Homepage offre un tableau de bord centralisé de tous les services. Watchtower met à jour automatiquement les conteneurs chaque jour à 6h00 et notifie via Discord. Portainer et Dozzle permettent la gestion et le suivi des logs des conteneurs. Netdata surveille les performances du serveur.
 
-## How It All Connects
+| Service | Fonction | URL |
+|---|---|---|
+| **Homepage** | Tableau de bord centralisé | `homepage.battistella.ovh` |
+| **Portainer** | Interface de gestion Docker | `portainer.battistella.ovh` |
+| **Dozzle** | Visualiseur de logs en temps réel | `dozzle.battistella.ovh` |
+| **Netdata** | Supervision des performances serveur | `netdata.battistella.ovh` |
+| **Watchtower** | Mises à jour automatiques quotidiennes (alertes Discord) | _arrière-plan_ |
+| **Unifi** | Contrôleur réseau (WiFi, switches) | _accès local_ |
+
+## Environnements
+
+| Environnement | URL | Description |
+|---------------|-----|-------------|
+| Production | `https://*.battistella.ovh` | Serveur domestique Debian |
+| NAS | Unraid (réseau local) | Stockage multimédia et documents via NFS |
+
+## Déploiement
 
 ```mermaid
-graph TB
-    subgraph External
-        Internet((Internet))
-        LetsEncrypt[Let's Encrypt]
-        OVH[OVH DNS]
-    end
-
-    subgraph Server [Debian Home Server]
-        Traefik[Traefik<br>Reverse Proxy]
-        subgraph Services [~30 Containers]
-            S1[Media Stack]
-            S2[Smart Home]
-            S3[Photos & Docs]
-            S4[Web Apps]
-            S5[Tools]
-            S6[Monitoring]
-        end
-    end
-
-    subgraph Storage [Unraid NAS]
-        Movies[(Movies)]
-        TV[(TV Shows)]
-        Music[(Music)]
-        Photos[(Photos)]
-        Docs[(Documents)]
-    end
-
-    Internet -->|HTTPS| Traefik
-    LetsEncrypt -.->|TLS Certs| Traefik
-    OVH -.->|DNS Challenge| LetsEncrypt
-    Traefik --> Services
-    Storage -.->|NFS| Services
-
-    style Internet fill:#f9f,stroke:#333
-    style Traefik fill:#2196F3,color:#fff
-    style Server fill:#E3F2FD,stroke:#2196F3
-    style Storage fill:#FFF3E0,stroke:#FF9800
-    style Services fill:#E8EAF6,stroke:#3F51B5
+graph LR
+    Dev[Développeur] -->|Modifie compose.yml| Git[Dépôt Git]
+    Dev -->|docker compose up -d| Serveur[Serveur Debian]
+    Watchtower -->|Mises à jour quotidiennes 6h| Serveur
+    LetsEncrypt[Let's Encrypt] -.->|Certificats TLS| Traefik
+    OVH[OVH DNS] -.->|Challenge DNS| LetsEncrypt
 ```
 
-## Roadmap
+Le déploiement se fait manuellement via `docker compose up -d` dans le répertoire du service concerné. Il n'y a pas de pipeline CI/CD (Intégration et Déploiement Continus). Les images des conteneurs sont mises à jour automatiquement chaque jour par Watchtower. Les certificats HTTPS sont renouvelés automatiquement via Let's Encrypt et le challenge DNS OVH.
 
-- **Unified NAS storage** — Consolidate NFS mounts into a single share to enable hardlinks and instant file moves (faster imports, no temporary disk usage doubling)
+## Stack technique
+
+- **Orchestration :** Docker, Docker Compose
+- **Proxy inverse :** Traefik v3.6 avec Let's Encrypt (challenge DNS OVH)
+- **Bases de données :** PostgreSQL 16, Redis / Valkey
+- **Stockage :** NAS Unraid via NFS
+- **Supervision :** Netdata, Dozzle, Portainer, Homepage
+- **Domaine :** `battistella.ovh` (sous-domaines par service)
+
+## Feuille de route
+
+- **Stockage NAS unifié** — Consolider les montages NFS en un seul partage pour activer les hardlinks et les déplacements instantanés de fichiers
+
+## Documentation complémentaire
+
+| Document | Description |
+|----------|-------------|
+| [Stack Multimédia](multimedia/README.md) | Architecture, configuration et variables d'environnement de la pile multimédia |
+| [Traefik](docs/traefik.md) | Proxy inverse, routage, certificats TLS et middlewares de sécurité |
+| [Stockage NFS](docs/stockage-nfs.md) | Architecture de stockage, montages Unraid et limitations hardlinks |
+| [Ajout d'un service](docs/ajout-service.md) | Guide pas à pas pour ajouter un nouveau service à la plateforme |
+| [Bases de données](docs/bases-de-donnees.md) | Configuration PostgreSQL et Redis/Valkey, healthchecks et persistance |
+| [CLAUDE.md](CLAUDE.md) | Guide pour les assistants IA travaillant sur ce dépôt |
+| [AGENT.md](AGENT.md) | Guide pour les agents IA autonomes |

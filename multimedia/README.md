@@ -1,98 +1,86 @@
-# Multimedia Stack
+# Stack Multimédia
 
-Docker Compose stack for managing media acquisition, organization, and streaming.
+Pile de services Docker pour l'acquisition, l'organisation et le streaming de contenu multimédia. Ce document couvre l'architecture, la configuration et le fonctionnement de la pile.
 
 ## Services
 
-| Service | Image | Port | URL | Description |
+| Service | Image | Port | URL | Fonction |
 |---|---|---|---|---|
-| **Plex** | `lscr.io/linuxserver/plex` | 32400 | `plex.battistella.ovh` | Media server for streaming movies, TV shows, and music |
-| **Sonarr** | `lscr.io/linuxserver/sonarr` | 8989 | `sonarr.battistella.ovh` | TV show PVR and manager |
-| **Radarr** | `lscr.io/linuxserver/radarr` | 7878 | `radarr.battistella.ovh` | Movie PVR and manager |
-| **Lidarr** | `lscr.io/linuxserver/lidarr` | 8686 | `lidarr.battistella.ovh` | Music PVR and manager |
-| **Bazarr** | `lscr.io/linuxserver/bazarr` | 6767 | `bazarr.battistella.ovh` | Subtitle manager for Sonarr and Radarr |
-| **Prowlarr** | `lscr.io/linuxserver/prowlarr` | 9696 | `indexer.battistella.ovh` | Indexer manager for Sonarr, Radarr, and Lidarr |
-| **qBittorrent** | `ghcr.io/hotio/qbittorrent` | 8080 | `qbittorrent.battistella.ovh` | BitTorrent client with built-in VPN (ProtonVPN) |
-| **Seerr** | `ghcr.io/hotio/seerr` | 5055 | `seerr.battistella.ovh` | Media request and discovery manager |
-| **Tautulli** | `lscr.io/linuxserver/tautulli` | 8181 | `tautulli.battistella.ovh` | Plex monitoring, analytics, and notifications |
+| **Plex** | `lscr.io/linuxserver/plex` | 32400 | `plex.battistella.ovh` | Streaming films, séries et musique |
+| **Sonarr** | `lscr.io/linuxserver/sonarr` | 8989 | `sonarr.battistella.ovh` | Gestion automatisée des séries |
+| **Radarr** | `lscr.io/linuxserver/radarr` | 7878 | `radarr.battistella.ovh` | Gestion automatisée des films |
+| **Lidarr** | `lscr.io/linuxserver/lidarr` | 8686 | `lidarr.battistella.ovh` | Gestion automatisée de la musique |
+| **Bazarr** | `lscr.io/linuxserver/bazarr` | 6767 | `bazarr.battistella.ovh` | Gestion des sous-titres |
+| **Prowlarr** | `lscr.io/linuxserver/prowlarr` | 9696 | `indexer.battistella.ovh` | Gestion des indexeurs de recherche |
+| **qBittorrent** | `ghcr.io/hotio/qbittorrent` | 8080 | `qbittorrent.battistella.ovh` | Client de téléchargement avec VPN (ProtonVPN) |
+| **Seerr** | `ghcr.io/hotio/seerr` | 5055 | `seerr.battistella.ovh` | Demande et découverte de contenu |
+| **Tautulli** | `lscr.io/linuxserver/tautulli` | 8181 | `tautulli.battistella.ovh` | Statistiques d'utilisation de Plex |
 
 ## Architecture
 
-```
-                   ┌─────────────┐
-                   │   Traefik   │
-                   │ (reverse    │
-                   │  proxy)     │
-                   └──────┬──────┘
-                          │
-        ┌─────────────────┼─────────────────────┐
-        │    lan network   │                     │
-        │                  │                     │
-   ┌────┴────┐  ┌─────────┴──────┐  ┌───────────┴──┐
-   │ Seerr   │  │   *arr suite   │  │  qBittorrent │
-   │ (request│  │ Sonarr, Radarr │  │  (VPN/WG)    │
-   │ manager)│  │ Lidarr, Bazarr │  └───────┬──────┘
-   └─────────┘  │ Prowlarr       │          │
-                └───────┬────────┘    /mnt/downloads
-                        │
-                  ┌─────┴──────┐
-                  │    Plex    │ ← host network
-                  │  Tautulli  │   (port 32400)
-                  └────────────┘
-                        │
-              /mnt/movies  /mnt/tv-shows  /mnt/musics
+```mermaid
+graph LR
+    Seerr[Seerr - Demandes] --> Sonarr[Sonarr - Séries]
+    Seerr --> Radarr[Radarr - Films]
+    Sonarr --> Prowlarr[Prowlarr - Indexeurs]
+    Radarr --> Prowlarr
+    Lidarr[Lidarr - Musique] --> Prowlarr
+    Prowlarr --> qBit[qBittorrent + VPN]
+    qBit --> Plex[Plex - Lecture]
+    Bazarr -.->|Sous-titres| Plex
+    Tautulli -.->|Statistiques| Plex
 ```
 
-## Prerequisites
+L'utilisateur demande du contenu via Seerr. Les gestionnaires (Sonarr, Radarr, Lidarr) interrogent les indexeurs via Prowlarr. Le téléchargement passe par qBittorrent, protégé par un VPN WireGuard. Le contenu est ensuite disponible dans Plex.
 
-- Docker and Docker Compose
-- An external Docker network named `lan` (`docker network create lan`)
-- Traefik reverse proxy with:
-  - Docker provider on the `lan` network
-  - File provider for Plex routing (see [Plex & Traefik](#plex--traefik))
-- Mount points: `/mnt/downloads`, `/mnt/movies`, `/mnt/tv-shows`, `/mnt/musics`
-- A WireGuard config file for ProtonVPN in `./wireguard/wg0.conf`
+## Prérequis
 
-## Quick Start
+- Docker et Docker Compose installés
+- Réseau Docker externe `lan` créé (`docker network create lan`)
+- Traefik configuré avec le provider Docker et le provider fichier (pour Plex)
+- Points de montage NFS : `/mnt/downloads`, `/mnt/movies`, `/mnt/tv-shows`, `/mnt/musics`
+- Fichier WireGuard pour ProtonVPN dans `./wireguard/wg0.conf`
 
-1. Copy the example environment file and edit it:
+## Démarrage rapide
+
+1. Copier le fichier d'environnement et l'éditer :
    ```bash
    cp .env.example .env
    nano .env
    ```
 
-2. Place your WireGuard configuration at `./wireguard/wg0.conf`.
+2. Placer la configuration WireGuard dans `./wireguard/wg0.conf`
 
-3. Start the stack:
+3. Démarrer la pile :
    ```bash
    docker compose up -d
    ```
 
-## Environment Variables
+## Variables d'environnement
 
-### Common
+### Générales
 
-| Variable | Description | Default |
+| Variable | Description | Défaut |
 |---|---|---|
-| `TZ` | Timezone | `Europe/Paris` |
-| `PUID` | User ID for file permissions | `1000` |
-| `PGID` | Group ID for file permissions | `1000` |
-| `DOMAIN` | Base domain for Traefik routing | `battistella.ovh` |
+| `TZ` | Fuseau horaire | `Europe/Paris` |
+| `PUID` | ID utilisateur pour les permissions | `1000` |
+| `PGID` | ID groupe pour les permissions | `1000` |
+| `DOMAIN` | Domaine de base pour le routage Traefik | `battistella.ovh` |
 
-### Media Paths
+### Chemins des médias
 
-| Variable | Description | Default |
+| Variable | Description | Défaut |
 |---|---|---|
-| `DOWNLOADS_LOCATION` | Download client output directory | `/mnt/downloads` |
-| `TV_SHOWS_LOCATION` | TV shows library | `/mnt/tv-shows` |
-| `MOVIES_LOCATION` | Movies library | `/mnt/movies` |
-| `MUSIC_LOCATION` | Music library | `/mnt/musics` |
+| `DOWNLOADS_LOCATION` | Répertoire de téléchargement | `/mnt/downloads` |
+| `TV_SHOWS_LOCATION` | Bibliothèque de séries | `/mnt/tv-shows` |
+| `MOVIES_LOCATION` | Bibliothèque de films | `/mnt/movies` |
+| `MUSIC_LOCATION` | Bibliothèque musicale | `/mnt/musics` |
 
-### Service Config Paths
+### Chemins de configuration des services
 
-Each service stores persistent data in a config directory relative to the compose file:
+Chaque service stocke ses données persistantes dans un répertoire relatif :
 
-| Variable | Default |
+| Variable | Défaut |
 |---|---|
 | `BAZARR_CONFIG_PATH` | `../bazarr/data` |
 | `LIDARR_CONFIG_PATH` | `../lidarr/config` |
@@ -104,57 +92,35 @@ Each service stores persistent data in a config directory relative to the compos
 | `TAUTULLI_CONFIG_PATH` | `../tautulli/config` |
 | `CONFIG_LOCATION` (qBittorrent) | `../qbittorrent/data` |
 
-### qBittorrent / VPN
+### qBittorrent et VPN
 
-| Variable | Description | Default |
+| Variable | Description | Défaut |
 |---|---|---|
-| `WEBUI_PORTS` | WebUI listen ports | `8080/tcp` |
-| `LIBTORRENT` | libtorrent version | `v1` |
-| `BT_PORT` | BitTorrent listen port (host) | `6881` |
-| `VPN_ENABLED` | Enable WireGuard VPN | `true` |
-| `VPN_CONF` | WireGuard config name | `wg0` |
-| `VPN_PROVIDER` | VPN provider | `proton` |
-| `VPN_LAN_NETWORK` | Local network CIDR (for bypass) | `192.168.1.0/24` |
-| `VPN_AUTO_PORT_FORWARD` | Auto port forwarding | `true` |
+| `VPN_ENABLED` | Activer le VPN WireGuard | `true` |
+| `VPN_CONF` | Nom du fichier de configuration WireGuard | `wg0` |
+| `VPN_PROVIDER` | Fournisseur VPN | `proton` |
+| `VPN_LAN_NETWORK` | CIDR du réseau local (contournement VPN) | `192.168.1.0/24` |
+| `VPN_AUTO_PORT_FORWARD` | Transfert de port automatique | `true` |
+| `BT_PORT` | Port d'écoute BitTorrent (hôte) | `6881` |
 
 ### Plex
 
-| Variable | Description | Default |
+| Variable | Description | Défaut |
 |---|---|---|
-| `PLEX_VERSION` | Plex version type | `docker` |
-| `PLEX_CLAIM` | Plex claim token (from plex.tv/claim) | — |
+| `PLEX_VERSION` | Type de version Plex | `docker` |
+| `PLEX_CLAIM` | Jeton de revendication Plex (depuis plex.tv/claim) | — |
 
-## Plex & Traefik
+## Plex et Traefik
 
-Plex runs with `network_mode: host` for DLNA and local discovery support. Because of this, Traefik cannot route to it via Docker labels. Instead, Plex is exposed through Traefik's **file provider**.
+> **Détail technique**
 
-The route is defined in `traefik/config/plex.yml`:
+Plex fonctionne en `network_mode: host` pour la découverte DLNA. Traefik ne peut donc pas le router via les labels Docker. Le routage se fait via le **provider fichier** dans `traefik/config/plex.yml`.
 
-```yaml
-http:
-  routers:
-    plex:
-      entryPoints:
-        - websecure
-      rule: "Host(`plex.battistella.ovh`)"
-      service: plex
-      tls:
-        certResolver: letsencrypt
+Remplacer `<HOST_IP>` par l'adresse IP LAN du serveur dans ce fichier.
 
-  services:
-    plex:
-      loadBalancer:
-        servers:
-          - url: "http://<HOST_IP>:32400"
-```
+## Montages de volumes
 
-Replace `<HOST_IP>` with the server's LAN IP address.
-
-## Volume Mappings
-
-Container paths follow official image documentation:
-
-| Service | Config | Media / Data |
+| Service | Configuration | Médias / Données |
 |---|---|---|
 | Bazarr | `/config` | `/tv`, `/movies` |
 | Lidarr | `/config` | `/music`, `/downloads` |
@@ -164,41 +130,40 @@ Container paths follow official image documentation:
 | qBittorrent | `/config` | `/data/downloads` |
 | Radarr | `/config` | `/movies`, `/downloads` |
 | Sonarr | `/config` | `/tv`, `/downloads` |
-| Tautulli | `/config` | `/logs` (Plex logs, read-only) |
+| Tautulli | `/config` | `/logs` (logs Plex, lecture seule) |
 
-## Networking
+## Réseau
 
-- All services (except Plex) are attached to the external `lan` Docker network, shared with Traefik.
-- Plex uses `network_mode: host` for full host network access (required for DLNA discovery).
-- qBittorrent routes all traffic through a WireGuard VPN tunnel (ProtonVPN). It has `NET_ADMIN` capability and a TUN device for VPN connectivity.
+- Tous les services (sauf Plex) utilisent le réseau Docker externe `lan`
+- Plex utilise `network_mode: host` pour la découverte DLNA
+- qBittorrent route tout son trafic via un tunnel VPN WireGuard (ProtonVPN)
 
-## Hardware Transcoding
+## Transcodage matériel
 
-Plex is configured with `/dev/dri` device passthrough for Intel QuickSync / VAAPI hardware transcoding. Ensure the `PUID` user has access to the render group on the host:
+> **Détail technique**
+
+Plex dispose du passthrough `/dev/dri` pour le transcodage matériel Intel QuickSync / VAAPI. L'utilisateur système doit appartenir au groupe `render` :
 
 ```bash
 sudo usermod -aG render <username>
 ```
 
-## Auto-Updates
+## Mises à jour automatiques
 
-All services have the Watchtower label `com.centurylinklabs.watchtower.enable=true` for automatic image updates.
+Tous les services portent le label Watchtower pour la mise à jour automatique des images.
 
-## Useful Commands
+## Commandes utiles
 
 ```bash
-# Start all services
+# Démarrer tous les services
 docker compose up -d
 
-# Restart a single service
+# Redémarrer un service
 docker compose restart sonarr
 
-# View logs
+# Voir les logs
 docker compose logs -f radarr
 
-# Pull latest images
-docker compose pull
-
-# Rebuild and restart
-docker compose up -d --pull always
+# Mettre à jour les images
+docker compose pull && docker compose up -d
 ```
