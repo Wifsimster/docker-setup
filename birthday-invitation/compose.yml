@@ -33,7 +33,7 @@ services:
       - "traefik.http.routers.birthday-invitation.entrypoints=websecure"
 
       # Router
-      - "traefik.http.routers.birthday-invitation.rule=Host(`leo-birthday.battistella.ovh`)"
+      - "traefik.http.routers.birthday-invitation.rule=Host(`leo-birthday.${DOMAIN}`)"
 
       # Service
       - "traefik.http.services.birthday-invitation.loadBalancer.server.port=3000"

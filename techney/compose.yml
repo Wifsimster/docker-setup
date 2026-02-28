@@ -27,7 +27,7 @@ services:
       - "traefik.http.routers.techney.entrypoints=websecure"
 
       # Router
-      - "traefik.http.routers.techney.rule=Host(`techney.battistella.ovh`)"
+      - "traefik.http.routers.techney.rule=Host(`techney.${DOMAIN}`)"
 
       # Service
       - "traefik.http.services.techney.loadBalancer.server.port=3000"

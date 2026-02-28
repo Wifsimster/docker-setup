@@ -8,7 +8,7 @@ services:
       - PUID=1000
       - PGID=1000
       - TZ=Europe/Paris
-      - HOMEPAGE_ALLOWED_HOSTS=homepage.battistella.ovh
+      - HOMEPAGE_ALLOWED_HOSTS=homepage.${DOMAIN}
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000"]
       interval: 30s
@@ -35,7 +35,7 @@ services:
       - "traefik.http.routers.homepage.entrypoints=websecure"
 
       # Router
-      - "traefik.http.routers.homepage.rule=Host(`homepage.battistella.ovh`)"
+      - "traefik.http.routers.homepage.rule=Host(`homepage.${DOMAIN}`)"
 
       # Service
       - "traefik.http.services.homepage.loadBalancer.server.port=3000"

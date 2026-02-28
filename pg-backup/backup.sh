@@ -4,6 +4,7 @@ set -e
 DATE=$(date +%Y-%m-%d_%H%M%S)
 BACKUP_DIR="/backups"
 RETENTION_DAYS=7
+ERRORS=""
 
 # Database definitions: host|user|dbname|password_env_var
 DATABASES="
@@ -32,6 +33,7 @@ for entry in $DATABASES; do
     echo "    OK: ${DUMP_FILE} (${SIZE})"
   else
     echo "    FAILED: ${DB} from ${HOST}"
+    ERRORS="${ERRORS}${DB} (${HOST})\n"
     rm -f "$DUMP_FILE"
   fi
 done
@@ -41,3 +43,9 @@ echo "--- Removing backups older than ${RETENTION_DAYS} days..."
 find "$BACKUP_DIR" -name "*.dump" -mtime +${RETENTION_DAYS} -delete
 
 echo "=== PostgreSQL backup finished at $(date) ==="
+
+# Send Discord alert on failure
+if [ -n "$ERRORS" ] && [ -n "$DISCORD_WEBHOOK_URL" ]; then
+  PAYLOAD=$(printf '{"content":"⚠️ **pg-backup failure** — %s\\nFailed databases:\\n%s"}' "$(date +%Y-%m-%d)" "$ERRORS")
+  wget -q --header="Content-Type: application/json" --post-data="$PAYLOAD" "$DISCORD_WEBHOOK_URL" -O /dev/null 2>&1 || echo "    WARNING: Failed to send Discord alert"
+fi

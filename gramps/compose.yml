@@ -2,7 +2,7 @@ name: gramps
 
 services:
   grampsweb_redis:
-    image: docker.io/library/redis:7.2.4-alpine
+    image: redis:7-alpine
     container_name: grampsweb-redis
     restart: unless-stopped
     deploy:
@@ -67,7 +67,7 @@ services:
       - "traefik.http.routers.gramps.entrypoints=websecure"
 
       # Router
-      - "traefik.http.routers.gramps.rule=Host(`gramps.battistella.ovh`)"
+      - "traefik.http.routers.gramps.rule=Host(`gramps.${DOMAIN}`)"
 
       # Service
       - "traefik.http.services.gramps.loadBalancer.server.port=5000"

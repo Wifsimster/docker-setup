@@ -42,7 +42,7 @@ services:
       - "traefik.http.routers.pihole.entrypoints=websecure"
 
       # Router
-      - "traefik.http.routers.pihole.rule=Host(`pihole.battistella.ovh`)"
+      - "traefik.http.routers.pihole.rule=Host(`pihole.${DOMAIN}`)"
 
       # Service
       - "traefik.http.services.pihole.loadBalancer.server.port=80"

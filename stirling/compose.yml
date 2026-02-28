@@ -43,7 +43,7 @@ services:
       - "traefik.http.routers.stirling.entrypoints=websecure"
 
       # Router
-      - "traefik.http.routers.stirling.rule=Host(`stirling.battistella.ovh`)"
+      - "traefik.http.routers.stirling.rule=Host(`stirling.${DOMAIN}`)"
 
       # Service
       - "traefik.http.services.stirling.loadBalancer.server.port=8080"

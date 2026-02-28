@@ -22,15 +22,12 @@ services:
       - TZ=${TZ}
     labels:
       - "traefik.enable=true"
-      - "traefik.docker.network=lan"
 
       # Entrypoint
       - "traefik.http.routers.personal-blog.entrypoints=websecure"
 
       # Router
       - "traefik.http.routers.personal-blog.rule=Host(`blog.${DOMAIN}`)"
-      - "traefik.http.routers.personal-blog.tls=true"
-      - "traefik.http.routers.personal-blog.tls.certresolver=letsencrypt"
 
       # Service
       - "traefik.http.services.personal-blog.loadBalancer.server.port=80"

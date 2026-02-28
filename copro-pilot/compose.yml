@@ -31,15 +31,12 @@ services:
         condition: service_healthy
     labels:
       - "traefik.enable=true"
-      - "traefik.docker.network=lan"
 
       # Entrypoint
       - "traefik.http.routers.copro-pilot.entrypoints=websecure"
 
       # Router
-      - "traefik.http.routers.copro-pilot.rule=Host(`copro-pilot.battistella.ovh`)"
-      - "traefik.http.routers.copro-pilot.tls=true"
-      - "traefik.http.routers.copro-pilot.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.copro-pilot.rule=Host(`copro-pilot.${DOMAIN}`)"
 
       # Service
       - "traefik.http.services.copro-pilot.loadBalancer.server.port=3001"

@@ -138,7 +138,7 @@ services:
     environment:
       - USERMAP_UID=1000
       - USERMAP_GID=1000
-      - PAPERLESS_URL=https://paperless.battistella.ovh
+      - PAPERLESS_URL=https://paperless.${DOMAIN}
       - PAPERLESS_SECRET_KEY=${PAPERLESS_SECRET_KEY}
       - PAPERLESS_OCR_LANGUAGE=fra+eng
       - PAPERLESS_TIME_ZONE=Europe/Paris
@@ -169,7 +169,7 @@ services:
       - "traefik.http.routers.paperless.entrypoints=websecure"
 
       # Router
-      - "traefik.http.routers.paperless.rule=Host(`paperless.battistella.ovh`)"
+      - "traefik.http.routers.paperless.rule=Host(`paperless.${DOMAIN}`)"
 
       # Service
       - "traefik.http.services.paperless.loadBalancer.server.port=8000"

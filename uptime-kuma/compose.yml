@@ -29,7 +29,7 @@ services:
       - "traefik.http.routers.uptime-kuma.entrypoints=websecure"
 
       # Router
-      - "traefik.http.routers.uptime-kuma.rule=Host(`uptime.battistella.ovh`)"
+      - "traefik.http.routers.uptime-kuma.rule=Host(`uptime.${DOMAIN}`)"
 
       # Service
       - "traefik.http.services.uptime-kuma.loadBalancer.server.port=3001"

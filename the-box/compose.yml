@@ -38,8 +38,8 @@ services:
       - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
       
       # URLs (REQUIRED)
-      - API_URL=https://the-box.battistella.ovh
-      - CORS_ORIGIN=https://the-box.battistella.ovh
+      - API_URL=https://the-box.${DOMAIN}
+      - CORS_ORIGIN=https://the-box.${DOMAIN}
       
       # Email (Optional - for password reset)
       - RESEND_API_KEY=${RESEND_API_KEY:-}
@@ -56,15 +56,12 @@ services:
         condition: service_healthy
     labels:
       - "traefik.enable=true"
-      - "traefik.docker.network=lan"
 
       # Entrypoint
       - "traefik.http.routers.the-box.entrypoints=websecure"
 
       # Router
-      - "traefik.http.routers.the-box.rule=Host(`the-box.battistella.ovh`)"
-      - "traefik.http.routers.the-box.tls=true"
-      - "traefik.http.routers.the-box.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.the-box.rule=Host(`the-box.${DOMAIN}`)"
 
       # Service
       - "traefik.http.services.the-box.loadBalancer.server.port=80"
@@ -76,7 +73,7 @@ services:
       lan:
 
   redis:
-    image: redis:alpine
+    image: redis:7-alpine
     container_name: the-box-redis
     restart: unless-stopped
     deploy:

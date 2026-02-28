@@ -29,7 +29,7 @@ services:
       - "traefik.http.routers.memos.entrypoints=websecure"
 
       # Router
-      - "traefik.http.routers.memos.rule=Host(`memos.battistella.ovh`)"
+      - "traefik.http.routers.memos.rule=Host(`memos.${DOMAIN}`)"
 
       # Service
       - "traefik.http.services.memos.loadBalancer.server.port=5230"

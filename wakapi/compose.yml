@@ -16,7 +16,7 @@ services:
         max-file: "3"
     environment:
       - WAKAPI_PASSWORD_SALT=${WAKAPI_PASSWORD_SALT}
-      - WAKAPI_PUBLIC_URL=https://wakapi.battistella.ovh
+      - WAKAPI_PUBLIC_URL=https://wakapi.${DOMAIN}
       - WAKAPI_ALLOW_SIGNUP=false
     volumes:
       - ./data:/data
@@ -33,7 +33,7 @@ services:
       - "traefik.http.routers.wakapi.entrypoints=websecure"
 
       # Router
-      - "traefik.http.routers.wakapi.rule=Host(`wakapi.battistella.ovh`)"
+      - "traefik.http.routers.wakapi.rule=Host(`wakapi.${DOMAIN}`)"
 
       # Service
       - "traefik.http.services.wakapi.loadBalancer.server.port=3000"

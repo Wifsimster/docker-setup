@@ -32,7 +32,7 @@ services:
       - "traefik.http.routers.infisical.entrypoints=websecure"
 
       # Router
-      - "traefik.http.routers.infisical.rule=Host(`infisical.battistella.ovh`)"
+      - "traefik.http.routers.infisical.rule=Host(`infisical.${DOMAIN}`)"
 
       # Service
       - "traefik.http.services.infisical.loadBalancer.server.port=8080"

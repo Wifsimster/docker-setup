@@ -46,7 +46,7 @@ services:
       - "traefik.http.routers.netdata.entrypoints=websecure"
 
       # Router
-      - "traefik.http.routers.netdata.rule=Host(`netdata.battistella.ovh`)"
+      - "traefik.http.routers.netdata.rule=Host(`netdata.${DOMAIN}`)"
 
       # Service
       - "traefik.http.services.netdata.loadBalancer.server.port=19999"

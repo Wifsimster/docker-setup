@@ -30,7 +30,7 @@ services:
       - "traefik.http.routers.portainer.entrypoints=websecure"
 
       # Router
-      - "traefik.http.routers.portainer.rule=Host(`portainer.battistella.ovh`)"
+      - "traefik.http.routers.portainer.rule=Host(`portainer.${DOMAIN}`)"
 
       # Service
       - "traefik.http.services.portainer.loadBalancer.server.port=9000"

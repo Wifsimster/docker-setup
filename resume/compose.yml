@@ -22,15 +22,12 @@ services:
       - TZ=Europe/Paris
     labels:
       - "traefik.enable=true"
-      - "traefik.docker.network=lan"
 
       # Entrypoint
       - "traefik.http.routers.resume.entrypoints=websecure"
 
       # Router
-      - "traefik.http.routers.resume.rule=Host(`cv.battistella.ovh`)"
-      - "traefik.http.routers.resume.tls=true"
-      - "traefik.http.routers.resume.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.resume.rule=Host(`cv.${DOMAIN}`)"
 
       # Service
       - "traefik.http.services.resume.loadBalancer.server.port=80"

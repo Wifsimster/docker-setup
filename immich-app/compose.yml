@@ -48,7 +48,7 @@ services:
       - "traefik.http.routers.immich.entrypoints=websecure"
 
       # Router
-      - "traefik.http.routers.immich.rule=Host(`immich.battistella.ovh`)"
+      - "traefik.http.routers.immich.rule=Host(`immich.${DOMAIN}`)"
       - "traefik.http.routers.immich.tls=true"
       - "traefik.http.routers.immich.tls.certresolver=letsencrypt"
       - "traefik.http.routers.immich.tls.options=immich-mtls@file"

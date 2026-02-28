@@ -12,7 +12,7 @@ services:
     tmpfs:
       - /tmp
     environment:
-      - DOMAIN=https://vaultwarden.battistella.ovh
+      - DOMAIN=https://vaultwarden.${DOMAIN}
       - EXPERIMENTAL_CLIENT_FEATURE_FLAGS=ssh-key-vault-item,ssh-agent
       - SIGNUPS_ALLOWED=false
       - SHOW_PASSWORD_HINT=false
@@ -42,7 +42,7 @@ services:
       - "traefik.http.routers.vaultwarden.entrypoints=websecure"
 
       # Router
-      - "traefik.http.routers.vaultwarden.rule=Host(`vaultwarden.battistella.ovh`)"
+      - "traefik.http.routers.vaultwarden.rule=Host(`vaultwarden.${DOMAIN}`)"
 
       # Service
       - "traefik.http.services.vaultwarden.loadBalancer.server.port=80"

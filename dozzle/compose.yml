@@ -29,7 +29,7 @@ services:
       - "traefik.http.routers.dozzle.entrypoints=websecure"
 
       # Router
-      - "traefik.http.routers.dozzle.rule=Host(`dozzle.battistella.ovh`)"
+      - "traefik.http.routers.dozzle.rule=Host(`dozzle.${DOMAIN}`)"
 
       # Service
       - "traefik.http.services.dozzle.loadBalancer.server.port=8080"
