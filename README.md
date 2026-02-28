@@ -17,6 +17,7 @@ Plateforme personnelle auto-hébergée offrant ~30 services sur un serveur Debia
 - [Environnements](#environnements)
 - [Déploiement](#déploiement)
 - [Stack technique](#stack-technique)
+- [Sauvegarde des bases de données](#sauvegarde-des-bases-de-données)
 - [Feuille de route](#feuille-de-route)
 - [Documentation complémentaire](#documentation-complémentaire)
 
@@ -189,9 +190,10 @@ graph LR
     Portainer -->|Gestion des conteneurs| Services
     Dozzle -->|Logs en direct| Services
     Netdata -->|Métriques système| Serveur([Santé du serveur])
+    PgBackup[pg-backup] -->|Dump quotidien 3h| DB[(PostgreSQL x5)]
 ```
 
-Homepage offre un tableau de bord centralisé de tous les services. Watchtower met à jour automatiquement les conteneurs chaque jour à 6h00 et notifie via Discord. Portainer et Dozzle permettent la gestion et le suivi des logs des conteneurs. Netdata surveille les performances du serveur.
+Homepage offre un tableau de bord centralisé de tous les services. Watchtower met à jour automatiquement les conteneurs chaque jour à 6h00 et notifie via Discord. Portainer et Dozzle permettent la gestion et le suivi des logs des conteneurs. Netdata surveille les performances du serveur. pg-backup sauvegarde quotidiennement les 5 bases PostgreSQL (Paperless, Immich, The-box, Copro-Pilot, Infisical) avec une rétention de 7 jours.
 
 | Service | Fonction | URL |
 |---|---|---|
@@ -200,6 +202,7 @@ Homepage offre un tableau de bord centralisé de tous les services. Watchtower m
 | **Dozzle** | Visualiseur de logs en temps réel | `dozzle.battistella.ovh` |
 | **Netdata** | Supervision des performances serveur | `netdata.battistella.ovh` |
 | **Watchtower** | Mises à jour automatiques quotidiennes (alertes Discord) | _arrière-plan_ |
+| **pg-backup** | Sauvegarde quotidienne des 5 bases PostgreSQL (rétention 7j) | _arrière-plan_ |
 | **Unifi** | Contrôleur réseau (WiFi, switches) | _accès local_ |
 
 ## Environnements
@@ -227,9 +230,28 @@ Le déploiement se fait manuellement via `docker compose up -d` dans le réperto
 - **Orchestration :** Docker, Docker Compose
 - **Proxy inverse :** Traefik v3.6 avec Let's Encrypt (challenge DNS OVH)
 - **Bases de données :** PostgreSQL 16, Redis / Valkey
+- **Sauvegarde :** pg-backup — dump quotidien des 5 bases PostgreSQL à 3h00, rétention 7 jours
 - **Stockage :** NAS Unraid via NFS
 - **Supervision :** Netdata, Dozzle, Portainer, Homepage
+- **Limites de ressources :** Plex (12 Go / 8 CPU), Immich ML (6 Go / 4 CPU), Paperless (4 Go / 4 CPU)
 - **Domaine :** `battistella.ovh` (sous-domaines par service)
+
+## Sauvegarde des bases de données
+
+Le service **pg-backup** exécute un dump quotidien à 3h00 des 5 bases PostgreSQL de la plateforme :
+
+| Base | Conteneur source | Format |
+|------|-----------------|--------|
+| Paperless | `paperless-db` | Custom (`pg_dump -Fc`) |
+| Immich | `immich_postgres` | Custom (`pg_dump -Fc`) |
+| The Box | `the-box-postgres` | Custom (`pg_dump -Fc`) |
+| Copro-Pilot | `copro-pilot-postgres` | Custom (`pg_dump -Fc`) |
+| Infisical | `infisical-db` | Custom (`pg_dump -Fc`) |
+
+- **Rétention :** 7 jours (suppression automatique des dumps plus anciens)
+- **Stockage :** `pg-backup/backups/` sur le serveur local
+- **Logs :** `pg-backup/backups/backup.log`
+- **Restauration :** `pg_restore -h <host> -U <user> -d <db> <fichier.dump>`
 
 ## Feuille de route
 
