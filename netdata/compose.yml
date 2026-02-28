@@ -5,6 +5,15 @@ services:
     image: netdata/netdata
     container_name: netdata
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     cap_add:
       - SYS_PTRACE
       - SYS_ADMIN

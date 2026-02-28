@@ -5,6 +5,15 @@ services:
     image: wifsimster/the-box:latest
     container_name: the-box
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80/health"]
       interval: 30s
@@ -70,6 +79,15 @@ services:
     image: redis:alpine
     container_name: the-box-redis
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     volumes:
       - redis-data:/data
     networks:
@@ -84,6 +102,15 @@ services:
     image: postgres:16-alpine
     container_name: the-box-postgres
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     environment:
       - POSTGRES_USER=${DB_USER:-thebox}
       - POSTGRES_PASSWORD=${DB_PASSWORD:-thebox}

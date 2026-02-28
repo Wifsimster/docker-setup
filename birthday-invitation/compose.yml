@@ -5,6 +5,15 @@ services:
     image: wifsimster/birthday-invitation:latest
     container_name: birthday-invitation
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     environment:
       - NODE_ENV=production
       - BIRTHDAY_PERSON=${BIRTHDAY_PERSON}

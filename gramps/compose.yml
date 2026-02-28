@@ -5,6 +5,15 @@ services:
     image: docker.io/library/redis:7.2.4-alpine
     container_name: grampsweb-redis
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     volumes:
       - gramps_redis_data:/data
     healthcheck:
@@ -19,6 +28,15 @@ services:
     image: ghcr.io/gramps-project/grampsweb:latest
     container_name: grampsweb
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     depends_on:
       grampsweb_redis:
         condition: service_healthy
@@ -64,6 +82,15 @@ services:
     image: ghcr.io/gramps-project/grampsweb:latest
     container_name: grampsweb-celery
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     depends_on:
       - grampsweb
       - grampsweb_redis

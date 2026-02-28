@@ -11,6 +11,15 @@ services:
         condition: service_healthy
     image: infisical/infisical:latest-postgres
     pull_policy: always
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     env_file: .env
     environment:
       - NODE_ENV=production
@@ -35,6 +44,15 @@ services:
     image: redis:7-alpine
     container_name: infisical-redis
     restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     networks:
       - lan
     volumes:
@@ -49,6 +67,15 @@ services:
     container_name: infisical-db
     image: postgres:14-alpine
     restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     env_file: .env
     volumes:
       - pg_data:/var/lib/postgresql/data

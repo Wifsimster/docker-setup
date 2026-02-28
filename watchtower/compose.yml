@@ -16,6 +16,21 @@ services:
       - WATCHTOWER_NOTIFICATIONS=slack
       - WATCHTOWER_NOTIFICATION_SLACK_IDENTIFIER=${DISCORD_WEBHOOK_ID}
       - WATCHTOWER_NOTIFICATION_SLACK_HOOK_URL=${DISCORD_WEBHOOK_URL}
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "/watchtower", "--health-check"]
+      interval: 60s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:

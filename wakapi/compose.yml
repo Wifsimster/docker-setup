@@ -5,6 +5,15 @@ services:
     image: ghcr.io/muety/wakapi:latest
     container_name: wakapi
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     environment:
       - WAKAPI_PASSWORD_SALT=${WAKAPI_PASSWORD_SALT}
       - WAKAPI_PUBLIC_URL=https://wakapi.battistella.ovh

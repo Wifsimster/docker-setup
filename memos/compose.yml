@@ -5,6 +5,15 @@ services:
     image: neosmemo/memos:stable
     container_name: memos
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     volumes:
       - ./data:/var/opt/memos
     healthcheck:

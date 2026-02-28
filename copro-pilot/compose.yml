@@ -5,6 +5,15 @@ services:
     image: wifsimster/copro-pilot:latest
     container_name: copro-pilot
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     user: root
     healthcheck:
       disable: true
@@ -47,6 +56,15 @@ services:
     image: postgres:16-alpine
     container_name: copro-pilot-postgres
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     environment:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}

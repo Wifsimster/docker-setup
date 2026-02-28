@@ -18,6 +18,15 @@ services:
       - SHOW_PASSWORD_HINT=false
       - IP_HEADER=X-Forwarded-For
       - LOG_LEVEL=warn
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     volumes:
       - ./data:/data/
     healthcheck:

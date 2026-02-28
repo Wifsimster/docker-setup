@@ -5,6 +5,15 @@ services:
     container_name: portainer
     image: portainer/portainer-ce:latest
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     volumes:
       - ./data:/data
       - /var/run/docker.sock:/var/run/docker.sock

@@ -15,6 +15,15 @@ services:
       - /run/dbus:/run/dbus:ro
       - /dev/ttyUSB0:/dev/ttyUSB0
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     privileged: true
     cap_add:
       - NET_ADMIN
@@ -51,9 +60,20 @@ services:
     container_name: mosquitto
     image: eclipse-mosquitto:2
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     user: "1883:1883"
     security_opt:
       - no-new-privileges:true
+    # MQTT ports — used by LAN IoT devices (not internet-facing)
+    # Ensure these ports are NOT forwarded on the router/firewall
     ports:
       - 1883:1883
       - 1884:1884
@@ -77,6 +97,15 @@ services:
     image: ghcr.io/home-assistant-libs/python-matter-server:stable
     container_name: matter-server
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     security_opt:
       - apparmor:unconfined # Needed for Bluetooth via dbus
     volumes:

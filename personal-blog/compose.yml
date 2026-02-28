@@ -5,6 +5,15 @@ services:
     image: wifsimster/wifsimster-blog:latest
     container_name: personal-blog
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     healthcheck:
       disable: true
     environment:

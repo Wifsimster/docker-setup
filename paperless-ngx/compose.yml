@@ -5,6 +5,15 @@ services:
     container_name: paperless-db
     image: postgres:16-alpine
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     volumes:
       - pg_data:/var/lib/postgresql/data
     environment:
@@ -23,6 +32,15 @@ services:
     container_name: paperless-redis
     image: redis:7-alpine
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     volumes:
       - redis_data:/data
     command: redis-server --maxmemory 512mb --maxmemory-policy allkeys-lru
@@ -38,6 +56,15 @@ services:
     container_name: paperless-gotenberg
     image: gotenberg/gotenberg:8
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     command:
       - "gotenberg"
       - "--chromium-disable-javascript=true"
@@ -55,12 +82,30 @@ services:
     container_name: paperless-tika
     image: apache/tika:latest
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     networks:
       - lan
 
   protonmail-bridge:
     container_name: protonmail-bridge
     image: shenxn/protonmail-bridge:latest
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     ports:
       - 1025:25/tcp
       - 1143:143/tcp
@@ -112,6 +157,11 @@ services:
         limits:
           memory: 4G
           cpus: "4.0"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     labels:
       - "traefik.enable=true"
 
