@@ -1,6 +1,6 @@
 # Home Server Platform
 
-Plateforme personnelle auto-hébergée offrant ~30 services sur un serveur Debian. Streaming multimédia, domotique, gestion de documents, stockage photo et outils de productivité — le tout accessible via `*.battistella.ovh` avec HTTPS automatique.
+Plateforme personnelle auto-hébergée offrant ~30 services sur un serveur Debian. Streaming multimédia, domotique, gestion de documents, stockage photo et outils de productivité — le tout accessible via `*.example.com` avec HTTPS automatique.
 
 ## Table des matières
 
@@ -93,15 +93,15 @@ L'utilisateur demande un contenu via Seerr. Les gestionnaires (Sonarr, Radarr, L
 
 | Service | Fonction | URL |
 |---|---|---|
-| **Plex** | Streaming films, séries et musique | `plex.battistella.ovh` |
-| **Seerr** | Demande et découverte de contenu | `seerr.battistella.ovh` |
-| **Sonarr** | Gestion automatisée des séries | `sonarr.battistella.ovh` |
-| **Radarr** | Gestion automatisée des films | `radarr.battistella.ovh` |
-| **Lidarr** | Gestion automatisée de la musique | `lidarr.battistella.ovh` |
-| **Bazarr** | Téléchargement automatique de sous-titres | `bazarr.battistella.ovh` |
-| **Prowlarr** | Gestion des indexeurs de recherche | `indexer.battistella.ovh` |
-| **qBittorrent** | Client de téléchargement (protégé par VPN) | `qbittorrent.battistella.ovh` |
-| **Tautulli** | Statistiques d'utilisation de Plex | `tautulli.battistella.ovh` |
+| **Plex** | Streaming films, séries et musique | `plex.example.com` |
+| **Seerr** | Demande et découverte de contenu | `seerr.example.com` |
+| **Sonarr** | Gestion automatisée des séries | `sonarr.example.com` |
+| **Radarr** | Gestion automatisée des films | `radarr.example.com` |
+| **Lidarr** | Gestion automatisée de la musique | `lidarr.example.com` |
+| **Bazarr** | Téléchargement automatique de sous-titres | `bazarr.example.com` |
+| **Prowlarr** | Gestion des indexeurs de recherche | `indexer.example.com` |
+| **qBittorrent** | Client de téléchargement (protégé par VPN) | `qbittorrent.example.com` |
+| **Tautulli** | Statistiques d'utilisation de Plex | `tautulli.example.com` |
 
 ## Domotique
 
@@ -120,7 +120,7 @@ Home Assistant centralise le contrôle de tous vos appareils connectés. Le serv
 
 | Service | Fonction | URL |
 |---|---|---|
-| **Home Assistant** | Hub domotique et automatisations | `home-assistant.battistella.ovh` |
+| **Home Assistant** | Hub domotique et automatisations | `home-assistant.example.com` |
 | **Mosquitto** | Broker de messages MQTT pour objets connectés | _interne_ |
 | **Matter Server** | Support du protocole Matter | _interne_ |
 
@@ -141,8 +141,8 @@ Immich permet d'importer vos photos et vidéos, puis les analyse automatiquement
 
 | Service | Fonction | URL |
 |---|---|---|
-| **Immich** | Gestion de photos et vidéos avec IA | `immich.battistella.ovh` |
-| **Paperless-ngx** | Gestion documentaire avec OCR | `paperless.battistella.ovh` |
+| **Immich** | Gestion de photos et vidéos avec IA | `immich.example.com` |
+| **Paperless-ngx** | Gestion documentaire avec OCR | `paperless.example.com` |
 
 ## Applications web
 
@@ -150,29 +150,29 @@ Applications personnalisées développées sur mesure.
 
 | Service | Fonction | URL |
 |---|---|---|
-| **Blog personnel** | Blog | `blog.battistella.ovh` |
-| **CV en ligne** | Curriculum vitae interactif | `cv.battistella.ovh` |
-| **Copro-Pilot** | Gestion de copropriété | `copro-pilot.battistella.ovh` |
-| **The Box** | Gestionnaire de collection de jeux | `the-box.battistella.ovh` |
-| **Techney** | Site de documentation technique | `techney.battistella.ovh` |
-| **Invitation anniversaire** | Invitations avec RSVP | `leo-birthday.battistella.ovh` |
+| **Blog personnel** | Blog | `blog.example.com` |
+| **CV en ligne** | Curriculum vitae interactif | `cv.example.com` |
+| **Copro-Pilot** | Gestion de copropriété | `copro-pilot.example.com` |
+| **The Box** | Gestionnaire de collection de jeux | `the-box.example.com` |
+| **Techney** | Site de documentation technique | `techney.example.com` |
+| **Invitation anniversaire** | Invitations avec RSVP | `leo-birthday.example.com` |
 
 ## Outils de productivité
 
 | Service | Fonction | URL |
 |---|---|---|
-| **Stirling PDF** | Outils de manipulation PDF (fusion, découpe, conversion) | `stirling.battistella.ovh` |
-| **Memos** | Prise de notes rapide | `memos.battistella.ovh` |
-| **Wakapi** | Suivi du temps de développement | `wakapi.battistella.ovh` |
-| **Gramps Web** | Généalogie et arbre familial | `gramps.battistella.ovh` |
+| **Stirling PDF** | Outils de manipulation PDF (fusion, découpe, conversion) | `stirling.example.com` |
+| **Memos** | Prise de notes rapide | `memos.example.com` |
+| **Wakapi** | Suivi du temps de développement | `wakapi.example.com` |
+| **Gramps Web** | Généalogie et arbre familial | `gramps.example.com` |
 
 ## Sécurité
 
 | Service | Fonction | URL |
 |---|---|---|
-| **Vaultwarden** | Gestionnaire de mots de passe (compatible Bitwarden) | `vaultwarden.battistella.ovh` |
-| **Infisical** | Gestion des secrets et variables d'environnement | `infisical.battistella.ovh` |
-| **Pi-hole** | Blocage publicitaire DNS sur tout le réseau | `pihole.battistella.ovh` |
+| **Vaultwarden** | Gestionnaire de mots de passe (compatible Bitwarden) | `vaultwarden.example.com` |
+| **Infisical** | Gestion des secrets et variables d'environnement | `infisical.example.com` |
+| **Pi-hole** | Blocage publicitaire DNS sur tout le réseau | `pihole.example.com` |
 
 ### Gestion des secrets
 
@@ -199,11 +199,11 @@ Homepage offre un tableau de bord centralisé de tous les services. Watchtower m
 
 | Service | Fonction | URL |
 |---|---|---|
-| **Homepage** | Tableau de bord centralisé | `homepage.battistella.ovh` |
-| **Portainer** | Interface de gestion Docker | `portainer.battistella.ovh` |
-| **Dozzle** | Visualiseur de logs en temps réel | `dozzle.battistella.ovh` |
-| **Netdata** | Supervision des performances serveur (alertes Discord) | `netdata.battistella.ovh` |
-| **Uptime Kuma** | Surveillance de disponibilité des services | `uptime.battistella.ovh` |
+| **Homepage** | Tableau de bord centralisé | `homepage.example.com` |
+| **Portainer** | Interface de gestion Docker | `portainer.example.com` |
+| **Dozzle** | Visualiseur de logs en temps réel | `dozzle.example.com` |
+| **Netdata** | Supervision des performances serveur (alertes Discord) | `netdata.example.com` |
+| **Uptime Kuma** | Surveillance de disponibilité des services | `uptime.example.com` |
 | **Watchtower** | Mises à jour automatiques quotidiennes (alertes Discord) | _arrière-plan_ |
 | **pg-backup** | Sauvegarde quotidienne des 5 bases PostgreSQL (rétention 7j) | _arrière-plan_ |
 | **Unifi** | Contrôleur réseau (WiFi, switches) | _accès local_ |
@@ -212,7 +212,7 @@ Homepage offre un tableau de bord centralisé de tous les services. Watchtower m
 
 | Environnement | URL | Description |
 |---------------|-----|-------------|
-| Production | `https://*.battistella.ovh` | Serveur domestique Debian |
+| Production | `https://*.example.com` | Serveur domestique Debian |
 | NAS | Unraid (réseau local) | Stockage multimédia et documents via NFS |
 
 ## Déploiement
@@ -237,7 +237,7 @@ Le déploiement se fait manuellement via `docker compose up -d` dans le réperto
 - **Stockage :** NAS Unraid via NFS
 - **Supervision :** Netdata (alertes Discord), Uptime Kuma, Dozzle, Portainer, Homepage
 - **Limites de ressources :** Plex (12 Go / 8 CPU), Immich ML (6 Go / 4 CPU), Paperless (4 Go / 4 CPU)
-- **Domaine :** `battistella.ovh` (sous-domaines par service)
+- **Domaine :** `example.com` (sous-domaines par service)
 
 ## Sauvegarde des bases de données
 
@@ -263,7 +263,7 @@ Le service **pg-backup** exécute un dump quotidien à 3h00 des 5 bases PostgreS
 ### Terminé
 
 - ~~**Rate limiting Vaultwarden**~~ — Middleware Traefik anti brute-force (20 req/min, burst 50)
-- ~~**Uptime Kuma**~~ — Surveillance de disponibilité des services (`uptime.battistella.ovh`)
+- ~~**Uptime Kuma**~~ — Surveillance de disponibilité des services (`uptime.example.com`)
 - ~~**Alertes Netdata → Discord**~~ — Notifications Discord sur les alertes système
 
 ## Documentation complémentaire
