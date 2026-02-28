@@ -14,9 +14,10 @@ services:
   immich-server:
     container_name: immich_server
     image: ghcr.io/immich-app/immich-server:${IMMICH_VERSION:-release}
-    extends:
-      file: hwaccel.transcoding.yml
-      service: vaapi # set to one of [nvenc, quicksync, rkmpp, vaapi, vaapi-wsl] for accelerated transcoding
+    # No real GPU on this server (QEMU virtual VGA) — CPU-only transcoding
+    # extends:
+    #   file: hwaccel.transcoding.yml
+    #   service: vaapi
     volumes:
       # Do not edit the next line. If you want to change the media storage location on your system, edit the value of UPLOAD_LOCATION in the .env file
       - ${UPLOAD_LOCATION}:/usr/src/app/upload
@@ -62,9 +63,10 @@ services:
     # For hardware acceleration, add one of -[armnn, cuda, rocm, openvino, rknn] to the image tag.
     # Example tag: ${IMMICH_VERSION:-release}-cuda
     image: ghcr.io/immich-app/immich-machine-learning:${IMMICH_VERSION:-release}
-    extends:
-      file: hwaccel.ml.yml
-      service: openvino # set to one of [armnn, cuda, rocm, openvino, openvino-wsl, rknn] for accelerated inference
+    # No real GPU on this server (QEMU virtual VGA) — CPU-only ML inference
+    # extends:
+    #   file: hwaccel.ml.yml
+    #   service: openvino
     volumes:
       - model-cache:/cache
     env_file:
@@ -77,6 +79,9 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+    labels:
+      # Watchtower automatic update (keep ML in sync with server)
+      - "com.centurylinklabs.watchtower.enable=true"
     networks:
       lan:
 

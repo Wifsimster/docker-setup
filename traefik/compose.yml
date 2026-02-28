@@ -30,6 +30,9 @@ services:
             # HTTPS entrypoint
             - "--entrypoints.websecure.address=:443"
             - "--entrypoints.websecure.http.tls.certresolver=letsencrypt"
+            # Extended timeouts for large file uploads (Immich videos, etc.)
+            - "--entrypoints.websecure.transport.respondingTimeouts.readTimeout=600s"
+            - "--entrypoints.websecure.transport.respondingTimeouts.writeTimeout=600s"
             # TLS domains are automatically discovered from service labels
             # - "--entrypoints.websecure.http.tls.domains[0].main=${DOMAIN}"
             # - "--entrypoints.websecure.http.tls.domains[0].sans=*.${DOMAIN}"
