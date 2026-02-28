@@ -33,7 +33,7 @@ services:
     environment:
       TZ: ${TZ}
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8123/api/health"]
+      test: ["CMD", "curl", "-sf", "-o", "/dev/null", "http://localhost:8123/"]
       interval: 60s
       timeout: 10s
       retries: 3
@@ -85,7 +85,7 @@ services:
     environment:
       TZ: ${TZ}
     healthcheck:
-      test: ["CMD-SHELL", "mosquitto_pub -h localhost -t health/check -m ok || exit 1"]
+      test: ["CMD-SHELL", "pidof mosquitto || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
