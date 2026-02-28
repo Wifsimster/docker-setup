@@ -7,6 +7,8 @@
 !**/compose.yml
 !**/hwaccel.*.yml
 !CLAUDE.md
+!pg-backup/backup.sh
+!pg-backup/crontab
 
 # Explicitly exclude homepage config containing secrets
 homepage/config/services.yaml

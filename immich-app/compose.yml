@@ -72,6 +72,11 @@ services:
     env_file:
       - .env
     restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 6G
+          cpus: "4.0"
     healthcheck:
       disable: false
     logging:

@@ -47,10 +47,13 @@ docker-setup/
 ├── copro-pilot/compose.yml    # Co-ownership app (+ Postgres)
 ├── the-box/compose.yml        # Game management app (+ Postgres, Redis)
 ├── techney/compose.yml        # Tech documentation site
-└── unifi/compose.yml          # Network controller
+├── unifi/compose.yml          # Network controller
+└── pg-backup/                 # Daily PostgreSQL backups
+    ├── compose.yml            # postgres:16-alpine + crond
+    ├── backup.sh              # Dump script (5 databases, 7-day retention)
+    ├── crontab                # Schedule: daily at 03:00
+    └── .env                   # DB credentials (gitignored)
 ```
-
-Legacy directories exist for services now consolidated into the multimedia stack: `bazarr/`, `lidarr/`, `sonarr/`, `prowlarr/`, `overseerr/` — these contain older standalone compose files.
 
 ## Key Conventions
 

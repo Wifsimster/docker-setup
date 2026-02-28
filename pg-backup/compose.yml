@@ -1,0 +1,26 @@
+name: pg-backup
+
+services:
+  pg-backup:
+    container_name: pg-backup
+    image: postgres:16-alpine
+    restart: unless-stopped
+    env_file:
+      - .env
+    entrypoint: crond -f -l 2
+    volumes:
+      - ./backups:/backups
+      - ./backup.sh:/backup.sh:ro
+      - ./crontab:/var/spool/cron/crontabs/root:ro
+    labels:
+      - "traefik.enable=false"
+
+      # Watchtower automatic update
+      - "com.centurylinklabs.watchtower.enable=true"
+
+    networks:
+      lan:
+
+networks:
+  lan:
+    external: true

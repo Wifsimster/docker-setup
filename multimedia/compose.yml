@@ -139,6 +139,11 @@ services:
       timeout: 30s
       retries: 3
       start_period: 120s
+    deploy:
+      resources:
+        limits:
+          memory: 12G
+          cpus: "8.0"
     labels:
       # Watchtower automatic update
       - "com.centurylinklabs.watchtower.enable=true"

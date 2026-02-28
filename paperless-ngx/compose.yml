@@ -107,6 +107,11 @@ services:
       - PAPERLESS_TIKA_ENDPOINT=http://paperless-tika:9998
       - PAPERLESS_TASK_WORKERS=2
       - PAPERLESS_WEBSERVER_WORKERS=2
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          cpus: "4.0"
     labels:
       - "traefik.enable=true"
 
