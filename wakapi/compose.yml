@@ -5,6 +5,8 @@ services:
     image: ghcr.io/muety/wakapi:latest
     container_name: wakapi
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
     deploy:
       resources:
         limits:

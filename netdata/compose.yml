@@ -19,6 +19,7 @@ services:
       - SYS_ADMIN
     security_opt:
       - apparmor:unconfined
+      - no-new-privileges:true
     volumes:
       - netdataconfig:/etc/netdata
       - netdatalib:/var/lib/netdata

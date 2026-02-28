@@ -4,6 +4,8 @@ services:
   backend:
     container_name: infisical-backend
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
     depends_on:
       db:
         condition: service_healthy
@@ -25,6 +27,7 @@ services:
       - NODE_ENV=production
     networks:
       - lan
+      - backend
     labels:
       - "traefik.enable=true"
 
@@ -44,6 +47,8 @@ services:
     image: redis:7-alpine
     container_name: infisical-redis
     restart: always
+    security_opt:
+      - no-new-privileges:true
     deploy:
       resources:
         limits:
@@ -54,7 +59,7 @@ services:
         max-size: "10m"
         max-file: "3"
     networks:
-      - lan
+      - backend
     volumes:
       - redis_data:/data
     healthcheck:
@@ -67,6 +72,8 @@ services:
     container_name: infisical-db
     image: postgres:14-alpine
     restart: always
+    security_opt:
+      - no-new-privileges:true
     deploy:
       resources:
         limits:
@@ -81,6 +88,7 @@ services:
       - pg_data:/var/lib/postgresql/data
     networks:
       - lan
+      - backend
     healthcheck:
       test: "pg_isready --username=${POSTGRES_USER} && psql --username=${POSTGRES_USER} --list"
       interval: 5s
@@ -96,3 +104,5 @@ volumes:
 networks:
   lan:
     external: true
+  backend:
+    internal: true

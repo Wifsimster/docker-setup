@@ -5,6 +5,8 @@ services:
     image: wifsimster/techney:latest
     container_name: techney
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
     deploy:
       resources:
         limits:

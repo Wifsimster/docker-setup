@@ -5,6 +5,8 @@ services:
     image: wifsimster/resume:latest
     container_name: resume
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
     deploy:
       resources:
         limits:

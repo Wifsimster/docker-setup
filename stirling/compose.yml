@@ -4,6 +4,8 @@ services:
   stirling-pdf:
     container_name: stirling-pdf
     image: docker.stirlingpdf.com/stirlingtools/stirling-pdf:latest
+    security_opt:
+      - no-new-privileges:true
     deploy:
       resources:
         limits:

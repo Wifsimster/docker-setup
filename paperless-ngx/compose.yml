@@ -5,6 +5,8 @@ services:
     container_name: paperless-db
     image: postgres:16-alpine
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
     deploy:
       resources:
         limits:
@@ -27,11 +29,14 @@ services:
       retries: 5
     networks:
       - lan
+      - backend
 
   redis:
     container_name: paperless-redis
     image: redis:7-alpine
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
     deploy:
       resources:
         limits:
@@ -50,12 +55,14 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - lan
+      - backend
 
   gotenberg:
     container_name: paperless-gotenberg
     image: gotenberg/gotenberg:8
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
     deploy:
       resources:
         limits:
@@ -76,12 +83,14 @@ services:
       timeout: 10s
       retries: 5
     networks:
-      - lan
+      - backend
 
   tika:
     container_name: paperless-tika
     image: apache/tika:latest
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
     deploy:
       resources:
         limits:
@@ -92,11 +101,13 @@ services:
         max-size: "10m"
         max-file: "3"
     networks:
-      - lan
+      - backend
 
   protonmail-bridge:
     container_name: protonmail-bridge
     image: shenxn/protonmail-bridge:latest
+    security_opt:
+      - no-new-privileges:true
     deploy:
       resources:
         limits:
@@ -113,12 +124,14 @@ services:
     volumes:
       - proton_bridge_data:/root
     networks:
-      - lan
+      - backend
 
   webserver:
     container_name: paperless-webserver
     image: ghcr.io/paperless-ngx/paperless-ngx:latest
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
     depends_on:
       db:
         condition: service_healthy
@@ -179,6 +192,7 @@ services:
 
     networks:
       - lan
+      - backend
 
 volumes:
   pg_data:
@@ -199,4 +213,6 @@ volumes:
 networks:
   lan:
     external: true
+  backend:
+    internal: true
 

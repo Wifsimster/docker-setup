@@ -5,6 +5,8 @@ services:
     image: containrrr/watchtower
     container_name: watchtower
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
     environment:
       - TZ=Europe/Paris
       - DOCKER_API_VERSION=1.44

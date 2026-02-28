@@ -5,6 +5,8 @@ services:
     image: redis:7-alpine
     container_name: grampsweb-redis
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
     deploy:
       resources:
         limits:
@@ -22,12 +24,14 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - lan
+      backend:
 
   grampsweb:
     image: ghcr.io/gramps-project/grampsweb:latest
     container_name: grampsweb
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
     deploy:
       resources:
         limits:
@@ -76,12 +80,15 @@ services:
       - "com.centurylinklabs.watchtower.enable=true"
 
     networks:
-      - lan
+      lan:
+      backend:
 
   grampsweb_celery:
     image: ghcr.io/gramps-project/grampsweb:latest
     container_name: grampsweb-celery
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
     deploy:
       resources:
         limits:
@@ -110,7 +117,7 @@ services:
       - ./media:/app/media
       - ./tmp:/tmp
     networks:
-      - lan
+      backend:
 
 volumes:
   gramps_redis_data:
@@ -119,3 +126,5 @@ volumes:
 networks:
   lan:
     external: true
+  backend:
+    internal: true

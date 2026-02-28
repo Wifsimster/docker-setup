@@ -5,6 +5,8 @@ services:
     image: wifsimster/copro-pilot:latest
     container_name: copro-pilot
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
     deploy:
       resources:
         limits:
@@ -48,11 +50,14 @@ services:
 
     networks:
       lan:
+      backend:
 
   postgres:
     image: postgres:16-alpine
     container_name: copro-pilot-postgres
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
     deploy:
       resources:
         limits:
@@ -72,6 +77,7 @@ services:
       - postgres-data:/var/lib/postgresql/data
     networks:
       lan:
+      backend:
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
       interval: 5s
@@ -85,3 +91,5 @@ volumes:
 networks:
   lan:
     external: true
+  backend:
+    internal: true

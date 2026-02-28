@@ -5,6 +5,8 @@ services:
     image: wifsimster/birthday-invitation:latest
     container_name: birthday-invitation
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
     deploy:
       resources:
         limits:

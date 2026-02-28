@@ -258,13 +258,37 @@ Le service **pg-backup** exécute un dump quotidien à 3h00 des 5 bases PostgreS
 
 ## Feuille de route
 
+### Priorité haute
+
 - **Stockage NAS unifié** — Consolider les montages NFS en un seul partage pour activer les hardlinks et les déplacements instantanés de fichiers
+- **Sauvegardes off-site** — Répliquer les dumps PostgreSQL et les volumes critiques vers un stockage distant (S3, Backblaze B2, ou second NAS)
+- **Restauration testée** — Mettre en place un test de restauration périodique (mensuel) pour valider l'intégrité des sauvegardes
+
+### Priorité moyenne
+
+- **Secrets centralisés** — Migrer les `.env` manuels vers Infisical pour une gestion centralisée des secrets avec rotation automatique
+- **Monitoring des certificats TLS** — Ajouter une sonde Uptime Kuma pour alerter avant l'expiration des certificats Let's Encrypt
+- **Sauvegardes Redis** — Ajouter les instances Redis critiques (Immich, Paperless) au plan de sauvegarde
+
+### Priorité basse
+
+- **Images versionnées** — Remplacer `:latest` par des tags versionnés sur les services critiques (Vaultwarden, Paperless, Immich) pour des mises à jour contrôlées
+- **Read-only rootfs** — Ajouter `read_only: true` aux conteneurs stateless compatibles pour renforcer la sécurité
+- ~~**Documentation DR**~~ — Rédiger un runbook de reprise après sinistre avec les procédures de restauration étape par étape
 
 ### Terminé
 
 - ~~**Rate limiting Vaultwarden**~~ — Middleware Traefik anti brute-force (20 req/min, burst 50)
 - ~~**Uptime Kuma**~~ — Surveillance de disponibilité des services (`uptime.example.com`)
 - ~~**Alertes Netdata → Discord**~~ — Notifications Discord sur les alertes système
+- ~~**Healthchecks universels**~~ — Ajout de healthchecks à tous les services (Watchtower, Homepage, Dozzle, Techney)
+- ~~**Limites mémoire**~~ — Limites `deploy.resources.limits.memory` sur les 27 services (128M–12G)
+- ~~**Rotation des logs**~~ — Driver `json-file` avec `max-size: 10m` et `max-file: 3` sur tous les services
+- ~~**Domaine variable**~~ — Remplacement des domaines en dur par `${DOMAIN}` sur 20+ services
+- ~~**Nettoyage labels Traefik**~~ — Suppression des labels TLS et `docker.network` redondants
+- ~~**Sécurité conteneurs**~~ — `security_opt: no-new-privileges:true` sur tous les services compatibles
+- ~~**Isolation réseau**~~ — Réseaux internes `backend` pour isoler les bases de données du réseau externe
+- ~~**Alertes backup Discord**~~ — Notification Discord en cas d'échec du backup PostgreSQL
 
 ## Documentation complémentaire
 
@@ -275,5 +299,6 @@ Le service **pg-backup** exécute un dump quotidien à 3h00 des 5 bases PostgreS
 | [Stockage NFS](docs/stockage-nfs.md) | Architecture de stockage, montages Unraid et limitations hardlinks |
 | [Ajout d'un service](docs/ajout-service.md) | Guide pas à pas pour ajouter un nouveau service à la plateforme |
 | [Bases de données](docs/bases-de-donnees.md) | Configuration PostgreSQL et Redis/Valkey, healthchecks et persistance |
+| [Reprise après sinistre](docs/reprise-sinistre.md) | Runbook de restauration complète de l'infrastructure |
 | [CLAUDE.md](CLAUDE.md) | Guide pour les assistants IA travaillant sur ce dépôt |
 | [AGENT.md](AGENT.md) | Guide pour les agents IA autonomes |

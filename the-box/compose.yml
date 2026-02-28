@@ -5,6 +5,8 @@ services:
     image: wifsimster/the-box:latest
     container_name: the-box
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
     deploy:
       resources:
         limits:
@@ -71,11 +73,14 @@ services:
 
     networks:
       lan:
+      backend:
 
   redis:
     image: redis:7-alpine
     container_name: the-box-redis
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
     deploy:
       resources:
         limits:
@@ -88,7 +93,7 @@ services:
     volumes:
       - redis-data:/data
     networks:
-      lan:
+      backend:
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -99,6 +104,8 @@ services:
     image: postgres:16-alpine
     container_name: the-box-postgres
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
     deploy:
       resources:
         limits:
@@ -116,13 +123,14 @@ services:
       - TZ=Europe/Paris
     volumes:
       - postgres-data:/var/lib/postgresql/data
-    networks:
-      lan:
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-thebox}"]
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      lan:
+      backend:
 
 volumes:
   uploads:
@@ -132,3 +140,5 @@ volumes:
 networks:
   lan:
     external: true
+  backend:
+    internal: true

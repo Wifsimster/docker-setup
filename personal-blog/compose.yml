@@ -5,6 +5,8 @@ services:
     image: wifsimster/wifsimster-blog:latest
     container_name: personal-blog
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
     deploy:
       resources:
         limits:

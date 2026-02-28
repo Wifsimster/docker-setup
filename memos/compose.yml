@@ -5,6 +5,8 @@ services:
     image: neosmemo/memos:stable
     container_name: memos
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
     deploy:
       resources:
         limits:

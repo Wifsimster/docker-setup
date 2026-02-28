@@ -5,6 +5,8 @@ services:
     container_name: dozzle
     image: amir20/dozzle:latest
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
     deploy:
       resources:
         limits:

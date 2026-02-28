@@ -5,6 +5,8 @@ services:
     container_name: pg-backup
     image: postgres:16-alpine
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
     deploy:
       resources:
         limits:
