@@ -7,3 +7,6 @@
 !**/compose.yml
 !**/hwaccel.*.yml
 !CLAUDE.md
+
+# Explicitly exclude homepage config containing secrets
+homepage/config/services.yaml
