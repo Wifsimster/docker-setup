@@ -260,6 +260,12 @@ Le service **pg-backup** exécute un dump quotidien à 3h00 des 5 bases PostgreS
 
 - **Stockage NAS unifié** — Consolider les montages NFS en un seul partage pour activer les hardlinks et les déplacements instantanés de fichiers
 
+### Terminé
+
+- ~~**Rate limiting Vaultwarden**~~ — Middleware Traefik anti brute-force (20 req/min, burst 50)
+- ~~**Uptime Kuma**~~ — Surveillance de disponibilité des services (`uptime.battistella.ovh`)
+- ~~**Alertes Netdata → Discord**~~ — Notifications Discord sur les alertes système
+
 ## Documentation complémentaire
 
 | Document | Description |
