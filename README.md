@@ -173,6 +173,12 @@ Applications personnalisées développées sur mesure.
 | **Infisical** | Gestion des secrets et variables d'environnement | `infisical.battistella.ovh` |
 | **Pi-hole** | Blocage publicitaire DNS sur tout le réseau | `pihole.battistella.ovh` |
 
+### Gestion des secrets
+
+Les clés API, mots de passe et tokens ne sont **jamais commités** dans le dépôt. Chaque service utilise un fichier `.env` co-localisé avec son `compose.yml` (automatiquement ignoré par le `.gitignore`).
+
+**Homepage** utilise la substitution d'environnement native : les secrets sont stockés dans `homepage/.env` sous forme de variables `HOMEPAGE_VAR_*`, puis référencés dans `homepage/config/services.yaml` via la syntaxe `{{HOMEPAGE_VAR_*}}`. Le fichier `services.yaml` est lui aussi exclu du suivi git.
+
 ## Opérations et supervision
 
 ```mermaid
