@@ -14,7 +14,7 @@ Self-hosted Docker infrastructure for a personal home server (Debian). ~30 servi
 docker-setup/
 ├── CLAUDE.md                  # This file
 ├── README.md                  # Infrastructure documentation
-├── .gitignore                 # Tracks only compose.yml, hwaccel.*.yml, and homepage config
+├── .gitignore                 # Tracks only compose.yml, hwaccel.*.yml, and CLAUDE.md
 ├── traefik/compose.yml        # Core: reverse proxy, TLS, Let's Encrypt (OVH DNS)
 ├── multimedia/                # Unified media stack (single compose project)
 │   ├── compose.yml            # Plex, Sonarr, Radarr, Lidarr, Bazarr, Prowlarr,
@@ -28,7 +28,8 @@ docker-setup/
 ├── paperless-ngx/compose.yml  # Document management (+ Postgres, Redis, Gotenberg, Tika)
 ├── homepage/                  # Dashboard
 │   ├── compose.yml
-│   └── config/                # Dashboard widget configs (services.yaml, settings.yaml, etc.)
+│   ├── .env                   # API keys for widgets (HOMEPAGE_VAR_*, gitignored)
+│   └── config/                # Dashboard widget configs (services.yaml — gitignored, uses env substitution)
 ├── vaultwarden/compose.yml    # Password manager
 ├── infisical/compose.yml      # Secrets management (+ Postgres, Redis)
 ├── portainer/compose.yml      # Docker UI
@@ -132,7 +133,7 @@ The `.gitignore` uses an inverted pattern — it ignores everything, then whitel
 !**/hwaccel.*.yml
 ```
 
-The `homepage/config/` directory is also tracked (force-added). **Security note**: `homepage/config/services.yaml` contains API keys and widget credentials. Avoid adding more secrets to tracked files; use `.env` files instead.
+`homepage/config/services.yaml` is **not tracked** — it contains `{{HOMEPAGE_VAR_*}}` template variables that Homepage resolves from environment variables at runtime. The actual secrets live in `homepage/.env` (gitignored). The `env_file` directive in `homepage/compose.yml` injects them into the container.
 
 Runtime data, logs, certificates, `.env` files, and service-generated configs are all excluded.
 
@@ -174,4 +175,4 @@ Follow the pattern in `paperless-ngx/compose.yml` or `the-box/compose.yml`:
 - **Image tags**: Most services use `:latest`. The multimedia stack (LinuxServer images) and some others may pin specific versions.
 - **NFS storage**: Media paths (`/mnt/*`) are NFS mounts from Unraid. Hardlinks don't work across separate NFS shares (see README TODO).
 - **Domain**: The domain `battistella.ovh` is used throughout. Use `${DOMAIN}` variable where possible.
-- **Homepage config**: The `homepage/config/services.yaml` file contains widget API keys. Be cautious when modifying — do not expose additional secrets.
+- **Homepage config**: `homepage/config/services.yaml` is gitignored and uses `{{HOMEPAGE_VAR_*}}` env substitution for secrets. Add new API keys to `homepage/.env` as `HOMEPAGE_VAR_<NAME>=<value>`, then reference them in `services.yaml` as `{{HOMEPAGE_VAR_<NAME>}}`.
