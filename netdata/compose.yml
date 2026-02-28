@@ -23,6 +23,7 @@ services:
       - /etc/os-release:/host/etc/os-release:ro
       - /var/log:/host/var/log:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./health_alarm_notify.conf:/etc/netdata/health_alarm_notify.conf:ro
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:19999/api/v1/info"]
       interval: 30s

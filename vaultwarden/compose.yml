@@ -38,6 +38,12 @@ services:
       # Service
       - "traefik.http.services.vaultwarden.loadBalancer.server.port=80"
 
+      # Rate limiting middleware
+      - "traefik.http.middlewares.vaultwarden-ratelimit.ratelimit.average=20"
+      - "traefik.http.middlewares.vaultwarden-ratelimit.ratelimit.burst=50"
+      - "traefik.http.middlewares.vaultwarden-ratelimit.ratelimit.period=1m"
+      - "traefik.http.routers.vaultwarden.middlewares=vaultwarden-ratelimit@docker"
+
       # Watchtower automatic update
       - "com.centurylinklabs.watchtower.enable=true"
 

@@ -1,0 +1,36 @@
+name: uptime-kuma
+
+services:
+  uptime-kuma:
+    image: louislam/uptime-kuma:latest
+    container_name: uptime-kuma
+    restart: unless-stopped
+    volumes:
+      - ./data:/app/data
+    healthcheck:
+      test: ["CMD-SHELL", "extra/healthcheck"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    labels:
+      - "traefik.enable=true"
+
+      # Entrypoint
+      - "traefik.http.routers.uptime-kuma.entrypoints=websecure"
+
+      # Router
+      - "traefik.http.routers.uptime-kuma.rule=Host(`uptime.battistella.ovh`)"
+
+      # Service
+      - "traefik.http.services.uptime-kuma.loadBalancer.server.port=3001"
+
+      # Watchtower automatic update
+      - "com.centurylinklabs.watchtower.enable=true"
+
+    networks:
+      lan:
+
+networks:
+  lan:
+    external: true
