@@ -42,6 +42,7 @@
                 {
                   "type": "tile",
                   "entity": "script.activation_porte_atelier",
+                  "name": "Porte atelier",
                   "color": "yellow",
                   "show_entity_picture": false,
                   "features_position": "bottom",
@@ -91,6 +92,7 @@
                 {
                   "type": "tile",
                   "entity": "camera.sonnerie_mediaprofile_channel1_mainstream",
+                  "name": "Sonnette",
                   "show_entity_picture": true,
                   "features_position": "bottom",
                   "vertical": false,
@@ -102,6 +104,7 @@
                 {
                   "type": "tile",
                   "entity": "camera.camera_allee_medium_resolution_channel",
+                  "name": "Allée",
                   "show_entity_picture": true,
                   "features_position": "bottom",
                   "vertical": false
@@ -109,11 +112,13 @@
                 {
                   "type": "tile",
                   "entity": "camera.camera_portail_medium_resolution_channel",
+                  "name": "Portail",
                   "show_entity_picture": true
                 },
                 {
                   "type": "tile",
                   "entity": "camera.g5_bullet_high_resolution_channel",
+                  "name": "Jardin",
                   "show_entity_picture": true,
                   "features_position": "bottom",
                   "vertical": false
@@ -248,6 +253,7 @@
                 {
                   "type": "tile",
                   "entity": "script.office_fan_light",
+                  "name": "Lumière ventilateur",
                   "color": "yellow",
                   "show_entity_picture": false,
                   "layout_options": {
@@ -258,6 +264,7 @@
                 {
                   "type": "tile",
                   "entity": "script.desktop_light_power",
+                  "name": "Lumière bureau",
                   "color": "yellow",
                   "show_entity_picture": false,
                   "layout_options": {
@@ -268,6 +275,7 @@
                 {
                   "type": "tile",
                   "entity": "script.office_fan_power",
+                  "name": "Ventilateur",
                   "color": "yellow",
                   "show_entity_picture": false,
                   "layout_options": {
@@ -550,15 +558,18 @@
                 },
                 {
                   "type": "tile",
-                  "entity": "select.chauffage_fil_pilote_mode_du_fil_pilote"
+                  "entity": "select.chauffage_fil_pilote_mode_du_fil_pilote",
+                  "name": "Mode"
                 },
                 {
                   "type": "tile",
-                  "entity": "sensor.chauffage_fil_pilote_consommation"
+                  "entity": "sensor.chauffage_fil_pilote_consommation",
+                  "name": "Consommation"
                 },
                 {
                   "type": "tile",
-                  "entity": "sensor.chauffage_fil_pilote_demande_instantanee"
+                  "entity": "sensor.chauffage_fil_pilote_demande_instantanee",
+                  "name": "Puissance instantanée"
                 },
                 {
                   "type": "sensor",
