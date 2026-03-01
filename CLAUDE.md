@@ -34,7 +34,7 @@ docker-setup/
 ├── infisical/compose.yml      # Secrets management (+ Postgres, Redis)
 ├── portainer/compose.yml      # Docker UI
 ├── dozzle/compose.yml         # Docker log viewer
-├── netdata/compose.yml        # System monitoring (+ Discord alerting)
+├── beszel/compose.yml         # System monitoring — Beszel hub + agent (+ Discord alerting)
 ├── uptime-kuma/compose.yml    # Uptime monitoring
 ├── watchtower/compose.yml     # Auto-updates (daily at 06:00)
 ├── pihole/compose.yml         # DNS ad-blocking

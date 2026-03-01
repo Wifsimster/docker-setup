@@ -188,20 +188,20 @@ graph LR
     Watchtower -->|Notifications| Discord([Discord])
     Portainer -->|Gestion des conteneurs| Services
     Dozzle -->|Logs en direct| Services
-    Netdata -->|Métriques système| Serveur([Santé du serveur])
-    Netdata -->|Alertes| Discord
+    Beszel -->|Métriques système| Serveur([Santé du serveur])
+    Beszel -->|Alertes| Discord
     UptimeKuma[Uptime Kuma] -->|Surveillance disponibilité| Services
     PgBackup[pg-backup] -->|Dump quotidien 3h| DB[(PostgreSQL x5)]
 ```
 
-Homepage offre un tableau de bord centralisé de tous les services. Watchtower met à jour automatiquement les conteneurs chaque jour à 6h00 et notifie via Discord. Portainer et Dozzle permettent la gestion et le suivi des logs des conteneurs. Netdata surveille les performances du serveur et envoie des alertes via Discord. Uptime Kuma assure la surveillance de disponibilité de tous les services. pg-backup sauvegarde quotidiennement les 5 bases PostgreSQL (Paperless, Immich, The-box, Copro-Pilot, Infisical) avec une rétention de 7 jours.
+Homepage offre un tableau de bord centralisé de tous les services. Watchtower met à jour automatiquement les conteneurs chaque jour à 6h00 et notifie via Discord. Portainer et Dozzle permettent la gestion et le suivi des logs des conteneurs. Beszel surveille les performances du serveur et envoie des alertes via Discord. Uptime Kuma assure la surveillance de disponibilité de tous les services. pg-backup sauvegarde quotidiennement les 5 bases PostgreSQL (Paperless, Immich, The-box, Copro-Pilot, Infisical) avec une rétention de 7 jours.
 
 | Service | Fonction | URL |
 |---|---|---|
 | **Homepage** | Tableau de bord centralisé | `homepage.example.com` |
 | **Portainer** | Interface de gestion Docker | `portainer.example.com` |
 | **Dozzle** | Visualiseur de logs en temps réel | `dozzle.example.com` |
-| **Netdata** | Supervision des performances serveur (alertes Discord) | `netdata.example.com` |
+| **Beszel** | Supervision des performances serveur (alertes Discord) | `beszel.example.com` |
 | **Uptime Kuma** | Surveillance de disponibilité des services | `uptime.example.com` |
 | **Watchtower** | Mises à jour automatiques quotidiennes (alertes Discord) | _arrière-plan_ |
 | **pg-backup** | Sauvegarde quotidienne des 5 bases PostgreSQL (rétention 7j) | _arrière-plan_ |
@@ -234,7 +234,7 @@ Le déploiement se fait manuellement via `docker compose up -d` dans le réperto
 - **Bases de données :** PostgreSQL 16, Redis / Valkey
 - **Sauvegarde :** pg-backup — dump quotidien des 5 bases PostgreSQL à 3h00, rétention 7 jours
 - **Stockage :** NAS Unraid via NFS
-- **Supervision :** Netdata (alertes Discord), Uptime Kuma, Dozzle, Portainer, Homepage
+- **Supervision :** Beszel (alertes Discord), Uptime Kuma, Dozzle, Portainer, Homepage
 - **Limites de ressources :** Plex (12 Go / 8 CPU), Immich ML (6 Go / 4 CPU), Paperless (4 Go / 4 CPU)
 - **Domaine :** `example.com` (sous-domaines par service)
 
@@ -279,7 +279,7 @@ Le service **pg-backup** exécute un dump quotidien à 3h00 des 5 bases PostgreS
 
 - ~~**Rate limiting Vaultwarden**~~ — Middleware Traefik anti brute-force (20 req/min, burst 50)
 - ~~**Uptime Kuma**~~ — Surveillance de disponibilité des services (`uptime.example.com`)
-- ~~**Alertes Netdata → Discord**~~ — Notifications Discord sur les alertes système
+- ~~**Alertes Beszel → Discord**~~ — Notifications Discord sur les alertes système (migration Netdata → Beszel)
 - ~~**Healthchecks universels**~~ — Ajout de healthchecks à tous les services (Watchtower, Homepage, Dozzle, Techney)
 - ~~**Limites mémoire**~~ — Limites `deploy.resources.limits.memory` sur les 27 services (128M–12G)
 - ~~**Rotation des logs**~~ — Driver `json-file` avec `max-size: 10m` et `max-file: 3` sur tous les services

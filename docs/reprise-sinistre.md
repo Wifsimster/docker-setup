@@ -52,7 +52,7 @@ cd /opt/docker/traefik && docker compose up -d
 cd /opt/docker/pihole && docker compose up -d
 
 # 3. Monitoring (pour surveiller la restauration)
-cd /opt/docker/netdata && docker compose up -d
+cd /opt/docker/beszel && docker compose up -d
 cd /opt/docker/uptime-kuma && docker compose up -d
 cd /opt/docker/dozzle && docker compose up -d
 ```
@@ -149,7 +149,7 @@ Vérifier que chaque service répond via Traefik :
 # Liste des sous-domaines à tester
 for sub in paperless immich the-box copro-pilot infisical \
            gramps memos wakapi plex sonarr radarr homepage \
-           vaultwarden dozzle portainer netdata uptime stirling; do
+           vaultwarden dozzle portainer beszel uptime stirling; do
   STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://${sub}.${DOMAIN}")
   echo "${sub}: ${STATUS}"
 done
@@ -194,4 +194,4 @@ Les éléments suivants ne sont **pas** couverts par les sauvegardes automatique
 
 - **Alertes Discord** : Les échecs de backup sont notifiés automatiquement via webhook
 - **Uptime Kuma** : Surveillance de disponibilité avec alertes configurées
-- **Netdata** : Alertes système (CPU, RAM, disque) vers Discord
+- **Beszel** : Alertes système (CPU, RAM, disque) vers Discord
