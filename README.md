@@ -85,6 +85,31 @@ graph TB
 | 🔌 **Mosquitto** | Broker MQTT | _interne_ |
 | 🔗 **Matter Server** | Protocole Matter | _interne_ |
 
+### 📋 Dashboards Home Assistant
+
+| Dashboard | Description |
+|---|---|
+| 🏠 **My Home** | Vue d'ensemble — badges température, humidité et batterie |
+| 🗺️ **Map** | Carte de localisation |
+| 📊 **Aperçu** | Dashboard principal avec les vues par pièce |
+
+**Vues du dashboard Aperçu :**
+
+| Vue | Icône | Équipements principaux |
+|---|---|---|
+| 🌳 **Extérieur** | `mdi:pine-tree-variant` | Éclairage, pompe piscine, portail, volet, caméras |
+| 🛋️ **Salon** | `mdi:sofa` | Yeelight x2, lumière TV, lumière meuble, volets Tasmota, thermostat, température |
+| 💻 **Bureau** | `mdi:monitor` | Ventilateur, éclairage bureau, monitoring baie informatique, température |
+| 🛏️ **Chambre parentale** | `mdi:bed-king` | Yeelight, thermostat, température |
+| 🛏️ **Chambre Léo** | `mdi:bed` | Yeelight, thermostat, température |
+| 🛏️ **Chambre Anna** | `mdi:bed` | Thermostat, température |
+| 🚿 **Salle d'eau** | `mdi:shower-head` | Chauffage fil pilote, température |
+| 🛁 **Salle de bain** | `mdi:shower` | Thermostat, température |
+| 🧹 **Cellier** | `mdi:hanger` | Température |
+| 🍳 **Cuisine** | `mdi:fridge` | Thermostat, température |
+| 🚽 **WC** | `mdi:toilet` | Thermostat, température |
+| 🚪 **Couloir** | `mdi:coat-rack` | Yeelight Mono x2 |
+
 ---
 
 ## 📸 Photos & Documents
