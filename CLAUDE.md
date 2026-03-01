@@ -47,7 +47,6 @@ docker-setup/
 ├── birthday-invitation/compose.yml
 ├── copro-pilot/compose.yml    # Co-ownership app (+ Postgres)
 ├── the-box/compose.yml        # Game management app (+ Postgres, Redis)
-├── techney/compose.yml        # Tech documentation site
 ├── unifi/compose.yml          # Network controller
 └── pg-backup/                 # Daily PostgreSQL backups
     ├── compose.yml            # postgres:16-alpine + crond

@@ -154,7 +154,6 @@ Applications personnalisées développées sur mesure.
 | **CV en ligne** | Curriculum vitae interactif | `cv.example.com` |
 | **Copro-Pilot** | Gestion de copropriété | `copro-pilot.example.com` |
 | **The Box** | Gestionnaire de collection de jeux | `the-box.example.com` |
-| **Techney** | Site de documentation technique | `techney.example.com` |
 | **Invitation anniversaire** | Invitations avec RSVP | `leo-birthday.example.com` |
 
 ## Outils de productivité
