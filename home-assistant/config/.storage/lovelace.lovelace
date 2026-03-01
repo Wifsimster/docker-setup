@@ -334,7 +334,7 @@
                   "entity": "sensor.thermometre_humidite",
                   "detail": 1,
                   "name": "Humidité"
-                },
+                }
               ],
               "column_span": 1
             },
