@@ -1,0 +1,36 @@
+{
+  "version": 1,
+  "minor_version": 1,
+  "key": "lovelace_dashboards",
+  "data": {
+    "items": [
+      {
+        "id": "map",
+        "icon": "mdi:map",
+        "title": "Map",
+        "url_path": "map",
+        "require_admin": false,
+        "mode": "storage",
+        "show_in_sidebar": true
+      },
+      {
+        "id": "my_home",
+        "show_in_sidebar": true,
+        "icon": "mdi:home",
+        "title": "My Home",
+        "require_admin": false,
+        "mode": "storage",
+        "url_path": "my-home"
+      },
+      {
+        "id": "lovelace",
+        "icon": "mdi:view-dashboard",
+        "title": "Aperçu",
+        "url_path": "lovelace",
+        "show_in_sidebar": true,
+        "mode": "storage",
+        "require_admin": false
+      }
+    ]
+  }
+}

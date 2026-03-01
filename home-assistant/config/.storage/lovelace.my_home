@@ -1,0 +1,56 @@
+{
+  "version": 1,
+  "minor_version": 1,
+  "key": "lovelace.my_home",
+  "data": {
+    "config": {
+      "views": [
+        {
+          "title": "Home",
+          "badges": [
+            {
+              "type": "entity",
+              "entity": "sensor.sonoff_snzb_02d_temperature"
+            },
+            {
+              "type": "entity",
+              "entity": "sensor.sonoff_snzb_02d_humidite"
+            },
+            {
+              "type": "entity",
+              "entity": "sensor.sonoff_snzb_02d_humidite_2"
+            },
+            {
+              "type": "entity",
+              "entity": "sensor.sonoff_snzb_02d_humidite_3"
+            },
+            {
+              "type": "entity",
+              "entity": "sensor.sonoff_snzb_02d_temperature"
+            },
+            {
+              "type": "entity",
+              "entity": "sensor.sonoff_snzb_02d_temperature_2"
+            },
+            {
+              "type": "entity",
+              "entity": "sensor.sonoff_snzb_02d_temperature_3"
+            },
+            {
+              "type": "entity",
+              "entity": "sensor.sonoff_snzb_02d_batterie"
+            },
+            {
+              "type": "entity",
+              "entity": "sensor.sonoff_snzb_02d_batterie_2"
+            },
+            {
+              "type": "entity",
+              "entity": "sensor.sonoff_snzb_02d_batterie_3"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

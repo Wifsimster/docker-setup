@@ -1,0 +1,763 @@
+{
+  "version": 1,
+  "minor_version": 1,
+  "key": "lovelace.lovelace",
+  "data": {
+    "config": {
+      "views": [
+        {
+          "title": "Extérieur",
+          "path": "exterieur",
+          "icon": "mdi:pine-tree-variant",
+          "type": "sections",
+          "sections": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "type": "heading",
+                  "heading": "Extérieur"
+                },
+                {
+                  "type": "tile",
+                  "entity": "light.eclairage_exterieur",
+                  "icon": "mdi:light-flood-down",
+                  "color": "yellow",
+                  "show_entity_picture": false,
+                  "layout_options": {
+                    "grid_columns": 2,
+                    "grid_rows": 1
+                  },
+                  "features_position": "bottom",
+                  "vertical": false
+                },
+                {
+                  "type": "tile",
+                  "entity": "switch.smart_plug_mini_10",
+                  "features_position": "bottom",
+                  "vertical": false,
+                  "icon": "mdi:pool",
+                  "name": "Pompe piscine "
+                },
+                {
+                  "type": "tile",
+                  "entity": "script.activation_porte_atelier",
+                  "icon": "",
+                  "color": "yellow",
+                  "show_entity_picture": false,
+                  "features_position": "bottom",
+                  "vertical": false,
+                  "grid_options": {
+                    "columns": 12,
+                    "rows": 1
+                  }
+                },
+                {
+                  "type": "entities",
+                  "entities": [
+                    {
+                      "entity": "switch.alimentation_portail",
+                      "name": "Alimentation",
+                      "secondary_info": "last-updated"
+                    },
+                    {
+                      "entity": "switch.ouverture_portail",
+                      "icon": "mdi:gate-open",
+                      "secondary_info": "last-updated",
+                      "name": "Ouverture"
+                    },
+                    {
+                      "entity": "switch.wifi_smart_switch",
+                      "icon": "mdi:gate",
+                      "secondary_info": "last-changed",
+                      "name": "Fermeture"
+                    }
+                  ],
+                  "title": "Portail"
+                },
+                {
+                  "graph": "line",
+                  "type": "sensor",
+                  "entity": "sensor.ewelink_snzb_02p_temperature_2",
+                  "detail": 1,
+                  "name": "Température"
+                },
+                {
+                  "graph": "line",
+                  "type": "sensor",
+                  "entity": "sensor.ewelink_snzb_02p_humidite_2",
+                  "detail": 1,
+                  "name": "Humidité"
+                },
+                {
+                  "type": "tile",
+                  "entity": "camera.sonnerie_mediaprofile_channel1_mainstream",
+                  "show_entity_picture": true,
+                  "features_position": "bottom",
+                  "vertical": false,
+                  "grid_options": {
+                    "columns": 6,
+                    "rows": 1
+                  }
+                },
+                {
+                  "type": "tile",
+                  "entity": "camera.camera_allee_medium_resolution_channel",
+                  "show_entity_picture": true,
+                  "features_position": "bottom",
+                  "vertical": false
+                },
+                {
+                  "type": "tile",
+                  "entity": "camera.camera_portail_medium_resolution_channel",
+                  "show_entity_picture": true
+                },
+                {
+                  "type": "tile",
+                  "entity": "camera.g5_bullet_high_resolution_channel",
+                  "show_entity_picture": true,
+                  "features_position": "bottom",
+                  "vertical": false
+                }
+              ],
+              "column_span": 1
+            }
+          ]
+        },
+        {
+          "title": "Salon",
+          "path": "salon",
+          "icon": "mdi:sofa",
+          "type": "sections",
+          "sections": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "type": "heading",
+                  "heading": "Salon"
+                },
+                {
+                  "type": "tile",
+                  "entity": "light.yeelight_color_0x4d2a413",
+                  "features": [
+                    {
+                      "type": "light-color-temp"
+                    }
+                  ]
+                },
+                {
+                  "type": "tile",
+                  "entity": "light.yeelight_color_0x52bf405",
+                  "features": [
+                    {
+                      "type": "light-color-temp"
+                    }
+                  ]
+                },
+                {
+                  "type": "entities",
+                  "entities": [
+                    {
+                      "entity": "switch.lumiere_tv",
+                      "icon": "mdi:floor-lamp-outline",
+                      "secondary_info": "last-updated"
+                    },
+                    {
+                      "entity": "switch.prise_radiateur_salon",
+                      "icon": "mdi:lamp",
+                      "name": "Lumière meuble",
+                      "secondary_info": "last-updated"
+                    }
+                  ]
+                },
+                {
+                  "type": "entities",
+                  "entities": [
+                    {
+                      "entity": "switch.tasmota_tasmota2",
+                      "secondary_info": "last-updated"
+                    },
+                    {
+                      "entity": "switch.tasmota",
+                      "secondary_info": "last-updated"
+                    }
+                  ]
+                },
+                {
+                  "type": "tile",
+                  "entity": "climate.thermostat_salon_thermostat_5",
+                  "show_entity_picture": false,
+                  "name": "Thermostat",
+                  "color": "primary",
+                  "features": [
+                    {
+                      "type": "target-temperature"
+                    }
+                  ],
+                  "layout_options": {
+                    "grid_columns": 4,
+                    "grid_rows": 2
+                  }
+                },
+                {
+                  "type": "sensor",
+                  "graph": "line",
+                  "entity": "sensor.thermometre_temperature_5",
+                  "detail": 1
+                },
+                {
+                  "type": "sensor",
+                  "graph": "line",
+                  "entity": "sensor.thermometre_humidite_5",
+                  "detail": 1
+                }
+              ],
+              "column_span": 1
+            }
+          ]
+        },
+        {
+          "title": "Bureau",
+          "path": "bureau",
+          "icon": "mdi:monitor",
+          "type": "sections",
+          "sections": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "type": "heading",
+                  "heading": "Bureau"
+                },
+                {
+                  "type": "tile",
+                  "entity": "script.office_fan_light",
+                  "icon": "",
+                  "color": "yellow",
+                  "show_entity_picture": false,
+                  "layout_options": {
+                    "grid_columns": 2,
+                    "grid_rows": 1
+                  }
+                },
+                {
+                  "type": "tile",
+                  "entity": "script.desktop_light_power",
+                  "icon": "",
+                  "color": "yellow",
+                  "show_entity_picture": false,
+                  "layout_options": {
+                    "grid_columns": 2,
+                    "grid_rows": 1
+                  }
+                },
+                {
+                  "type": "tile",
+                  "entity": "script.office_fan_power",
+                  "icon": "",
+                  "color": "yellow",
+                  "show_entity_picture": false,
+                  "layout_options": {
+                    "grid_columns": 4,
+                    "grid_rows": 1
+                  }
+                },
+                {
+                  "type": "sensor",
+                  "graph": "line",
+                  "entity": "sensor.thermometre_temperature",
+                  "detail": 1
+                },
+                {
+                  "type": "sensor",
+                  "graph": "line",
+                  "entity": "sensor.thermometre_humidite",
+                  "detail": 1
+                },
+                {
+                  "type": "heading",
+                  "icon": "mdi:server",
+                  "heading": "Baie informatique",
+                  "heading_style": "title",
+                  "badges": [
+                    {
+                      "type": "entity",
+                      "entity": "sensor.tasmota_energy_yesterday"
+                    }
+                  ]
+                },
+                {
+                  "graph": "line",
+                  "type": "sensor",
+                  "entity": "sensor.tasmota_energy_power",
+                  "detail": 1,
+                  "name": "Puissance",
+                  "layout_options": {
+                    "grid_columns": 2,
+                    "grid_rows": 2
+                  }
+                },
+                {
+                  "graph": "line",
+                  "type": "sensor",
+                  "entity": "sensor.tasmota_energy_yesterday",
+                  "detail": 1,
+                  "name": "Puissance 24h",
+                  "layout_options": {
+                    "grid_columns": 2,
+                    "grid_rows": 2
+                  },
+                  "hours_to_show": 168
+                },
+                {
+                  "graph": "line",
+                  "type": "sensor",
+                  "entity": "sensor.tasmota_energy_today",
+                  "layout_options": {
+                    "grid_columns": 4,
+                    "grid_rows": 1
+                  },
+                  "hours_to_show": 168,
+                  "detail": 1
+                },
+                {
+                  "type": "sensor",
+                  "entity": "sensor.ewelink_snzb_02p_temperature",
+                  "graph": "line"
+                },
+                {
+                  "type": "sensor",
+                  "entity": "sensor.ewelink_snzb_02p_humidite",
+                  "graph": "line"
+                }
+              ],
+              "column_span": 1
+            }
+          ]
+        },
+        {
+          "title": "Chambre parentale",
+          "path": "chambre-parentale",
+          "icon": "mdi:bed-king",
+          "type": "sections",
+          "sections": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "type": "heading",
+                  "heading": "Chambre parentale"
+                },
+                {
+                  "type": "tile",
+                  "entity": "light.yeelight_colora_0xeda9237",
+                  "name": "Lumière",
+                  "features": [
+                    {
+                      "type": "light-color-temp"
+                    }
+                  ],
+                  "layout_options": {
+                    "grid_columns": 4,
+                    "grid_rows": 2
+                  }
+                },
+                {
+                  "type": "tile",
+                  "layout_options": {
+                    "grid_columns": 4,
+                    "grid_rows": 2
+                  },
+                  "entity": "climate.thermostat_chambre_parentale_thermostat",
+                  "name": "Thermostat",
+                  "color": "primary",
+                  "show_entity_picture": false,
+                  "vertical": false,
+                  "features": [
+                    {
+                      "type": "target-temperature"
+                    }
+                  ],
+                  "features_position": "bottom"
+                },
+                {
+                  "type": "sensor",
+                  "graph": "line",
+                  "entity": "sensor.thermometre_temperature_3",
+                  "detail": 1
+                },
+                {
+                  "type": "sensor",
+                  "graph": "line",
+                  "entity": "sensor.thermometre_humidite_3",
+                  "detail": 1
+                }
+              ],
+              "column_span": 1
+            }
+          ]
+        },
+        {
+          "title": "Chambre Léo",
+          "path": "chambre-leo",
+          "icon": "mdi:bed",
+          "type": "sections",
+          "sections": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "type": "heading",
+                  "heading": "Chambre Léo"
+                },
+                {
+                  "type": "tile",
+                  "entity": "light.yeelight_color_0x52c3a36",
+                  "name": "Lumière",
+                  "features": [
+                    {
+                      "type": "light-color-temp"
+                    }
+                  ],
+                  "layout_options": {
+                    "grid_columns": 4,
+                    "grid_rows": 2
+                  }
+                },
+                {
+                  "type": "tile",
+                  "entity": "climate.sonoff_trvzb_thermostat_2",
+                  "show_entity_picture": false,
+                  "name": "Thermostat",
+                  "color": "primary",
+                  "features": [
+                    {
+                      "type": "target-temperature"
+                    }
+                  ],
+                  "layout_options": {
+                    "grid_columns": 4,
+                    "grid_rows": 2
+                  }
+                },
+                {
+                  "type": "sensor",
+                  "graph": "line",
+                  "entity": "sensor.sonoff_snzb_02d_temperature_3",
+                  "detail": 1
+                },
+                {
+                  "type": "sensor",
+                  "graph": "line",
+                  "entity": "sensor.sonoff_snzb_02d_humidite_3",
+                  "detail": 1
+                }
+              ],
+              "column_span": 1
+            }
+          ]
+        },
+        {
+          "type": "sections",
+          "max_columns": 4,
+          "title": "Chambre Anna",
+          "path": "chambre-anna",
+          "icon": "mdi:bed",
+          "sections": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "type": "heading",
+                  "heading": "Chambre Anna",
+                  "heading_style": "title"
+                },
+                {
+                  "type": "tile",
+                  "layout_options": {
+                    "grid_columns": 4,
+                    "grid_rows": 2
+                  },
+                  "entity": "climate.thermostat_thermostat",
+                  "name": "Thermostat",
+                  "color": "primary",
+                  "show_entity_picture": false,
+                  "vertical": false,
+                  "features": [
+                    {
+                      "type": "target-temperature"
+                    }
+                  ],
+                  "features_position": "bottom"
+                },
+                {
+                  "graph": "line",
+                  "type": "sensor",
+                  "entity": "sensor.thermometre_chambre_anna_temperature_5",
+                  "detail": 1,
+                  "name": "Température"
+                },
+                {
+                  "graph": "line",
+                  "type": "sensor",
+                  "detail": 1,
+                  "entity": "sensor.thermometre_chambre_anna_humidite_5",
+                  "name": "Humidité"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Salle d'eau",
+          "path": "salle-d-eau",
+          "icon": "mdi:shower-head",
+          "type": "sections",
+          "sections": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "type": "heading",
+                  "heading": "Salle d'eau"
+                },
+                {
+                  "type": "tile",
+                  "entity": "switch.chauffage_fil_pilote",
+                  "features_position": "bottom",
+                  "vertical": false,
+                  "name": "Chauffage",
+                  "icon": "mdi:radiator"
+                },
+                {
+                  "type": "tile",
+                  "entity": "select.chauffage_fil_pilote_mode_du_fil_pilote"
+                },
+                {
+                  "type": "tile",
+                  "entity": "sensor.chauffage_fil_pilote_consommation"
+                },
+                {
+                  "type": "tile",
+                  "entity": "sensor.chauffage_fil_pilote_demande_instantanee"
+                },
+                {
+                  "type": "sensor",
+                  "graph": "line",
+                  "entity": "sensor.sonoff_snzb_02d_temperature_2",
+                  "detail": 1
+                },
+                {
+                  "type": "sensor",
+                  "graph": "line",
+                  "entity": "sensor.sonoff_snzb_02d_humidite_2",
+                  "detail": 1
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Salle de bain",
+          "path": "salle-de-bain",
+          "icon": "mdi:shower",
+          "type": "sections",
+          "sections": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "type": "heading",
+                  "heading": "Salle de bain"
+                },
+                {
+                  "type": "tile",
+                  "entity": "climate.sonoff_trvzb_thermostat_3",
+                  "show_entity_picture": false,
+                  "name": "Thermostat",
+                  "color": "primary",
+                  "features": [
+                    {
+                      "type": "target-temperature"
+                    }
+                  ],
+                  "layout_options": {
+                    "grid_columns": 4,
+                    "grid_rows": 2
+                  }
+                },
+                {
+                  "type": "sensor",
+                  "graph": "line",
+                  "entity": "sensor.sonoff_snzb_02d_temperature",
+                  "detail": 1
+                },
+                {
+                  "type": "sensor",
+                  "graph": "line",
+                  "entity": "sensor.sonoff_snzb_02d_humidite",
+                  "detail": 1
+                }
+              ],
+              "column_span": 1
+            }
+          ]
+        },
+        {
+          "type": "sections",
+          "max_columns": 4,
+          "title": "Cellier",
+          "path": "cellier",
+          "icon": "mdi:hanger",
+          "sections": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "type": "heading",
+                  "heading": "Cellier",
+                  "heading_style": "title"
+                },
+                {
+                  "graph": "line",
+                  "type": "sensor",
+                  "entity": "sensor.sonoff_snzb_02d_temperature_5",
+                  "detail": 1,
+                  "name": "Température"
+                },
+                {
+                  "graph": "line",
+                  "type": "sensor",
+                  "entity": "sensor.sonoff_snzb_02d_humidite_5",
+                  "detail": 1,
+                  "name": "Humidité"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Cuisine",
+          "path": "cuisine",
+          "icon": "mdi:fridge",
+          "type": "sections",
+          "sections": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "type": "heading",
+                  "heading": "Cuisine",
+                  "heading_style": "title"
+                },
+                {
+                  "type": "tile",
+                  "entity": "climate.sonoff_trvzb_thermostat_4",
+                  "show_entity_picture": false,
+                  "name": "Thermostat",
+                  "color": "primary",
+                  "features": [
+                    {
+                      "type": "target-temperature"
+                    }
+                  ],
+                  "layout_options": {
+                    "grid_columns": 4,
+                    "grid_rows": 2
+                  }
+                },
+                {
+                  "type": "sensor",
+                  "graph": "line",
+                  "entity": "sensor.thermometre_temperature_2",
+                  "detail": 1
+                },
+                {
+                  "type": "sensor",
+                  "graph": "line",
+                  "entity": "sensor.thermometre_humidite_2",
+                  "detail": 1
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "WC",
+          "path": "wc",
+          "icon": "mdi:toilet",
+          "type": "sections",
+          "sections": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "type": "heading",
+                  "heading": "WC"
+                },
+                {
+                  "type": "tile",
+                  "entity": "climate.sonoff_trvzb_thermostat",
+                  "show_entity_picture": false,
+                  "name": "Thermostat",
+                  "color": "primary",
+                  "features": [
+                    {
+                      "type": "target-temperature"
+                    }
+                  ],
+                  "layout_options": {
+                    "grid_columns": 4,
+                    "grid_rows": 2
+                  }
+                },
+                {
+                  "graph": "line",
+                  "type": "sensor",
+                  "entity": "sensor.sonoff_snzb_02d_temperature_4",
+                  "detail": 1,
+                  "name": "Température"
+                },
+                {
+                  "graph": "line",
+                  "type": "sensor",
+                  "entity": "sensor.sonoff_snzb_02d_humidite_4",
+                  "detail": 1,
+                  "name": "Humidité"
+                }
+              ],
+              "column_span": 1
+            }
+          ]
+        },
+        {
+          "title": "Couloir",
+          "path": "couloir",
+          "icon": "mdi:coat-rack",
+          "type": "sections",
+          "sections": [
+            {
+              "type": "grid",
+              "cards": [
+                {
+                  "type": "heading",
+                  "heading": "Couloir"
+                },
+                {
+                  "type": "entities",
+                  "entities": [
+                    "light.yeelight_mono_0x335ff81",
+                    "light.yeelight_mono_0x33601d3"
+                  ],
+                  "title": "Couloir"
+                }
+              ],
+              "column_span": 1
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
