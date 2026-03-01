@@ -30,10 +30,6 @@
                   "icon": "mdi:light-flood-down",
                   "color": "yellow",
                   "show_entity_picture": false,
-                  "layout_options": {
-                    "grid_columns": 2,
-                    "grid_rows": 1
-                  },
                   "features_position": "bottom",
                   "vertical": false
                 },
@@ -54,7 +50,7 @@
                   "features_position": "bottom",
                   "vertical": false,
                   "grid_options": {
-                    "columns": 12,
+                    "columns": 6,
                     "rows": 1
                   }
                 },
@@ -64,6 +60,7 @@
                     {
                       "entity": "switch.alimentation_portail",
                       "name": "Alimentation",
+                      "icon": "mdi:power-plug",
                       "secondary_info": "last-updated"
                     },
                     {
@@ -101,11 +98,7 @@
                   "name": "Sonnette",
                   "show_entity_picture": true,
                   "features_position": "bottom",
-                  "vertical": false,
-                  "grid_options": {
-                    "columns": 6,
-                    "rows": 1
-                  }
+                  "vertical": false
                 },
                 {
                   "type": "tile",
@@ -119,7 +112,9 @@
                   "type": "tile",
                   "entity": "camera.camera_portail_medium_resolution_channel",
                   "name": "Portail",
-                  "show_entity_picture": true
+                  "show_entity_picture": true,
+                  "features_position": "bottom",
+                  "vertical": false
                 },
                 {
                   "type": "tile",
@@ -145,7 +140,7 @@
               "cards": [
                 {
                   "type": "heading",
-                  "heading": "Salon",
+                  "heading": "Salon / Salle à manger",
                   "badges": [
                     {
                       "type": "entity",
@@ -165,7 +160,11 @@
                     {
                       "type": "light-color-temp"
                     }
-                  ]
+                  ],
+                  "layout_options": {
+                    "grid_columns": 4,
+                    "grid_rows": 2
+                  }
                 },
                 {
                   "type": "tile",
@@ -175,7 +174,11 @@
                     {
                       "type": "light-color-temp"
                     }
-                  ]
+                  ],
+                  "layout_options": {
+                    "grid_columns": 4,
+                    "grid_rows": 2
+                  }
                 },
                 {
                   "type": "entities",
@@ -192,7 +195,8 @@
                       "name": "Lumière meuble",
                       "secondary_info": "last-updated"
                     }
-                  ]
+                  ],
+                  "title": "Éclairages"
                 },
                 {
                   "type": "entities",
@@ -233,14 +237,22 @@
                   "graph": "line",
                   "entity": "sensor.thermometre_temperature_5",
                   "detail": 1,
-                  "name": "Température"
+                  "name": "Température",
+                  "layout_options": {
+                    "grid_columns": 2,
+                    "grid_rows": 2
+                  }
                 },
                 {
                   "type": "sensor",
                   "graph": "line",
                   "entity": "sensor.thermometre_humidite_5",
                   "detail": 1,
-                  "name": "Humidité"
+                  "name": "Humidité",
+                  "layout_options": {
+                    "grid_columns": 2,
+                    "grid_rows": 2
+                  }
                 },
                 {
                   "type": "tile",
@@ -323,6 +335,12 @@
                   "detail": 1,
                   "name": "Humidité"
                 },
+              ],
+              "column_span": 1
+            },
+            {
+              "type": "grid",
+              "cards": [
                 {
                   "type": "heading",
                   "icon": "mdi:server",
@@ -331,6 +349,10 @@
                     {
                       "type": "entity",
                       "entity": "sensor.tasmota_energy_yesterday"
+                    },
+                    {
+                      "type": "entity",
+                      "entity": "sensor.ewelink_snzb_02p_batterie"
                     }
                   ]
                 },
@@ -447,14 +469,22 @@
                   "graph": "line",
                   "entity": "sensor.thermometre_temperature_3",
                   "detail": 1,
-                  "name": "Température"
+                  "name": "Température",
+                  "layout_options": {
+                    "grid_columns": 2,
+                    "grid_rows": 2
+                  }
                 },
                 {
                   "type": "sensor",
                   "graph": "line",
                   "entity": "sensor.thermometre_humidite_3",
                   "detail": 1,
-                  "name": "Humidité"
+                  "name": "Humidité",
+                  "layout_options": {
+                    "grid_columns": 2,
+                    "grid_rows": 2
+                  }
                 }
               ],
               "column_span": 1
@@ -894,19 +924,36 @@
                   "heading": "Couloir"
                 },
                 {
-                  "type": "entities",
-                  "entities": [
+                  "type": "tile",
+                  "entity": "light.yeelight_mono_0x335ff81",
+                  "name": "Lumière 1",
+                  "icon": "mdi:ceiling-light",
+                  "color": "yellow",
+                  "features": [
                     {
-                      "entity": "light.yeelight_mono_0x335ff81",
-                      "name": "Lumière 1",
-                      "icon": "mdi:ceiling-light"
-                    },
-                    {
-                      "entity": "light.yeelight_mono_0x33601d3",
-                      "name": "Lumière 2",
-                      "icon": "mdi:ceiling-light"
+                      "type": "light-brightness"
                     }
-                  ]
+                  ],
+                  "layout_options": {
+                    "grid_columns": 4,
+                    "grid_rows": 2
+                  }
+                },
+                {
+                  "type": "tile",
+                  "entity": "light.yeelight_mono_0x33601d3",
+                  "name": "Lumière 2",
+                  "icon": "mdi:ceiling-light",
+                  "color": "yellow",
+                  "features": [
+                    {
+                      "type": "light-brightness"
+                    }
+                  ],
+                  "layout_options": {
+                    "grid_columns": 4,
+                    "grid_rows": 2
+                  }
                 }
               ],
               "column_span": 1
