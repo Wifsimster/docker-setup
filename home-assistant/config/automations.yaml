@@ -525,7 +525,7 @@
       brightness_pct: 1
       color_temp_kelvin: 2200
     target:
-      entity_id: light.yeelight_colora_0xeda9237
+      entity_id: light.yeelight_color_0x52bf405
   - delay:
       minutes: 5
   - action: light.turn_on
@@ -534,7 +534,7 @@
       color_temp_kelvin: 2500
       transition: 300
     target:
-      entity_id: light.yeelight_colora_0xeda9237
+      entity_id: light.yeelight_color_0x52bf405
   - delay:
       minutes: 5
   - action: light.turn_on
@@ -543,7 +543,7 @@
       color_temp_kelvin: 3200
       transition: 300
     target:
-      entity_id: light.yeelight_colora_0xeda9237
+      entity_id: light.yeelight_color_0x52bf405
   - delay:
       minutes: 5
   - action: light.turn_on
@@ -552,7 +552,7 @@
       color_temp_kelvin: 4000
       transition: 300
     target:
-      entity_id: light.yeelight_colora_0xeda9237
+      entity_id: light.yeelight_color_0x52bf405
   - delay:
       minutes: 5
   - action: light.turn_on
@@ -561,6 +561,6 @@
       color_temp_kelvin: 5000
       transition: 300
     target:
-      entity_id: light.yeelight_colora_0xeda9237
+      entity_id: light.yeelight_color_0x52bf405
   mode: single
   max_exceeded: warning
