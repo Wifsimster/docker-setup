@@ -1,303 +1,249 @@
-# Home Server Platform
+# 🏠 Home Server Platform
 
-Plateforme personnelle auto-hébergée offrant ~30 services sur un serveur Debian. Streaming multimédia, domotique, gestion de documents, stockage photo et outils de productivité — le tout accessible via `*.example.com` avec HTTPS automatique.
+> Plateforme auto-hébergée · ~30 services Docker · Debian · HTTPS automatique via `*.example.com`
 
-## Table des matières
+Streaming multimédia, domotique, gestion documentaire, galerie photo et outils de productivité — accessible partout, 100% sous votre contrôle.
 
-- [À quoi sert ce produit ?](#à-quoi-sert-ce-produit-)
-- [Fonctionnalités principales](#fonctionnalités-principales)
-- [Comment ça fonctionne](#comment-ça-fonctionne)
-- [Média et divertissement](#média-et-divertissement)
-- [Domotique](#domotique)
-- [Photos et documents](#photos-et-documents)
-- [Applications web](#applications-web)
-- [Outils de productivité](#outils-de-productivité)
-- [Sécurité](#sécurité)
-- [Opérations et supervision](#opérations-et-supervision)
-- [Environnements](#environnements)
-- [Déploiement](#déploiement)
-- [Stack technique](#stack-technique)
-- [Sauvegarde des bases de données](#sauvegarde-des-bases-de-données)
-- [Feuille de route](#feuille-de-route)
-- [Documentation complémentaire](#documentation-complémentaire)
+---
 
-### Documentation technique
+## 🎯 Ce que ça fait
 
-| Document | Description |
-|----------|-------------|
-| [Stack Multimédia](multimedia/README.md) | Architecture et configuration de la pile multimédia |
-| [Traefik](docs/traefik.md) | Proxy inverse, routage, certificats TLS et middlewares |
-| [Stockage NFS](docs/stockage-nfs.md) | Architecture de stockage, montages Unraid et limitations |
-| [Ajout d'un service](docs/ajout-service.md) | Guide pas à pas pour ajouter un nouveau service |
-| [Bases de données](docs/bases-de-donnees.md) | Configuration PostgreSQL et Redis/Valkey |
+| | Fonctionnalité | Description |
+|---|---|---|
+| 🎬 | **Streaming multimédia** | Films, séries, musique en streaming avec téléchargement automatisé |
+| 📱 | **Demandes de contenu** | Les utilisateurs demandent, le système télécharge automatiquement |
+| 🏡 | **Maison connectée** | Contrôle des appareils Matter, MQTT et Zigbee |
+| 📸 | **Galerie photo IA** | Reconnaissance faciale et recherche intelligente |
+| 📄 | **GED intelligente** | Numérisation OCR et classement automatique |
+| 🔐 | **Sécurité** | Mots de passe, secrets, blocage pub DNS |
+| 📊 | **Supervision 24/7** | Métriques, logs, alertes Discord, mises à jour auto |
 
-## À quoi sert ce produit ?
+---
 
-- **Regarder vos films et séries** en streaming depuis n'importe quel appareil
-- **Automatiser l'acquisition de contenu** multimédia (films, séries, musique, sous-titres)
-- **Contrôler votre maison connectée** via un hub domotique centralisé
-- **Stocker et retrouver vos photos** grâce à la reconnaissance faciale et la recherche intelligente
-- **Numériser et classer vos documents** avec OCR et tri automatique
-- **Gérer vos mots de passe, notes et outils** de productivité au quotidien
-
-## Fonctionnalités principales
-
-- **Streaming multimédia complet** — Films, séries et musique via Plex, avec recherche et téléchargement automatisés
-- **Requêtes de contenu** — Les utilisateurs demandent des films ou séries via Seerr, le reste est automatique
-- **Domotique centralisée** — Pilotage des appareils Matter, MQTT et Zigbee depuis Home Assistant
-- **Galerie photo intelligente** — Immich organise vos photos avec reconnaissance faciale et recherche par contenu
-- **Gestion documentaire** — Paperless-ngx numérise, classe et rend cherchables tous vos documents papier
-- **Sécurité des accès** — Mots de passe via Vaultwarden, secrets applicatifs via Infisical, blocage publicitaire via Pi-hole
-- **Supervision complète** — Tableau de bord centralisé, logs en temps réel, métriques système et mises à jour automatiques
-- **Applications personnelles** — Blog, CV en ligne, gestion de copropriété, collection de jeux, généalogie
-
-## Comment ça fonctionne
+## 🏗️ Architecture
 
 ```mermaid
 graph TB
-    Internet((Internet)) -->|HTTPS| Traefik[Traefik - Proxy inverse]
-    Traefik --> Media[Média et divertissement]
-    Traefik --> Domo[Domotique]
-    Traefik --> Docs[Photos et documents]
-    Traefik --> Apps[Applications web]
-    Traefik --> Outils[Outils de productivité]
-    Traefik --> Secu[Sécurité]
-    Traefik --> Ops[Supervision]
+    Internet((🌐 Internet)) -->|HTTPS| Traefik[🔀 Traefik]
+    Traefik --> Media[🎬 Média]
+    Traefik --> Home[🏡 Domotique]
+    Traefik --> Photos[📸 Photos & Docs]
+    Traefik --> Apps[🌐 Apps web]
+    Traefik --> Tools[🔧 Outils]
+    Traefik --> Sec[🔐 Sécurité]
+    Traefik --> Ops[📊 Supervision]
 
-    NAS[(NAS Unraid)] -.->|NFS| Media
-    NAS -.->|NFS| Docs
+    NAS[(💾 NAS Unraid)] -.->|NFS| Media
+    NAS -.->|NFS| Photos
 ```
 
-Les utilisateurs accèdent à tous les services via leur navigateur en HTTPS. Traefik sert de point d'entrée unique et route chaque sous-domaine vers le bon conteneur. Les certificats TLS sont générés automatiquement via Let's Encrypt et le challenge DNS OVH. Le stockage multimédia et les photos sont hébergés sur un NAS Unraid, monté via NFS.
+---
 
-## Média et divertissement
-
-Regardez vos films, séries et écoutez votre musique. Découvrez et demandez du contenu. Tout est automatisé — de la recherche au téléchargement, en passant par les sous-titres.
+## 🎬 Média & Divertissement
 
 ```mermaid
 graph LR
-    U[Utilisateur] -->|Demande du contenu| Seerr
+    U[👤 Utilisateur] -->|Demande| Seerr
     Seerr -->|Séries| Sonarr
     Seerr -->|Films| Radarr
-    Sonarr --> Prowlarr[Prowlarr - Indexeur]
-    Radarr --> Prowlarr
-    Lidarr[Lidarr - Musique] --> Prowlarr
-    Prowlarr -->|Recherche| qBit[qBittorrent + VPN]
-    qBit -->|Téléchargé| Plex[Plex - Lecture]
+    Sonarr & Radarr & Lidarr --> Prowlarr
+    Prowlarr --> qBit[qBittorrent + VPN 🔒]
+    qBit --> Plex[🎬 Plex]
     Bazarr -.->|Sous-titres| Plex
-    Tautulli -.->|Statistiques| Plex
+    Tautulli -.->|Stats| Plex
     U -->|Regarde| Plex
 ```
 
-L'utilisateur demande un contenu via Seerr. Les gestionnaires (Sonarr, Radarr, Lidarr) interrogent les indexeurs via Prowlarr, puis lancent le téléchargement via qBittorrent (protégé par VPN). Le contenu est ensuite disponible dans Plex. Bazarr ajoute les sous-titres et Tautulli fournit les statistiques d'utilisation.
-
-| Service | Fonction | URL |
+| Service | Rôle | URL |
 |---|---|---|
-| **Plex** | Streaming films, séries et musique | `plex.example.com` |
-| **Seerr** | Demande et découverte de contenu | `seerr.example.com` |
-| **Sonarr** | Gestion automatisée des séries | `sonarr.example.com` |
-| **Radarr** | Gestion automatisée des films | `radarr.example.com` |
-| **Lidarr** | Gestion automatisée de la musique | `lidarr.example.com` |
-| **Bazarr** | Téléchargement automatique de sous-titres | `bazarr.example.com` |
-| **Prowlarr** | Gestion des indexeurs de recherche | `indexer.example.com` |
-| **qBittorrent** | Client de téléchargement (protégé par VPN) | `qbittorrent.example.com` |
-| **Tautulli** | Statistiques d'utilisation de Plex | `tautulli.example.com` |
+| <img src="https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/plex.svg" width="16"/> **Plex** | Streaming films, séries, musique | `plex.example.com` |
+| <img src="https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/overseerr.svg" width="16"/> **Seerr** | Demande et découverte de contenu | `seerr.example.com` |
+| <img src="https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/sonarr.svg" width="16"/> **Sonarr** | Gestion automatisée des séries | `sonarr.example.com` |
+| <img src="https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/radarr.svg" width="16"/> **Radarr** | Gestion automatisée des films | `radarr.example.com` |
+| <img src="https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/lidarr.svg" width="16"/> **Lidarr** | Gestion automatisée de la musique | `lidarr.example.com` |
+| <img src="https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/bazarr.svg" width="16"/> **Bazarr** | Sous-titres automatiques | `bazarr.example.com` |
+| <img src="https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/prowlarr.svg" width="16"/> **Prowlarr** | Gestion des indexeurs | `indexer.example.com` |
+| <img src="https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/qbittorrent.svg" width="16"/> **qBittorrent** | Téléchargement (VPN intégré) | `qbittorrent.example.com` |
+| <img src="https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/tautulli.svg" width="16"/> **Tautulli** | Statistiques Plex | `tautulli.example.com` |
 
-## Domotique
+---
 
-Pilotez et automatisez vos appareils connectés via un hub centralisé. Compatible Matter, MQTT, Zigbee et bien d'autres protocoles.
+## 🏡 Domotique
 
 ```mermaid
 graph TB
-    HA[Home Assistant] --> Matter[Serveur Matter]
-    HA --> MQTT[Mosquitto MQTT]
-    Matter --> D1([Appareils Matter])
-    MQTT --> D2([Appareils MQTT])
-    HA --> D3([Zigbee et autres])
+    HA[🏡 Home Assistant] --> Matter[Matter Server]
+    HA --> MQTT[🔌 Mosquitto MQTT]
+    Matter --> D1([💡 Appareils Matter])
+    MQTT --> D2([🌡️ Capteurs MQTT])
+    HA --> D3([📡 Zigbee & autres])
 ```
 
-Home Assistant centralise le contrôle de tous vos appareils connectés. Le serveur Matter gère les appareils compatibles avec ce standard. Mosquitto sert de broker MQTT pour les capteurs et actionneurs IoT.
-
-| Service | Fonction | URL |
+| Service | Rôle | URL |
 |---|---|---|
-| **Home Assistant** | Hub domotique et automatisations | `home-assistant.example.com` |
-| **Mosquitto** | Broker de messages MQTT pour objets connectés | _interne_ |
-| **Matter Server** | Support du protocole Matter | _interne_ |
+| <img src="https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/home-assistant.svg" width="16"/> **Home Assistant** | Hub domotique centralisé | `home-assistant.example.com` |
+| 🔌 **Mosquitto** | Broker MQTT | _interne_ |
+| 🔗 **Matter Server** | Protocole Matter | _interne_ |
 
-## Photos et documents
+---
 
-Stockez et organisez vos photos avec recherche intelligente et reconnaissance faciale. Gérez vos documents avec OCR et classement automatique.
+## 📸 Photos & Documents
 
 ```mermaid
 graph LR
-    Photos([Photos]) -->|Import| Immich
-    Immich -->|IA| Reco[Reconnaissance faciale et recherche]
-    Documents([Documents]) -->|Scan / Import| Paperless[Paperless-ngx]
-    Paperless -->|OCR| Classe[Classement automatique]
-    Email([ProtonMail]) -.->|Import| Paperless
+    P([📸 Photos]) -->|Import| Immich
+    Immich -->|🤖 IA| Reco[Reconnaissance faciale]
+    D([📄 Documents]) -->|Scan| Paperless[Paperless-ngx]
+    Paperless -->|OCR| Class[📁 Classement auto]
 ```
 
-Immich permet d'importer vos photos et vidéos, puis les analyse automatiquement grâce à l'intelligence artificielle. Paperless-ngx numérise vos documents papier, les rend cherchables par OCR et les classe automatiquement. Un pont ProtonMail permet l'import de documents par e-mail.
-
-| Service | Fonction | URL |
+| Service | Rôle | URL |
 |---|---|---|
-| **Immich** | Gestion de photos et vidéos avec IA | `immich.example.com` |
-| **Paperless-ngx** | Gestion documentaire avec OCR | `paperless.example.com` |
+| <img src="https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/immich.svg" width="16"/> **Immich** | Galerie photo avec IA | `immich.example.com` |
+| <img src="https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/paperless-ngx.svg" width="16"/> **Paperless-ngx** | GED avec OCR | `paperless.example.com` |
 
-## Applications web
+---
 
-Applications personnalisées développées sur mesure.
+## 🌐 Applications personnelles
 
-| Service | Fonction | URL |
+| Service | Rôle | URL |
 |---|---|---|
-| **Blog personnel** | Blog | `blog.example.com` |
-| **CV en ligne** | Curriculum vitae interactif | `cv.example.com` |
-| **Copro-Pilot** | Gestion de copropriété | `copro-pilot.example.com` |
-| **The Box** | Gestionnaire de collection de jeux | `the-box.example.com` |
-| **Invitation anniversaire** | Invitations avec RSVP | `leo-birthday.example.com` |
+| ✍️ **Blog** | Blog personnel | `blog.example.com` |
+| 📋 **CV en ligne** | Curriculum vitae interactif | `cv.example.com` |
+| 🏢 **Copro-Pilot** | Gestion de copropriété | `copro-pilot.example.com` |
+| 🎲 **The Box** | Collection de jeux | `the-box.example.com` |
 
-## Outils de productivité
+---
 
-| Service | Fonction | URL |
+## 🔧 Outils de productivité
+
+| Service | Rôle | URL |
 |---|---|---|
-| **Stirling PDF** | Outils de manipulation PDF (fusion, découpe, conversion) | `stirling.example.com` |
-| **Memos** | Prise de notes rapide | `memos.example.com` |
-| **Wakapi** | Suivi du temps de développement | `wakapi.example.com` |
-| **Gramps Web** | Généalogie et arbre familial | `gramps.example.com` |
+| <img src="https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/stirling-pdf.svg" width="16"/> **Stirling PDF** | Manipulation PDF | `stirling.example.com` |
+| <img src="https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/memos.svg" width="16"/> **Memos** | Notes rapides | `memos.example.com` |
+| <img src="https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/wakapi.svg" width="16"/> **Wakapi** | Suivi temps de dev | `wakapi.example.com` |
+| 🌳 **Gramps Web** | Généalogie | `gramps.example.com` |
 
-## Sécurité
+---
 
-| Service | Fonction | URL |
+## 🔐 Sécurité
+
+| Service | Rôle | URL |
 |---|---|---|
-| **Vaultwarden** | Gestionnaire de mots de passe (compatible Bitwarden) | `vaultwarden.example.com` |
-| **Infisical** | Gestion des secrets et variables d'environnement | `infisical.example.com` |
-| **Pi-hole** | Blocage publicitaire DNS sur tout le réseau | `pihole.example.com` |
+| <img src="https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/vaultwarden.svg" width="16"/> **Vaultwarden** | Mots de passe (Bitwarden) | `vaultwarden.example.com` |
+| <img src="https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/infisical.svg" width="16"/> **Infisical** | Secrets applicatifs | `infisical.example.com` |
+| <img src="https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/pi-hole.svg" width="16"/> **Pi-hole** | Blocage pub DNS | `pihole.example.com` |
 
-### Gestion des secrets
+> 🔒 Les secrets (`.env`) ne sont jamais commités. Homepage utilise `{{HOMEPAGE_VAR_*}}` pour la substitution d'environnement.
 
-Les clés API, mots de passe et tokens ne sont **jamais commités** dans le dépôt. Chaque service utilise un fichier `.env` co-localisé avec son `compose.yml` (automatiquement ignoré par le `.gitignore`).
+---
 
-**Homepage** utilise la substitution d'environnement native : les secrets sont stockés dans `homepage/.env` sous forme de variables `HOMEPAGE_VAR_*`, puis référencés dans `homepage/config/services.yaml` via la syntaxe `{{HOMEPAGE_VAR_*}}`. Le fichier `services.yaml` est lui aussi exclu du suivi git.
-
-## Opérations et supervision
+## 📊 Supervision & Opérations
 
 ```mermaid
 graph LR
-    Homepage[Homepage - Tableau de bord] -->|Vue d'ensemble| Services([Tous les services])
-    Watchtower -->|Mises à jour quotidiennes| Services
-    Watchtower -->|Notifications| Discord([Discord])
-    Portainer -->|Gestion des conteneurs| Services
-    Dozzle -->|Logs en direct| Services
-    Beszel -->|Métriques système| Serveur([Santé du serveur])
-    Beszel -->|Alertes| Discord
-    UptimeKuma[Uptime Kuma] -->|Surveillance disponibilité| Services
-    PgBackup[pg-backup] -->|Dump quotidien 3h| DB[(PostgreSQL x5)]
+    Homepage[📊 Homepage] -->|Dashboard| S([Services])
+    Beszel[📈 Beszel] -->|Métriques| Srv([Serveur])
+    Beszel -->|⚠️ Alertes| Discord([💬 Discord])
+    Watchtower[🔄 Watchtower] -->|MAJ 6h| S
+    Watchtower -->|📢 Notif| Discord
+    UptimeKuma[⏱️ Uptime Kuma] -->|Ping| S
+    PgBackup[💾 pg-backup] -->|Dump 3h| DB[(🐘 PostgreSQL x5)]
 ```
 
-Homepage offre un tableau de bord centralisé de tous les services. Watchtower met à jour automatiquement les conteneurs chaque jour à 6h00 et notifie via Discord. Portainer et Dozzle permettent la gestion et le suivi des logs des conteneurs. Beszel surveille les performances du serveur et envoie des alertes via Discord. Uptime Kuma assure la surveillance de disponibilité de tous les services. pg-backup sauvegarde quotidiennement les 5 bases PostgreSQL (Paperless, Immich, The-box, Copro-Pilot, Infisical) avec une rétention de 7 jours.
-
-| Service | Fonction | URL |
+| Service | Rôle | URL |
 |---|---|---|
-| **Homepage** | Tableau de bord centralisé | `homepage.example.com` |
-| **Portainer** | Interface de gestion Docker | `portainer.example.com` |
-| **Dozzle** | Visualiseur de logs en temps réel | `dozzle.example.com` |
-| **Beszel** | Supervision des performances serveur (alertes Discord) | `beszel.example.com` |
-| **Uptime Kuma** | Surveillance de disponibilité des services | `uptime.example.com` |
-| **Watchtower** | Mises à jour automatiques quotidiennes (alertes Discord) | _arrière-plan_ |
-| **pg-backup** | Sauvegarde quotidienne des 5 bases PostgreSQL (rétention 7j) | _arrière-plan_ |
-| **Unifi** | Contrôleur réseau (WiFi, switches) | _accès local_ |
+| <img src="https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/homepage.svg" width="16"/> **Homepage** | Tableau de bord | `homepage.example.com` |
+| <img src="https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/beszel.svg" width="16"/> **Beszel** | Métriques système + alertes Discord | `beszel.example.com` |
+| <img src="https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/uptime-kuma.svg" width="16"/> **Uptime Kuma** | Surveillance disponibilité | `uptime.example.com` |
+| <img src="https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/portainer.svg" width="16"/> **Portainer** | Gestion Docker | `portainer.example.com` |
+| <img src="https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/dozzle.svg" width="16"/> **Dozzle** | Logs temps réel | `dozzle.example.com` |
+| 🔄 **Watchtower** | MAJ auto quotidiennes + alertes Discord | _arrière-plan_ |
+| 💾 **pg-backup** | Backup PostgreSQL (5 bases, rétention 7j) | _arrière-plan_ |
+| <img src="https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/unifi.svg" width="16"/> **Unifi** | Contrôleur réseau | `unifi.example.com` |
 
-## Environnements
+---
 
-| Environnement | URL | Description |
-|---------------|-----|-------------|
-| Production | `https://*.example.com` | Serveur domestique Debian |
-| NAS | Unraid (réseau local) | Stockage multimédia et documents via NFS |
-
-## Déploiement
+## 🚀 Déploiement
 
 ```mermaid
 graph LR
-    Dev[Développeur] -->|Modifie compose.yml| Git[Dépôt Git]
-    Dev -->|docker compose up -d| Serveur[Serveur Debian]
-    Watchtower -->|Mises à jour quotidiennes 6h| Serveur
-    LetsEncrypt[Let's Encrypt] -.->|Certificats TLS| Traefik
-    OVH[OVH DNS] -.->|Challenge DNS| LetsEncrypt
+    Dev[👨‍💻 Dev] -->|compose.yml| Git[📦 Git]
+    Dev -->|docker compose up -d| Server[🖥️ Serveur]
+    Watchtower[🔄 Watchtower] -->|MAJ 6h| Server
+    LE[🔒 Let's Encrypt] -.->|TLS| Traefik[🔀 Traefik]
+    OVH -.->|DNS Challenge| LE
 ```
 
-Le déploiement se fait manuellement via `docker compose up -d` dans le répertoire du service concerné. Il n'y a pas de pipeline CI/CD (Intégration et Déploiement Continus). Les images des conteneurs sont mises à jour automatiquement chaque jour par Watchtower. Les certificats HTTPS sont renouvelés automatiquement via Let's Encrypt et le challenge DNS OVH.
+> Pas de CI/CD — déploiement manuel `docker compose up -d`. Watchtower met à jour les images quotidiennement.
 
-## Stack technique
+---
 
-- **Orchestration :** Docker, Docker Compose
-- **Proxy inverse :** Traefik v3.6 avec Let's Encrypt (challenge DNS OVH)
-- **Bases de données :** PostgreSQL 16, Redis / Valkey
-- **Sauvegarde :** pg-backup — dump quotidien des 5 bases PostgreSQL à 3h00, rétention 7 jours
-- **Stockage :** NAS Unraid via NFS
-- **Supervision :** Beszel (alertes Discord), Uptime Kuma, Dozzle, Portainer, Homepage
-- **Limites de ressources :** Plex (12 Go / 8 CPU), Immich ML (6 Go / 4 CPU), Paperless (4 Go / 4 CPU)
-- **Domaine :** `example.com` (sous-domaines par service)
+## ⚙️ Stack technique
 
-## Sauvegarde des bases de données
+| Composant | Technologie |
+|---|---|
+| 🐳 Orchestration | Docker + Docker Compose |
+| 🔀 Proxy inverse | Traefik v3.6 (Let's Encrypt / OVH DNS) |
+| 🐘 Bases de données | PostgreSQL 16, Redis / Valkey |
+| 💾 Sauvegarde | pg-backup — dump quotidien 3h, rétention 7j |
+| 📁 Stockage | NAS Unraid via NFS |
+| 📊 Supervision | Beszel, Uptime Kuma, Dozzle, Portainer, Homepage |
+| 🔒 Sécurité | `no-new-privileges`, réseaux internes isolés |
+| 🌐 Domaine | `example.com` (sous-domaine par service) |
 
-Le service **pg-backup** exécute un dump quotidien à 3h00 des 5 bases PostgreSQL de la plateforme :
+---
 
-| Base | Conteneur source | Format |
-|------|-----------------|--------|
-| Paperless | `paperless-db` | Custom (`pg_dump -Fc`) |
-| Immich | `immich_postgres` | Custom (`pg_dump -Fc`) |
-| The Box | `the-box-postgres` | Custom (`pg_dump -Fc`) |
-| Copro-Pilot | `copro-pilot-postgres` | Custom (`pg_dump -Fc`) |
-| Infisical | `infisical-db` | Custom (`pg_dump -Fc`) |
+## 💾 Backup PostgreSQL
 
-- **Rétention :** 7 jours (suppression automatique des dumps plus anciens)
-- **Stockage :** `pg-backup/backups/` sur le serveur local
-- **Logs :** `pg-backup/backups/backup.log`
-- **Restauration :** `pg_restore -h <host> -U <user> -d <db> <fichier.dump>`
+| Base | Conteneur source |
+|---|---|
+| 📄 Paperless | `paperless-db` |
+| 📸 Immich | `immich_postgres` |
+| 🎲 The Box | `the-box-postgres` |
+| 🏢 Copro-Pilot | `copro-pilot-postgres` |
+| 🔐 Infisical | `infisical-db` |
 
-## Feuille de route
+> ⏰ Dump quotidien à 3h · Format `pg_dump -Fc` · Rétention 7 jours · Restauration via `pg_restore`
 
-### Priorité haute
+---
 
-- **Stockage NAS unifié** — Consolider les montages NFS en un seul partage pour activer les hardlinks et les déplacements instantanés de fichiers
-- **Sauvegardes off-site** — Répliquer les dumps PostgreSQL et les volumes critiques vers un stockage distant (S3, Backblaze B2, ou second NAS)
-- **Restauration testée** — Mettre en place un test de restauration périodique (mensuel) pour valider l'intégrité des sauvegardes
+## 🗺️ Feuille de route
 
-### Priorité moyenne
+### 🔴 Haute priorité
 
-- **Secrets centralisés** — Migrer les `.env` manuels vers Infisical pour une gestion centralisée des secrets avec rotation automatique
-- **Monitoring des certificats TLS** — Ajouter une sonde Uptime Kuma pour alerter avant l'expiration des certificats Let's Encrypt
-- **Sauvegardes Redis** — Ajouter les instances Redis critiques (Immich, Paperless) au plan de sauvegarde
+- **Stockage NAS unifié** — Consolider les montages NFS (hardlinks + déplacements instantanés)
+- **Sauvegardes off-site** — Réplication vers S3 / Backblaze B2 / second NAS
+- **Tests de restauration** — Validation mensuelle de l'intégrité des backups
 
-### Priorité basse
+### 🟡 Moyenne priorité
 
-- **Images versionnées** — Remplacer `:latest` par des tags versionnés sur les services critiques (Vaultwarden, Paperless, Immich) pour des mises à jour contrôlées
-- **Read-only rootfs** — Ajouter `read_only: true` aux conteneurs stateless compatibles pour renforcer la sécurité
-- ~~**Documentation DR**~~ — Rédiger un runbook de reprise après sinistre avec les procédures de restauration étape par étape
+- **Secrets centralisés** — Migration `.env` → Infisical (rotation auto)
+- **Monitoring TLS** — Alerte avant expiration des certificats
+- **Sauvegardes Redis** — Ajouter Redis (Immich, Paperless) au plan de backup
 
-### Terminé
+### 🟢 Basse priorité
 
-- ~~**Rate limiting Vaultwarden**~~ — Middleware Traefik anti brute-force (20 req/min, burst 50)
-- ~~**Uptime Kuma**~~ — Surveillance de disponibilité des services (`uptime.example.com`)
-- ~~**Alertes Beszel → Discord**~~ — Notifications Discord sur les alertes système (migration Netdata → Beszel)
-- ~~**Healthchecks universels**~~ — Ajout de healthchecks à tous les services (Watchtower, Homepage, Dozzle, Techney)
-- ~~**Limites mémoire**~~ — Limites `deploy.resources.limits.memory` sur les 27 services (128M–12G)
-- ~~**Rotation des logs**~~ — Driver `json-file` avec `max-size: 10m` et `max-file: 3` sur tous les services
-- ~~**Domaine variable**~~ — Remplacement des domaines en dur par `${DOMAIN}` sur 20+ services
-- ~~**Nettoyage labels Traefik**~~ — Suppression des labels TLS et `docker.network` redondants
-- ~~**Sécurité conteneurs**~~ — `security_opt: no-new-privileges:true` sur tous les services compatibles
-- ~~**Isolation réseau**~~ — Réseaux internes `backend` pour isoler les bases de données du réseau externe
-- ~~**Alertes backup Discord**~~ — Notification Discord en cas d'échec du backup PostgreSQL
+- **Images versionnées** — Tags fixes sur les services critiques
+- **Read-only rootfs** — `read_only: true` sur les conteneurs stateless
 
-## Documentation complémentaire
+### ✅ Terminé
+
+- ~~Rate limiting Vaultwarden~~ · ~~Uptime Kuma~~ · ~~Alertes Beszel → Discord~~
+- ~~Healthchecks universels~~ · ~~Limites mémoire~~ · ~~Rotation des logs~~
+- ~~Domaine variable~~ · ~~Nettoyage labels Traefik~~ · ~~Sécurité conteneurs~~
+- ~~Isolation réseau~~ · ~~Alertes backup Discord~~ · ~~Documentation DR~~
+
+---
+
+## 📚 Documentation
 
 | Document | Description |
-|----------|-------------|
-| [Stack Multimédia](multimedia/README.md) | Architecture, configuration et variables d'environnement de la pile multimédia |
-| [Traefik](docs/traefik.md) | Proxy inverse, routage, certificats TLS et middlewares de sécurité |
-| [Stockage NFS](docs/stockage-nfs.md) | Architecture de stockage, montages Unraid et limitations hardlinks |
-| [Ajout d'un service](docs/ajout-service.md) | Guide pas à pas pour ajouter un nouveau service à la plateforme |
-| [Bases de données](docs/bases-de-donnees.md) | Configuration PostgreSQL et Redis/Valkey, healthchecks et persistance |
-| [Reprise après sinistre](docs/reprise-sinistre.md) | Runbook de restauration complète de l'infrastructure |
-| [CLAUDE.md](CLAUDE.md) | Guide pour les assistants IA travaillant sur ce dépôt |
-| [AGENT.md](AGENT.md) | Guide pour les agents IA autonomes |
+|---|---|
+| 📖 [Stack Multimédia](multimedia/README.md) | Architecture de la pile multimédia |
+| 🔀 [Traefik](docs/traefik.md) | Proxy inverse, TLS, middlewares |
+| 💾 [Stockage NFS](docs/stockage-nfs.md) | Montages Unraid, limitations |
+| ➕ [Ajout d'un service](docs/ajout-service.md) | Guide pas à pas |
+| 🐘 [Bases de données](docs/bases-de-donnees.md) | PostgreSQL, Redis, healthchecks |
+| 🚨 [Reprise après sinistre](docs/reprise-sinistre.md) | Runbook de restauration |
+| 🤖 [CLAUDE.md](CLAUDE.md) | Guide pour assistants IA |
