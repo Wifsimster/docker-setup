@@ -37,12 +37,11 @@
                   "features_position": "bottom",
                   "vertical": false,
                   "icon": "mdi:pool",
-                  "name": "Pompe piscine "
+                  "name": "Pompe piscine"
                 },
                 {
                   "type": "tile",
                   "entity": "script.activation_porte_atelier",
-                  "icon": "",
                   "color": "yellow",
                   "show_entity_picture": false,
                   "features_position": "bottom",
@@ -140,6 +139,7 @@
                 {
                   "type": "tile",
                   "entity": "light.yeelight_color_0x4d2a413",
+                  "name": "Lumière salle à manger",
                   "features": [
                     {
                       "type": "light-color-temp"
@@ -149,6 +149,7 @@
                 {
                   "type": "tile",
                   "entity": "light.yeelight_color_0x52bf405",
+                  "name": "Lumière salon",
                   "features": [
                     {
                       "type": "light-color-temp"
@@ -161,6 +162,7 @@
                     {
                       "entity": "switch.lumiere_tv",
                       "icon": "mdi:floor-lamp-outline",
+                      "name": "Lumière TV",
                       "secondary_info": "last-updated"
                     },
                     {
@@ -176,13 +178,18 @@
                   "entities": [
                     {
                       "entity": "switch.tasmota_tasmota2",
+                      "name": "Volet Sud",
+                      "icon": "mdi:window-shutter",
                       "secondary_info": "last-updated"
                     },
                     {
                       "entity": "switch.tasmota",
+                      "name": "Volet Est",
+                      "icon": "mdi:window-shutter",
                       "secondary_info": "last-updated"
                     }
-                  ]
+                  ],
+                  "title": "Volets"
                 },
                 {
                   "type": "tile",
@@ -204,13 +211,21 @@
                   "type": "sensor",
                   "graph": "line",
                   "entity": "sensor.thermometre_temperature_5",
-                  "detail": 1
+                  "detail": 1,
+                  "name": "Température"
                 },
                 {
                   "type": "sensor",
                   "graph": "line",
                   "entity": "sensor.thermometre_humidite_5",
-                  "detail": 1
+                  "detail": 1,
+                  "name": "Humidité"
+                },
+                {
+                  "type": "tile",
+                  "entity": "camera.camera_salon_medium_resolution_channel",
+                  "show_entity_picture": true,
+                  "name": "Caméra salon"
                 }
               ],
               "column_span": 1
@@ -233,7 +248,6 @@
                 {
                   "type": "tile",
                   "entity": "script.office_fan_light",
-                  "icon": "",
                   "color": "yellow",
                   "show_entity_picture": false,
                   "layout_options": {
@@ -244,7 +258,6 @@
                 {
                   "type": "tile",
                   "entity": "script.desktop_light_power",
-                  "icon": "",
                   "color": "yellow",
                   "show_entity_picture": false,
                   "layout_options": {
@@ -255,7 +268,6 @@
                 {
                   "type": "tile",
                   "entity": "script.office_fan_power",
-                  "icon": "",
                   "color": "yellow",
                   "show_entity_picture": false,
                   "layout_options": {
@@ -267,19 +279,20 @@
                   "type": "sensor",
                   "graph": "line",
                   "entity": "sensor.thermometre_temperature",
-                  "detail": 1
+                  "detail": 1,
+                  "name": "Température"
                 },
                 {
                   "type": "sensor",
                   "graph": "line",
                   "entity": "sensor.thermometre_humidite",
-                  "detail": 1
+                  "detail": 1,
+                  "name": "Humidité"
                 },
                 {
                   "type": "heading",
                   "icon": "mdi:server",
                   "heading": "Baie informatique",
-                  "heading_style": "title",
                   "badges": [
                     {
                       "type": "entity",
@@ -324,12 +337,14 @@
                 {
                   "type": "sensor",
                   "entity": "sensor.ewelink_snzb_02p_temperature",
-                  "graph": "line"
+                  "graph": "line",
+                  "name": "Température baie"
                 },
                 {
                   "type": "sensor",
                   "entity": "sensor.ewelink_snzb_02p_humidite",
-                  "graph": "line"
+                  "graph": "line",
+                  "name": "Humidité baie"
                 }
               ],
               "column_span": 1
@@ -385,13 +400,15 @@
                   "type": "sensor",
                   "graph": "line",
                   "entity": "sensor.thermometre_temperature_3",
-                  "detail": 1
+                  "detail": 1,
+                  "name": "Température"
                 },
                 {
                   "type": "sensor",
                   "graph": "line",
                   "entity": "sensor.thermometre_humidite_3",
-                  "detail": 1
+                  "detail": 1,
+                  "name": "Humidité"
                 }
               ],
               "column_span": 1
@@ -445,13 +462,15 @@
                   "type": "sensor",
                   "graph": "line",
                   "entity": "sensor.sonoff_snzb_02d_temperature_3",
-                  "detail": 1
+                  "detail": 1,
+                  "name": "Température"
                 },
                 {
                   "type": "sensor",
                   "graph": "line",
                   "entity": "sensor.sonoff_snzb_02d_humidite_3",
-                  "detail": 1
+                  "detail": 1,
+                  "name": "Humidité"
                 }
               ],
               "column_span": 1
@@ -459,19 +478,17 @@
           ]
         },
         {
-          "type": "sections",
-          "max_columns": 4,
           "title": "Chambre Anna",
           "path": "chambre-anna",
           "icon": "mdi:bed",
+          "type": "sections",
           "sections": [
             {
               "type": "grid",
               "cards": [
                 {
                   "type": "heading",
-                  "heading": "Chambre Anna",
-                  "heading_style": "title"
+                  "heading": "Chambre Anna"
                 },
                 {
                   "type": "tile",
@@ -505,7 +522,8 @@
                   "entity": "sensor.thermometre_chambre_anna_humidite_5",
                   "name": "Humidité"
                 }
-              ]
+              ],
+              "column_span": 1
             }
           ]
         },
@@ -546,15 +564,18 @@
                   "type": "sensor",
                   "graph": "line",
                   "entity": "sensor.sonoff_snzb_02d_temperature_2",
-                  "detail": 1
+                  "detail": 1,
+                  "name": "Température"
                 },
                 {
                   "type": "sensor",
                   "graph": "line",
                   "entity": "sensor.sonoff_snzb_02d_humidite_2",
-                  "detail": 1
+                  "detail": 1,
+                  "name": "Humidité"
                 }
-              ]
+              ],
+              "column_span": 1
             }
           ]
         },
@@ -591,13 +612,15 @@
                   "type": "sensor",
                   "graph": "line",
                   "entity": "sensor.sonoff_snzb_02d_temperature",
-                  "detail": 1
+                  "detail": 1,
+                  "name": "Température"
                 },
                 {
                   "type": "sensor",
                   "graph": "line",
                   "entity": "sensor.sonoff_snzb_02d_humidite",
-                  "detail": 1
+                  "detail": 1,
+                  "name": "Humidité"
                 }
               ],
               "column_span": 1
@@ -605,19 +628,17 @@
           ]
         },
         {
-          "type": "sections",
-          "max_columns": 4,
           "title": "Cellier",
           "path": "cellier",
           "icon": "mdi:hanger",
+          "type": "sections",
           "sections": [
             {
               "type": "grid",
               "cards": [
                 {
                   "type": "heading",
-                  "heading": "Cellier",
-                  "heading_style": "title"
+                  "heading": "Cellier"
                 },
                 {
                   "graph": "line",
@@ -633,7 +654,8 @@
                   "detail": 1,
                   "name": "Humidité"
                 }
-              ]
+              ],
+              "column_span": 1
             }
           ]
         },
@@ -648,8 +670,7 @@
               "cards": [
                 {
                   "type": "heading",
-                  "heading": "Cuisine",
-                  "heading_style": "title"
+                  "heading": "Cuisine"
                 },
                 {
                   "type": "tile",
@@ -671,15 +692,18 @@
                   "type": "sensor",
                   "graph": "line",
                   "entity": "sensor.thermometre_temperature_2",
-                  "detail": 1
+                  "detail": 1,
+                  "name": "Température"
                 },
                 {
                   "type": "sensor",
                   "graph": "line",
                   "entity": "sensor.thermometre_humidite_2",
-                  "detail": 1
+                  "detail": 1,
+                  "name": "Humidité"
                 }
-              ]
+              ],
+              "column_span": 1
             }
           ]
         },
@@ -747,10 +771,17 @@
                 {
                   "type": "entities",
                   "entities": [
-                    "light.yeelight_mono_0x335ff81",
-                    "light.yeelight_mono_0x33601d3"
-                  ],
-                  "title": "Couloir"
+                    {
+                      "entity": "light.yeelight_mono_0x335ff81",
+                      "name": "Lumière 1",
+                      "icon": "mdi:ceiling-light"
+                    },
+                    {
+                      "entity": "light.yeelight_mono_0x33601d3",
+                      "name": "Lumière 2",
+                      "icon": "mdi:ceiling-light"
+                    }
+                  ]
                 }
               ],
               "column_span": 1
