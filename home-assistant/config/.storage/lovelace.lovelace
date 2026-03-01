@@ -75,7 +75,7 @@
                     {
                       "entity": "switch.wifi_smart_switch",
                       "icon": "mdi:gate",
-                      "secondary_info": "last-changed",
+                      "secondary_info": "last-updated",
                       "name": "Fermeture"
                     }
                   ],
