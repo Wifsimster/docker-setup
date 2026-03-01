@@ -13,6 +13,7 @@
 !home-assistant/config/configuration.yaml
 !home-assistant/config/.storage/lovelace.lovelace
 !home-assistant/config/.storage/lovelace.my_home
+!home-assistant/config/.storage/lovelace.map
 !home-assistant/config/.storage/lovelace_dashboards
 !pg-backup/backup.sh
 !pg-backup/crontab
