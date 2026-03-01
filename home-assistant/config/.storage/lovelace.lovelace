@@ -16,7 +16,13 @@
               "cards": [
                 {
                   "type": "heading",
-                  "heading": "Extérieur"
+                  "heading": "Extérieur",
+                  "badges": [
+                    {
+                      "type": "entity",
+                      "entity": "sensor.ewelink_snzb_02p_batterie_2"
+                    }
+                  ]
                 },
                 {
                   "type": "tile",
@@ -139,7 +145,17 @@
               "cards": [
                 {
                   "type": "heading",
-                  "heading": "Salon"
+                  "heading": "Salon",
+                  "badges": [
+                    {
+                      "type": "entity",
+                      "entity": "sensor.thermometre_batterie_5"
+                    },
+                    {
+                      "type": "entity",
+                      "entity": "sensor.thermostat_salon_batterie_5"
+                    }
+                  ]
                 },
                 {
                   "type": "tile",
@@ -182,15 +198,15 @@
                   "type": "entities",
                   "entities": [
                     {
-                      "entity": "switch.tasmota_tasmota2",
-                      "name": "Volet Sud - Descente",
-                      "icon": "mdi:arrow-down-box",
-                      "secondary_info": "last-updated"
-                    },
-                    {
                       "entity": "switch.tasmota",
                       "name": "Volet Sud - Montée",
                       "icon": "mdi:arrow-up-box",
+                      "secondary_info": "last-updated"
+                    },
+                    {
+                      "entity": "switch.tasmota_tasmota2",
+                      "name": "Volet Sud - Descente",
+                      "icon": "mdi:arrow-down-box",
                       "secondary_info": "last-updated"
                     }
                   ],
@@ -248,7 +264,17 @@
               "cards": [
                 {
                   "type": "heading",
-                  "heading": "Bureau"
+                  "heading": "Bureau",
+                  "badges": [
+                    {
+                      "type": "entity",
+                      "entity": "sensor.thermometre_batterie"
+                    },
+                    {
+                      "type": "entity",
+                      "entity": "sensor.ewelink_snzb_02p_batterie"
+                    }
+                  ]
                 },
                 {
                   "type": "tile",
@@ -346,12 +372,14 @@
                   "type": "sensor",
                   "entity": "sensor.ewelink_snzb_02p_temperature",
                   "graph": "line",
+                  "detail": 1,
                   "name": "Température baie"
                 },
                 {
                   "type": "sensor",
                   "entity": "sensor.ewelink_snzb_02p_humidite",
                   "graph": "line",
+                  "detail": 1,
                   "name": "Humidité baie"
                 }
               ],
@@ -370,7 +398,17 @@
               "cards": [
                 {
                   "type": "heading",
-                  "heading": "Chambre parentale"
+                  "heading": "Chambre parentale",
+                  "badges": [
+                    {
+                      "type": "entity",
+                      "entity": "sensor.thermometre_batterie_3"
+                    },
+                    {
+                      "type": "entity",
+                      "entity": "sensor.thermostat_chambre_parentale_batterie"
+                    }
+                  ]
                 },
                 {
                   "type": "tile",
@@ -434,7 +472,17 @@
               "cards": [
                 {
                   "type": "heading",
-                  "heading": "Chambre Léo"
+                  "heading": "Chambre Léo",
+                  "badges": [
+                    {
+                      "type": "entity",
+                      "entity": "sensor.sonoff_snzb_02d_batterie_3"
+                    },
+                    {
+                      "type": "entity",
+                      "entity": "sensor.sonoff_trvzb_batterie_2"
+                    }
+                  ]
                 },
                 {
                   "type": "tile",
@@ -496,7 +544,17 @@
               "cards": [
                 {
                   "type": "heading",
-                  "heading": "Chambre Anna"
+                  "heading": "Chambre Anna",
+                  "badges": [
+                    {
+                      "type": "entity",
+                      "entity": "sensor.thermometre_chambre_anna_batterie_5"
+                    },
+                    {
+                      "type": "entity",
+                      "entity": "sensor.thermostat_batterie"
+                    }
+                  ]
                 },
                 {
                   "type": "tile",
@@ -546,7 +604,13 @@
               "cards": [
                 {
                   "type": "heading",
-                  "heading": "Salle d'eau"
+                  "heading": "Salle d'eau",
+                  "badges": [
+                    {
+                      "type": "entity",
+                      "entity": "sensor.sonoff_snzb_02d_batterie_2"
+                    }
+                  ]
                 },
                 {
                   "type": "tile",
@@ -601,7 +665,17 @@
               "cards": [
                 {
                   "type": "heading",
-                  "heading": "Salle de bain"
+                  "heading": "Salle de bain",
+                  "badges": [
+                    {
+                      "type": "entity",
+                      "entity": "sensor.sonoff_snzb_02d_batterie"
+                    },
+                    {
+                      "type": "entity",
+                      "entity": "sensor.sonoff_trvzb_batterie_3"
+                    }
+                  ]
                 },
                 {
                   "type": "tile",
@@ -649,7 +723,13 @@
               "cards": [
                 {
                   "type": "heading",
-                  "heading": "Cellier"
+                  "heading": "Cellier",
+                  "badges": [
+                    {
+                      "type": "entity",
+                      "entity": "sensor.sonoff_snzb_02d_batterie_5"
+                    }
+                  ]
                 },
                 {
                   "graph": "line",
@@ -681,7 +761,31 @@
               "cards": [
                 {
                   "type": "heading",
-                  "heading": "Cuisine"
+                  "heading": "Cuisine",
+                  "badges": [
+                    {
+                      "type": "entity",
+                      "entity": "sensor.thermometre_batterie_2"
+                    },
+                    {
+                      "type": "entity",
+                      "entity": "sensor.sonoff_trvzb_batterie_4"
+                    }
+                  ]
+                },
+                {
+                  "type": "tile",
+                  "entity": "light.yeelight_colora_0xeda5313",
+                  "name": "Lumière",
+                  "features": [
+                    {
+                      "type": "light-color-temp"
+                    }
+                  ],
+                  "layout_options": {
+                    "grid_columns": 4,
+                    "grid_rows": 2
+                  }
                 },
                 {
                   "type": "tile",
@@ -729,7 +833,17 @@
               "cards": [
                 {
                   "type": "heading",
-                  "heading": "WC"
+                  "heading": "WC",
+                  "badges": [
+                    {
+                      "type": "entity",
+                      "entity": "sensor.sonoff_snzb_02d_batterie_4"
+                    },
+                    {
+                      "type": "entity",
+                      "entity": "sensor.sonoff_trvzb_batterie"
+                    }
+                  ]
                 },
                 {
                   "type": "tile",
