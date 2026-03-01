@@ -38,6 +38,19 @@ services:
     volumes:
       - /opt/docker/unifi:/unifi
     labels:
+      - "traefik.enable=true"
+
+      # Entrypoint
+      - "traefik.http.routers.unifi.entrypoints=websecure"
+
+      # Router
+      - "traefik.http.routers.unifi.rule=Host(`unifi.${DOMAIN}`)"
+
+      # Service — Unifi uses HTTPS internally on port 8443
+      - "traefik.http.services.unifi.loadBalancer.server.port=8443"
+      - "traefik.http.services.unifi.loadBalancer.server.scheme=https"
+      - "traefik.http.services.unifi.loadBalancer.serversTransport=unifi@file"
+
       # Watchtower automatic update
       - "com.centurylinklabs.watchtower.enable=true"
 
