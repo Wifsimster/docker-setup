@@ -1,0 +1,103 @@
+office_fan_light:
+  alias: Office Fan light
+  sequence:
+  - target:
+      entity_id: remote.universal_remote
+    data:
+      num_repeats: 1
+      delay_secs: 0.4
+      hold_secs: 0
+      device: fan
+      command: light on
+    action: remote.send_command
+  description: Office Fan light on
+  icon: mdi:ceiling-fan-light
+  mode: single
+office_fan_power:
+  alias: Office Fan power
+  sequence:
+  - target:
+      entity_id: remote.universal_remote
+    data:
+      num_repeats: 1
+      delay_secs: 0.4
+      hold_secs: 0
+      device: fan
+      command: turn on
+    action: remote.send_command
+  description: Office Fan power (toggle)
+  icon: mdi:fan
+  mode: single
+office_fan_on:
+  alias: Office Fan on
+  sequence:
+  - target:
+      entity_id: remote.universal_remote
+    data:
+      num_repeats: 1
+      delay_secs: 0.4
+      hold_secs: 0
+      device: fan
+      command: turn on
+    action: remote.send_command
+  description: Allume le ventilateur du bureau
+  icon: mdi:fan
+  mode: single
+office_fan_off:
+  alias: Office Fan off
+  sequence:
+  - target:
+      entity_id: remote.universal_remote
+    data:
+      num_repeats: 1
+      delay_secs: 0.4
+      hold_secs: 0
+      device: fan
+      command: turn off
+    action: remote.send_command
+  description: Éteint le ventilateur du bureau
+  icon: mdi:fan-off
+  mode: single
+desktop_light_power:
+  alias: Desktop light power
+  sequence:
+  - action: remote.send_command
+    data:
+      num_repeats: 1
+      delay_secs: 0.4
+      hold_secs: 0
+      device: desktop_light
+      command: power
+    target:
+      entity_id: remote.universal_remote
+  description: Allume ou éteint l'éclairage de l'écran
+  icon: mdi:led-strip
+desktop_light_augmenter_la_luminosite:
+  alias: Desktop light - Augmenter la luminosité
+  sequence:
+  - action: remote.send_command
+    target:
+      entity_id: remote.universal_remote
+    data:
+      num_repeats: 1
+      delay_secs: 0.4
+      hold_secs: 0
+      device: desktop_light
+      command: light_up
+  description: ''
+  icon: mdi:led-strip
+activation_porte_atelier:
+  alias: Activation porte atelier
+  sequence:
+  - action: remote.send_command
+    metadata: {}
+    data:
+      num_repeats: 1
+      delay_secs: 0.4
+      hold_secs: 0
+      device: remote
+      command: gate enable
+    target:
+      entity_id: remote.universal_remote
+  description: Ouvre / ferme la porte de l'atelier
+  icon: mdi:window-shutter

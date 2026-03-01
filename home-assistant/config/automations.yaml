@@ -1,0 +1,461 @@
+- id: '1707492797579'
+  alias: Salon - Bascule lumière via télécommande
+  description: Bascule l'état de la lumière du salon et des interrupteurs associés
+    via un appui court sur la télécommande Zigbee
+  triggers:
+  - device_id: 56076a2fb6bdddaa96772d9e4b90fac7
+    domain: zha
+    type: remote_button_short_press
+    subtype: button
+    trigger: device
+  conditions: []
+  actions:
+  - type: toggle
+    device_id: 3f9fc2f9ffd2b110fd82a82b27501b94
+    entity_id: cab38dfb55bb4d634885388ea44de4d4
+    domain: light
+  - type: toggle
+    device_id: 121c564f3fe91e9688d152a8d37ff22a
+    entity_id: 867b60e51f8b97c0656ac11a16df5212
+    domain: switch
+  - type: toggle
+    device_id: 847c9c3be14af9117826604f42269fb0
+    entity_id: adea25dc096220e5b70d3a61ec8cecdc
+    domain: switch
+  mode: single
+- id: '1707492898414'
+  alias: Extérieur - Éclairage manuel via télécommande
+  description: Bascule l'état de l'éclairage extérieur via un double appui sur la
+    télécommande Zigbee
+  triggers:
+  - device_id: 56076a2fb6bdddaa96772d9e4b90fac7
+    domain: zha
+    type: remote_button_double_press
+    subtype: button
+    trigger: device
+  conditions: []
+  actions:
+  - type: toggle
+    device_id: 983a5935f2e38632fb64a575dfe51025
+    entity_id: 7fb3d1f206164c68e9bddc4aade9121a
+    domain: switch
+  mode: single
+- id: '1707493081065'
+  alias: Extérieur - Éclairage automatique la nuit
+  description: Allume l'éclairage extérieur la nuit lors d'une détection de mouvement
+    (2 min) ou à l'ouverture du portail (10 min). Tout nouveau déclenchement relance
+    le minuteur avec la durée la plus adaptée.
+  triggers:
+  - type: turned_on
+    device_id: 96f829e62a43fd445ed8924b62209361
+    entity_id: 83a29abee4efbee8519cb43456e36a79
+    domain: binary_sensor
+    trigger: device
+    id: motion
+  - type: turned_on
+    device_id: 96f829e62a43fd445ed8924b62209361
+    entity_id: 37b2625e220edd986e85412aa8cd2fdf
+    domain: binary_sensor
+    trigger: device
+    id: motion
+  - type: turned_on
+    device_id: 7873afef03a2a456833f256347741aa8
+    entity_id: a3c8a232f650ba57dc1ccd5f967dc42f
+    domain: binary_sensor
+    trigger: device
+    id: motion
+  - type: turned_on
+    device_id: 7873afef03a2a456833f256347741aa8
+    entity_id: 082503e8431f0c0ec9c3c0e914944e69
+    domain: binary_sensor
+    trigger: device
+    id: motion
+  - type: turned_on
+    device_id: 2c1316275401ddba6ff92aa76f70368e
+    entity_id: 86b315cd07d7d7247173d15dbe1cc3b9
+    domain: binary_sensor
+    trigger: device
+    id: motion
+  - type: turned_on
+    device_id: 2c1316275401ddba6ff92aa76f70368e
+    entity_id: 8824ee3142c08ba604b90a145a08a302
+    domain: binary_sensor
+    trigger: device
+    id: motion
+  - type: turned_on
+    device_id: 95f350cd6bf0dee60b2b3c2b8af44e7e
+    entity_id: e32d2c6005adef95310decaac166ab98
+    domain: switch
+    trigger: device
+    id: gate
+  conditions:
+  - condition: state
+    entity_id: sun.sun
+    state: below_horizon
+  actions:
+  - action: switch.turn_on
+    data: {}
+    target:
+      entity_id: switch.eclairage_exterieur
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: gate
+      sequence:
+      - delay:
+          minutes: 10
+    default:
+    - action: notify.all_mobiles
+      data:
+        title: Mouvement détecté
+        message: Éclairage extérieur allumé automatiquement suite à une détection de mouvement
+    - delay:
+        minutes: 2
+  - action: switch.turn_off
+    data: {}
+    target:
+      entity_id: switch.eclairage_exterieur
+  mode: restart
+- id: '1727634762012'
+  alias: 'Volet roulant sud - Sécurité : désactiver descente si montée active'
+  description: Empêche la descente du volet roulant sud si la montée est déjà activée
+    pour éviter les conflits mécaniques
+  trigger:
+  - platform: device
+    type: turned_on
+    device_id: 249bd98880c7314ca981ffd3a904371e
+    entity_id: a6808306f228a2a14c5ec851e26b5bf4
+    domain: switch
+  condition: []
+  action:
+  - type: turn_off
+    device_id: 249bd98880c7314ca981ffd3a904371e
+    entity_id: 813693838ed15076281a48eb897f27c5
+    domain: switch
+  mode: single
+- id: '1727634843689'
+  alias: 'Volet roulant sud - Sécurité : désactiver montée si descente activée'
+  description: Empêche la montée du volet roulant sud si la descente est déjà activée
+    pour éviter les conflits mécaniques
+  trigger:
+  - platform: device
+    type: turned_on
+    device_id: 249bd98880c7314ca981ffd3a904371e
+    entity_id: 813693838ed15076281a48eb897f27c5
+    domain: switch
+  condition: []
+  action:
+  - type: turn_off
+    device_id: 249bd98880c7314ca981ffd3a904371e
+    entity_id: a6808306f228a2a14c5ec851e26b5bf4
+    domain: switch
+  mode: single
+- id: '1742635828110'
+  alias: Chauffage salle d'eau - Allumage automatique à 06:00
+  description: Allume automatiquement le chauffage de la salle d'eau tous les jours
+    à 06:00 pour préparer la salle de bain
+  triggers:
+  - trigger: time
+    at: 06:00:00
+  conditions: []
+  actions:
+  - action: switch.turn_on
+    metadata: {}
+    data: {}
+    target:
+      device_id: 852421e6505f033cf42ad76f60150dac
+  mode: single
+- id: '1742635905860'
+  alias: Chauffage salle d'eau - Extinction automatique à 07:15
+  description: Éteint automatiquement le chauffage de la salle d'eau tous les jours
+    à 07:15 après utilisation matinale
+  triggers:
+  - trigger: time
+    at: 07:15:00
+  conditions: []
+  actions:
+  - action: switch.turn_off
+    metadata: {}
+    data: {}
+    target:
+      device_id: 852421e6505f033cf42ad76f60150dac
+  mode: single
+- id: '1742719565025'
+  alias: Extérieur - Extinction automatique de l'éclairage à 08:00
+  description: Éteint automatiquement l'éclairage extérieur à 08:00 ou si allumé manuellement
+    après cette heure pour éviter qu'il reste allumé en journée
+  triggers:
+  - trigger: time
+    at: 08:00:00
+  conditions: []
+  actions:
+  - type: turn_off
+    device_id: 983a5935f2e38632fb64a575dfe51025
+    entity_id: 7fb3d1f206164c68e9bddc4aade9121a
+    domain: switch
+  mode: single
+- id: '1750881769604'
+  alias: Ventilation bureau - Activer si température > 28°C
+  description: Active la ventilation du bureau si la température dépasse 28°C
+  triggers:
+  - type: temperature
+    device_id: 4f53fbfe8d0ac2e6b7581b909bc2e125
+    entity_id: c3a4c63156866db19f423fb7589edb0f
+    domain: sensor
+    trigger: device
+    above: 28
+  conditions: []
+  actions:
+  - action: script.office_fan_on
+    metadata: {}
+  mode: single
+- id: '1750881769605'
+  alias: Ventilation bureau - Désactiver si température < 25°C
+  description: Désactive la ventilation du bureau si la température descend en dessous
+    de 25°C
+  triggers:
+  - type: temperature
+    device_id: 4f53fbfe8d0ac2e6b7581b909bc2e125
+    entity_id: c3a4c63156866db19f423fb7589edb0f
+    domain: sensor
+    trigger: device
+    below: 25
+  conditions: []
+  actions:
+  - action: script.office_fan_off
+    metadata: {}
+  mode: single
+- id: '1751288081403'
+  alias: 'Portail - Sécurité : désactiver ouverture si fermeture active'
+  description: Empêche l'ouverture du portail si la fermeture est déjà en cours pour
+    éviter les conflits mécaniques
+  triggers:
+  - type: turned_on
+    device_id: 95f350cd6bf0dee60b2b3c2b8af44e7e
+    entity_id: e32d2c6005adef95310decaac166ab98
+    domain: switch
+    trigger: device
+  conditions: []
+  actions:
+  - type: turn_off
+    device_id: 2a2d0e52ea1bbf8d481dfaab6dc2725b
+    entity_id: 75c98ddf44f9a1e899a86da4a485c4a0
+    domain: switch
+  mode: single
+- id: '1751288165605'
+  alias: 'Portail - Sécurité : désactiver fermeture si ouverture active'
+  description: Empêche la fermeture du portail si l'ouverture est déjà en cours pour
+    éviter les conflits mécaniques
+  triggers:
+  - type: turned_on
+    device_id: 2a2d0e52ea1bbf8d481dfaab6dc2725b
+    entity_id: 75c98ddf44f9a1e899a86da4a485c4a0
+    domain: switch
+    trigger: device
+  conditions: []
+  actions:
+  - type: turn_off
+    device_id: 95f350cd6bf0dee60b2b3c2b8af44e7e
+    entity_id: e32d2c6005adef95310decaac166ab98
+    domain: switch
+  mode: single
+- id: '1754681469617'
+  alias: Piscine - Arrêt automatique du moteur après 1h
+  description: Éteint automatiquement le moteur de la piscine après 1 heure de fonctionnement
+    pour éviter une utilisation prolongée
+  triggers:
+  - type: turned_on
+    device_id: 5f55c41bf6123105a780899ec8fa465b
+    entity_id: d19ac68d8815181c4b0fe0adc1560338
+    domain: switch
+    trigger: device
+    for:
+      hours: 1
+      minutes: 0
+      seconds: 0
+  conditions: []
+  actions:
+  - type: turn_off
+    device_id: 5f55c41bf6123105a780899ec8fa465b
+    entity_id: d19ac68d8815181c4b0fe0adc1560338
+    domain: switch
+  mode: single
+- id: '1754681469618'
+  alias: Portail - Fermeture automatique la nuit après 1h
+  description: Ferme automatiquement le portail s'il est ouvert depuis plus de 1h
+    et qu'il fait nuit (détecté par les caméras)
+  triggers:
+  - type: turned_on
+    device_id: 95f350cd6bf0dee60b2b3c2b8af44e7e
+    entity_id: e32d2c6005adef95310decaac166ab98
+    domain: switch
+    trigger: device
+  conditions:
+  - condition: or
+    conditions:
+    - type: is_on
+      condition: device
+      device_id: 96f829e62a43fd445ed8924b62209361
+      entity_id: 0fae94f44c05474959aa32732af37a05
+      domain: binary_sensor
+    - type: is_on
+      condition: device
+      device_id: 7873afef03a2a456833f256347741aa8
+      entity_id: 4386032543a9e3d2b1b3e97c999165fd
+      domain: binary_sensor
+  - condition: device
+    type: is_on
+    device_id: 95f350cd6bf0dee60b2b3c2b8af44e7e
+    entity_id: e32d2c6005adef95310decaac166ab98
+    domain: switch
+  actions:
+  - delay:
+      hours: 1
+      minutes: 0
+      seconds: 0
+      milliseconds: 0
+  - condition: device
+    type: is_on
+    device_id: 95f350cd6bf0dee60b2b3c2b8af44e7e
+    entity_id: e32d2c6005adef95310decaac166ab98
+    domain: switch
+  - action: switch.turn_on
+    metadata: {}
+    data: {}
+    target:
+      entity_id: switch.wifi_smart_switch
+  - action: notify.all_mobiles
+    data:
+      title: Portail fermé automatiquement
+      message: Le portail a été fermé automatiquement car il était ouvert depuis plus
+        de 1h pendant la nuit
+      data:
+        priority: high
+        ttl: 0
+  mode: restart
+
+- id: '1709300000001'
+  alias: Sécurité - Personne détectée la nuit
+  description: Envoie une notification push avec capture caméra lorsqu'une personne
+    est détectée par les caméras extérieures la nuit
+  triggers:
+  - trigger: state
+    entity_id: binary_sensor.camera_garage_person_detected
+    to: 'on'
+    id: allee
+  - trigger: state
+    entity_id: binary_sensor.camera_portail_person_detected
+    to: 'on'
+    id: portail
+  - trigger: state
+    entity_id: binary_sensor.g5_bullet_personne_detectee
+    to: 'on'
+    id: g5_bullet
+  conditions:
+  - condition: state
+    entity_id: sun.sun
+    state: below_horizon
+  actions:
+  - action: notify.all_mobiles
+    data:
+      title: Personne détectée
+      message: >-
+        Une personne a été détectée par
+        {% if trigger.id == 'allee' %}la caméra Allée
+        {% elif trigger.id == 'portail' %}la caméra Portail
+        {% else %}la caméra G5 Bullet{% endif %}
+      data:
+        image: >-
+          {% if trigger.id == 'allee' %}/api/camera_proxy/camera.camera_allee_medium_resolution_channel
+          {% elif trigger.id == 'portail' %}/api/camera_proxy/camera.camera_portail_medium_resolution_channel
+          {% else %}/api/camera_proxy/camera.g5_bullet_high_resolution_channel{% endif %}
+        priority: high
+        ttl: 0
+        channel: alarm_stream
+        importance: high
+  mode: single
+- id: '1709300000002'
+  alias: Portail - Avertissement ouvert depuis 30 min la nuit
+  description: Envoie une notification d'avertissement 30 minutes avant la fermeture
+    automatique du portail la nuit
+  triggers:
+  - type: turned_on
+    device_id: 95f350cd6bf0dee60b2b3c2b8af44e7e
+    entity_id: e32d2c6005adef95310decaac166ab98
+    domain: switch
+    trigger: device
+  conditions:
+  - condition: state
+    entity_id: sun.sun
+    state: below_horizon
+  actions:
+  - delay:
+      hours: 0
+      minutes: 30
+      seconds: 0
+  - condition: device
+    type: is_on
+    device_id: 95f350cd6bf0dee60b2b3c2b8af44e7e
+    entity_id: e32d2c6005adef95310decaac166ab98
+    domain: switch
+  - action: notify.all_mobiles
+    data:
+      title: Portail ouvert
+      message: Le portail est ouvert depuis 30 minutes. Il sera fermé automatiquement
+        dans 30 minutes.
+      data:
+        priority: high
+        ttl: 0
+  mode: restart
+- id: '1709300000003'
+  alias: Piscine - Notification arrêt automatique
+  description: Envoie une notification quand la pompe de piscine est arrêtée automatiquement
+    après 1h
+  triggers:
+  - type: turned_on
+    device_id: 5f55c41bf6123105a780899ec8fa465b
+    entity_id: d19ac68d8815181c4b0fe0adc1560338
+    domain: switch
+    trigger: device
+    for:
+      hours: 0
+      minutes: 59
+      seconds: 0
+  conditions: []
+  actions:
+  - action: notify.all_mobiles
+    data:
+      title: Piscine
+      message: La pompe de la piscine va être arrêtée automatiquement après 1h de
+        fonctionnement
+  mode: single
+- id: '1709300000004'
+  alias: Batterie faible - Notification capteurs Zigbee
+  description: Vérifie toutes les 6 heures si un capteur Zigbee a une batterie inférieure
+    à 20% et envoie une notification
+  triggers:
+  - trigger: time_pattern
+    hours: /6
+  conditions:
+  - condition: template
+    value_template: >-
+      {% set ns = namespace(count=0) %}
+      {% for state in states.sensor %}
+        {% if 'battery' in state.entity_id and state.state not in ['unknown', 'unavailable'] and state.state | float(100) < 20 and 'mobile' not in state.entity_id %}
+          {% set ns.count = ns.count + 1 %}
+        {% endif %}
+      {% endfor %}
+      {{ ns.count > 0 }}
+  actions:
+  - action: notify.all_mobiles
+    data:
+      title: Batterie faible
+      message: >-
+        {% set ns = namespace(sensors=[]) %}
+        {% for state in states.sensor %}
+          {% if 'battery' in state.entity_id and state.state not in ['unknown', 'unavailable'] and state.state | float(100) < 20 and 'mobile' not in state.entity_id %}
+            {% set ns.sensors = ns.sensors + [state.name ~ ' (' ~ state.state ~ '%)'] %}
+          {% endif %}
+        {% endfor %}
+        Capteurs avec batterie faible : {{ ns.sensors | join(', ') }}
+  mode: single

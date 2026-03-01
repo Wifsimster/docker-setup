@@ -1,0 +1,28 @@
+# Loads default set of integrations. Do not remove.
+default_config:
+
+# Load frontend themes from the themes folder
+frontend:
+  themes: !include_dir_merge_named themes
+
+automation: !include automations.yaml
+script: !include scripts.yaml
+scene: !include scenes.yaml
+
+http:
+  use_x_forwarded_for: true
+  trusted_proxies:
+    - 172.18.0.0/16  # lanv6 network entire subnet
+    - 172.26.0.0/16  # lan network entire subnet
+
+bluetooth:
+
+# Notification groups
+notify:
+  - name: all_mobiles
+    platform: group
+    services:
+      - service: mobile_app_25069ptebg
+      - service: mobile_app_21081111rg
+      - service: mobile_app_2306epn60g
+      - service: mobile_app_mi_8
