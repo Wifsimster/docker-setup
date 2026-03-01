@@ -23,6 +23,7 @@
     entity_id: adea25dc096220e5b70d3a61ec8cecdc
     domain: switch
   mode: single
+  max_exceeded: warning
 - id: '1707492898414'
   alias: Extérieur - Éclairage manuel via télécommande
   description: Bascule l'état de l'éclairage extérieur via un double appui sur la
@@ -40,6 +41,7 @@
     entity_id: 7fb3d1f206164c68e9bddc4aade9121a
     domain: switch
   mode: single
+  max_exceeded: warning
 - id: '1707493081065'
   alias: Extérieur - Éclairage automatique la nuit
   description: Allume l'éclairage extérieur la nuit lors d'une détection de mouvement
@@ -133,6 +135,7 @@
     entity_id: 813693838ed15076281a48eb897f27c5
     domain: switch
   mode: single
+  max_exceeded: warning
 - id: '1727634843689'
   alias: 'Volet roulant sud - Sécurité : désactiver montée si descente activée'
   description: Empêche la montée du volet roulant sud si la descente est déjà activée
@@ -150,6 +153,7 @@
     entity_id: a6808306f228a2a14c5ec851e26b5bf4
     domain: switch
   mode: single
+  max_exceeded: warning
 - id: '1742635828110'
   alias: Chauffage salle d'eau - Allumage automatique à 06:00
   description: Allume automatiquement le chauffage de la salle d'eau tous les jours
@@ -165,6 +169,7 @@
     target:
       device_id: 852421e6505f033cf42ad76f60150dac
   mode: single
+  max_exceeded: warning
 - id: '1742635905860'
   alias: Chauffage salle d'eau - Extinction automatique à 07:15
   description: Éteint automatiquement le chauffage de la salle d'eau tous les jours
@@ -180,6 +185,7 @@
     target:
       device_id: 852421e6505f033cf42ad76f60150dac
   mode: single
+  max_exceeded: warning
 - id: '1742719565025'
   alias: Extérieur - Extinction automatique de l'éclairage à 08:00
   description: Éteint automatiquement l'éclairage extérieur à 08:00 ou si allumé manuellement
@@ -194,9 +200,10 @@
     entity_id: 7fb3d1f206164c68e9bddc4aade9121a
     domain: switch
   mode: single
+  max_exceeded: warning
 - id: '1750881769604'
   alias: Ventilation bureau - Activer si température > 28°C
-  description: Active la ventilation du bureau si la température dépasse 28°C
+  description: Active la ventilation du bureau si la température dépasse 28°C (mai à septembre uniquement)
   triggers:
   - type: temperature
     device_id: 4f53fbfe8d0ac2e6b7581b909bc2e125
@@ -204,15 +211,18 @@
     domain: sensor
     trigger: device
     above: 28
-  conditions: []
+  conditions:
+  - condition: template
+    value_template: "{{ now().month in [5, 6, 7, 8, 9] }}"
   actions:
   - action: script.office_fan_on
     metadata: {}
   mode: single
+  max_exceeded: warning
 - id: '1750881769605'
   alias: Ventilation bureau - Désactiver si température < 25°C
   description: Désactive la ventilation du bureau si la température descend en dessous
-    de 25°C
+    de 25°C (mai à septembre uniquement)
   triggers:
   - type: temperature
     device_id: 4f53fbfe8d0ac2e6b7581b909bc2e125
@@ -220,11 +230,14 @@
     domain: sensor
     trigger: device
     below: 25
-  conditions: []
+  conditions:
+  - condition: template
+    value_template: "{{ now().month in [5, 6, 7, 8, 9] }}"
   actions:
   - action: script.office_fan_off
     metadata: {}
   mode: single
+  max_exceeded: warning
 - id: '1751288081403'
   alias: 'Portail - Sécurité : désactiver ouverture si fermeture active'
   description: Empêche l'ouverture du portail si la fermeture est déjà en cours pour
@@ -242,6 +255,7 @@
     entity_id: 75c98ddf44f9a1e899a86da4a485c4a0
     domain: switch
   mode: single
+  max_exceeded: warning
 - id: '1751288165605'
   alias: 'Portail - Sécurité : désactiver fermeture si ouverture active'
   description: Empêche la fermeture du portail si l'ouverture est déjà en cours pour
@@ -259,6 +273,7 @@
     entity_id: e32d2c6005adef95310decaac166ab98
     domain: switch
   mode: single
+  max_exceeded: warning
 - id: '1754681469617'
   alias: Piscine - Arrêt automatique du moteur après 1h
   description: Éteint automatiquement le moteur de la piscine après 1 heure de fonctionnement
@@ -280,6 +295,7 @@
     entity_id: d19ac68d8815181c4b0fe0adc1560338
     domain: switch
   mode: single
+  max_exceeded: warning
 - id: '1754681469618'
   alias: Portail - Fermeture automatique la nuit après 1h
   description: Ferme automatiquement le portail s'il est ouvert depuis plus de 1h
@@ -374,6 +390,7 @@
         channel: alarm_stream
         importance: high
   mode: single
+  max_exceeded: warning
 - id: '1709300000002'
   alias: Portail - Avertissement ouvert depuis 30 min la nuit
   description: Envoie une notification d'avertissement 30 minutes avant la fermeture
@@ -429,6 +446,7 @@
       message: La pompe de la piscine va être arrêtée automatiquement après 1h de
         fonctionnement
   mode: single
+  max_exceeded: warning
 - id: '1709300000004'
   alias: Batterie faible - Notification capteurs Zigbee
   description: Vérifie toutes les 6 heures si un capteur Zigbee a une batterie inférieure
@@ -459,3 +477,30 @@
         {% endfor %}
         Capteurs avec batterie faible : {{ ns.sensors | join(', ') }}
   mode: single
+  max_exceeded: warning
+- id: '1709300000005'
+  alias: Piscine - Failsafe extinction pompe
+  description: Sécurité supplémentaire pour éteindre la pompe si elle est encore allumée
+    à 22h00 ou au démarrage de HA (protège contre un redémarrage pendant le timer 1h)
+  triggers:
+  - trigger: time
+    at: '22:00:00'
+  - trigger: homeassistant
+    event: start
+  conditions:
+  - condition: device
+    type: is_on
+    device_id: 5f55c41bf6123105a780899ec8fa465b
+    entity_id: d19ac68d8815181c4b0fe0adc1560338
+    domain: switch
+  actions:
+  - type: turn_off
+    device_id: 5f55c41bf6123105a780899ec8fa465b
+    entity_id: d19ac68d8815181c4b0fe0adc1560338
+    domain: switch
+  - action: notify.all_mobiles
+    data:
+      title: Piscine - Failsafe
+      message: La pompe de la piscine a été arrêtée par la sécurité (encore active à 22h ou après redémarrage HA)
+  mode: single
+  max_exceeded: warning
