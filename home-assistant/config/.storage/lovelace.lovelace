@@ -178,14 +178,14 @@
                   "entities": [
                     {
                       "entity": "switch.tasmota_tasmota2",
-                      "name": "Volet Sud",
-                      "icon": "mdi:window-shutter",
+                      "name": "Volet Sud - Montée",
+                      "icon": "mdi:arrow-up-box",
                       "secondary_info": "last-updated"
                     },
                     {
                       "entity": "switch.tasmota",
-                      "name": "Volet Est",
-                      "icon": "mdi:window-shutter",
+                      "name": "Volet Sud - Descente",
+                      "icon": "mdi:arrow-down-box",
                       "secondary_info": "last-updated"
                     }
                   ],
