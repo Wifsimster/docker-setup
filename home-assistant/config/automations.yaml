@@ -504,3 +504,63 @@
       message: La pompe de la piscine a été arrêtée par la sécurité (encore active à 22h ou après redémarrage HA)
   mode: single
   max_exceeded: warning
+- id: '1709300000006'
+  alias: Réveil - Simulation lever de soleil chambre parentale
+  description: Allume progressivement la lumière de la chambre parentale pendant 20
+    minutes avant 07h00 en semaine pour simuler un lever de soleil
+  triggers:
+  - trigger: time
+    at: '06:40:00'
+  conditions:
+  - condition: time
+    weekday:
+    - mon
+    - tue
+    - wed
+    - thu
+    - fri
+  actions:
+  - action: light.turn_on
+    data:
+      brightness_pct: 1
+      color_temp_kelvin: 2200
+    target:
+      entity_id: light.yeelight_colora_0xeda9237
+  - delay:
+      minutes: 5
+  - action: light.turn_on
+    data:
+      brightness_pct: 10
+      color_temp_kelvin: 2500
+      transition: 300
+    target:
+      entity_id: light.yeelight_colora_0xeda9237
+  - delay:
+      minutes: 5
+  - action: light.turn_on
+    data:
+      brightness_pct: 40
+      color_temp_kelvin: 3200
+      transition: 300
+    target:
+      entity_id: light.yeelight_colora_0xeda9237
+  - delay:
+      minutes: 5
+  - action: light.turn_on
+    data:
+      brightness_pct: 80
+      color_temp_kelvin: 4000
+      transition: 300
+    target:
+      entity_id: light.yeelight_colora_0xeda9237
+  - delay:
+      minutes: 5
+  - action: light.turn_on
+    data:
+      brightness_pct: 100
+      color_temp_kelvin: 5000
+      transition: 300
+    target:
+      entity_id: light.yeelight_colora_0xeda9237
+  mode: single
+  max_exceeded: warning
