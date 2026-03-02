@@ -144,7 +144,7 @@ services:
       protonmail-bridge:
         condition: service_started
     volumes:
-      - /mnt/documents:/usr/src/paperless/data
+      - /mnt/media/documents:/usr/src/paperless/data
       - paperless_media:/usr/src/paperless/media
       - paperless_export:/usr/src/paperless/export
       - paperless_consume:/usr/src/paperless/consume

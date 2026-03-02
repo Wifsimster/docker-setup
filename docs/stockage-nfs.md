@@ -1,31 +1,41 @@
-# Stockage NFS — Architecture et montages Unraid
+# Stockage NFS — Architecture et montage Unraid
 
-Ce document décrit l'architecture de stockage utilisée par la plateforme. Il couvre les montages NFS depuis le NAS Unraid et leurs limitations.
+Ce document décrit l'architecture de stockage utilisée par la plateforme. Le NAS Unraid partage un **unique point de montage NFS** contenant tous les sous-répertoires médias.
 
 ## Vue d'ensemble
 
 ```mermaid
 graph LR
-    NAS[(NAS Unraid)] -->|NFS| Serveur[Serveur Debian]
-    Serveur --> Films[/mnt/movies]
-    Serveur --> Series[/mnt/tv-shows]
-    Serveur --> Musique[/mnt/musics]
-    Serveur --> DL[/mnt/downloads]
-    Serveur --> Docs[/mnt/documents]
-    Serveur --> Photos[/mnt/photos]
+    NAS[(NAS Unraid<br/>192.168.0.240)] -->|NFS unique| Serveur[Serveur Debian]
+    Serveur --> Media[/mnt/media]
+    Media --> Films[movies/]
+    Media --> Series[tv-shows/]
+    Media --> Musique[musics/]
+    Media --> DL[downloads/]
+    Media --> Docs[documents/]
+    Media --> Photos[photos/]
+    Media --> Data[data/]
 ```
 
-Le NAS Unraid héberge tous les fichiers multimédia et documents. Le serveur Debian y accède via des **montages NFS** sous `/mnt/`.
+## Point de montage unique
 
-## Points de montage
+Un seul partage NFS est monté sur l'hôte :
+
+```
+192.168.0.240:/mnt/user/media /mnt/media nfs defaults,_netdev 0 0
+```
+
+### Sous-répertoires
 
 | Chemin | Contenu | Services utilisateurs |
 |---|---|---|
-| `/mnt/movies` | Films | Plex, Radarr, Bazarr |
-| `/mnt/tv-shows` | Séries TV | Plex, Sonarr, Bazarr |
-| `/mnt/musics` | Musique | Plex, Lidarr |
-| `/mnt/downloads` | Téléchargements en cours | qBittorrent, Sonarr, Radarr, Lidarr |
-| `/mnt/documents` | Documents numérisés | Paperless-ngx |
+| `/mnt/media/movies` | Films | Plex, Radarr, Bazarr |
+| `/mnt/media/tv-shows` | Séries TV | Plex, Sonarr, Bazarr |
+| `/mnt/media/musics` | Musique | Plex, Lidarr |
+| `/mnt/media/downloads` | Téléchargements en cours | qBittorrent, Sonarr, Radarr, Lidarr |
+| `/mnt/media/documents` | Documents numérisés | Paperless-ngx |
+| `/mnt/media/photos` | Photos et vidéos | Immich |
+| `/mnt/media/data` | Données diverses | — |
 
 ## Comment les services accèdent au stockage
 
@@ -33,7 +43,7 @@ Les montages NFS sont réalisés au **niveau de l'hôte**. Les conteneurs Docker
 
 ```yaml
 volumes:
-  - /mnt/movies:/data/movies
+  - /mnt/media/movies:/data/movies
 ```
 
 Les conteneurs ne gèrent pas le NFS directement. Si le montage NFS tombe, le conteneur perd l'accès aux fichiers.
@@ -48,19 +58,34 @@ Tous les services multimédia utilisent les mêmes identifiants :
 
 Ces valeurs doivent correspondre aux permissions configurées sur le partage NFS du NAS Unraid.
 
-## Limitation : pas de hardlinks
+## Hardlinks et déplacements instantanés
 
-> **Point important**
+Le montage NFS unique permet les **hardlinks** entre tous les sous-répertoires. Quand Sonarr ou Radarr importe un fichier depuis `/mnt/media/downloads` vers `/mnt/media/movies`, il crée un **hardlink instantané** au lieu d'une copie.
 
-Les **hardlinks ne fonctionnent pas** entre des partages NFS séparés. Chaque point de montage (`/mnt/movies`, `/mnt/downloads`, etc.) est un partage NFS distinct.
+Avantages :
 
-**Conséquence :** quand Sonarr ou Radarr « déplace » un fichier depuis `/mnt/downloads` vers `/mnt/movies`, il effectue en réalité une **copie suivie d'une suppression**. Cela :
+- **Pas de duplication d'espace** — le fichier n'existe qu'une fois sur le disque
+- **Import instantané** — pas de copie réseau
+- **Seed continu** — le fichier reste disponible dans le répertoire de téléchargement pour le seeding
 
-- Double temporairement l'espace disque utilisé
-- Prend plus de temps qu'un déplacement instantané
-- Augmente le trafic réseau
+> Cela suit les recommandations des [TRaSH Guides](https://trash-guides.info/Hardlinks/How-to-setup-for/Unraid/) pour la configuration Unraid.
 
-**Solution envisagée :** consolider tous les partages NFS en un seul partage unique. Les hardlinks fonctionneraient alors et les déplacements seraient instantanés.
+## Configuration Unraid
+
+Sur Unraid, un partage unique `media` contient tous les sous-répertoires :
+
+```
+/mnt/user/media/
+├── movies/
+├── tv-shows/
+├── musics/
+├── downloads/
+├── documents/
+├── photos/
+└── data/
+```
+
+Le partage est exporté via NFS dans les paramètres Unraid (Settings > NFS).
 
 ## Données locales
 

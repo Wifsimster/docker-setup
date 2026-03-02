@@ -212,7 +212,7 @@ graph LR
 | 🔀 Proxy inverse | Traefik v3.6 (Let's Encrypt / OVH DNS) |
 | 🐘 Bases de données | PostgreSQL 16, Redis / Valkey |
 | 💾 Sauvegarde | pg-backup — dump quotidien 3h, rétention 7j |
-| 📁 Stockage | NAS Unraid via NFS |
+| 📁 Stockage | NAS Unraid via NFS (montage unique `/mnt/media`) |
 | 📊 Supervision | Beszel, Uptime Kuma, Dozzle, Portainer, Homepage |
 | 🔒 Sécurité | `no-new-privileges`, réseaux internes isolés |
 | 🌐 Domaine | `example.com` (sous-domaine par service) |
@@ -237,7 +237,6 @@ graph LR
 
 ### 🔴 Haute priorité
 
-- **Stockage NAS unifié** — Consolider les montages NFS (hardlinks + déplacements instantanés)
 - **Sauvegardes off-site** — Réplication vers S3 / Backblaze B2 / second NAS
 - **Tests de restauration** — Validation mensuelle de l'intégrité des backups
 
@@ -258,6 +257,7 @@ graph LR
 - ~~Healthchecks universels~~ · ~~Limites mémoire~~ · ~~Rotation des logs~~
 - ~~Domaine variable~~ · ~~Nettoyage labels Traefik~~ · ~~Sécurité conteneurs~~
 - ~~Isolation réseau~~ · ~~Alertes backup Discord~~ · ~~Documentation DR~~
+- ~~Stockage NAS unifié~~ — Montage NFS unique `/mnt/media` (hardlinks + déplacements instantanés)
 
 ---
 

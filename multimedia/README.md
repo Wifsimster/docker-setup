@@ -38,7 +38,7 @@ L'utilisateur demande du contenu via Seerr. Les gestionnaires (Sonarr, Radarr, L
 - Docker et Docker Compose installés
 - Réseau Docker externe `lan` créé (`docker network create lan`)
 - Traefik configuré avec le provider Docker et le provider fichier (pour Plex)
-- Points de montage NFS : `/mnt/downloads`, `/mnt/movies`, `/mnt/tv-shows`, `/mnt/musics`
+- Point de montage NFS unique : `/mnt/media` (sous-répertoires : `downloads/`, `movies/`, `tv-shows/`, `musics/`)
 - Fichier WireGuard pour ProtonVPN dans `./wireguard/wg0.conf`
 
 ## Démarrage rapide
@@ -71,10 +71,10 @@ L'utilisateur demande du contenu via Seerr. Les gestionnaires (Sonarr, Radarr, L
 
 | Variable | Description | Défaut |
 |---|---|---|
-| `DOWNLOADS_LOCATION` | Répertoire de téléchargement | `/mnt/downloads` |
-| `TV_SHOWS_LOCATION` | Bibliothèque de séries | `/mnt/tv-shows` |
-| `MOVIES_LOCATION` | Bibliothèque de films | `/mnt/movies` |
-| `MUSIC_LOCATION` | Bibliothèque musicale | `/mnt/musics` |
+| `DOWNLOADS_LOCATION` | Répertoire de téléchargement | `/mnt/media/downloads` |
+| `TV_SHOWS_LOCATION` | Bibliothèque de séries | `/mnt/media/tv-shows` |
+| `MOVIES_LOCATION` | Bibliothèque de films | `/mnt/media/movies` |
+| `MUSIC_LOCATION` | Bibliothèque musicale | `/mnt/media/musics` |
 
 ### Chemins de configuration des services
 

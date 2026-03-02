@@ -117,7 +117,7 @@ networks:
 
 - Config data: relative paths from compose file (e.g., `../bazarr/data`, `../plex/library`)
 - Named Docker volumes: for databases and internal state (`pg_data`, `redis_data`)
-- NFS mounts: host-level mounts under `/mnt/` (`/mnt/movies`, `/mnt/tv-shows`, `/mnt/downloads`, etc.)
+- NFS mounts: single host-level mount at `/mnt/media` with subdirectories (`movies/`, `tv-shows/`, `downloads/`, `musics/`, `photos/`, `documents/`, `data/`)
 
 ### Restart Policies
 
@@ -176,6 +176,6 @@ Follow the pattern in `paperless-ngx/compose.yml` or `the-box/compose.yml`:
 - **No build step**: There is nothing to compile or build. Changes take effect via `docker compose up -d`.
 - **Secrets in `.env`**: Never hardcode passwords, API keys, or tokens in compose files. Use `${VARIABLE}` interpolation from `.env` files.
 - **Image tags**: Most services use `:latest`. The multimedia stack (LinuxServer images) and some others may pin specific versions.
-- **NFS storage**: Media paths (`/mnt/*`) are NFS mounts from Unraid. Hardlinks don't work across separate NFS shares (see README TODO).
+- **NFS storage**: All media is stored under a single NFS mount `/mnt/media` from Unraid (`192.168.0.240:/mnt/user/media`). Hardlinks work across all subdirectories.
 - **Domain**: The domain `battistella.ovh` is used throughout. Use `${DOMAIN}` variable where possible.
 - **Homepage config**: `homepage/config/services.yaml` is gitignored and uses `{{HOMEPAGE_VAR_*}}` env substitution for secrets. Add new API keys to `homepage/.env` as `HOMEPAGE_VAR_<NAME>=<value>`, then reference them in `services.yaml` as `{{HOMEPAGE_VAR_<NAME>}}`.
