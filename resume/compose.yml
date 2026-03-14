@@ -33,9 +33,6 @@ services:
 
       # Service
       - "traefik.http.services.resume.loadBalancer.server.port=80"
-      
-      # Watchtower automatic update
-      - com.centurylinklabs.watchtower.enable=true
 
     networks:
       lan:

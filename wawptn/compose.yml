@@ -1,0 +1,135 @@
+name: wawptn
+
+services:
+  wawptn:
+    image: wifsimster/wawptn:latest
+    container_name: wawptn
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    env_file:
+      - .env
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Paris
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://${DB_USER:-wawptn}:${DB_PASSWORD:-wawptn}@wawptn-postgres:5432/${DB_NAME:-wawptn}
+      - STEAM_API_KEY=${STEAM_API_KEY}
+      - API_URL=https://wawptn.${DOMAIN}
+      - CORS_ORIGIN=https://wawptn.${DOMAIN}
+      - DISCORD_BOT_API_SECRET=${DISCORD_BOT_API_SECRET}
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    depends_on:
+      postgres:
+        condition: service_healthy
+    labels:
+      - "traefik.enable=true"
+
+      # Entrypoint
+      - "traefik.http.routers.wawptn.entrypoints=websecure"
+
+      # Router
+      - "traefik.http.routers.wawptn.rule=Host(`wawptn.${DOMAIN}`)"
+
+      # TLS
+      - "traefik.docker.network=lan"
+      - "traefik.http.routers.wawptn.tls=true"
+      - "traefik.http.routers.wawptn.tls.certresolver=letsencrypt"
+
+      # Service
+      - "traefik.http.services.wawptn.loadBalancer.server.port=8080"
+
+    cap_drop:
+      - ALL
+    networks:
+      lan:
+      backend:
+
+  wawptn-discord:
+    image: wifsimster/wawptn:latest
+    container_name: wawptn-discord
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    env_file:
+      - .env
+    environment:
+      - TZ=Europe/Paris
+      - NODE_ENV=production
+      - DISCORD_BOT_TOKEN=${DISCORD_BOT_TOKEN}
+      - DISCORD_APPLICATION_ID=${DISCORD_APPLICATION_ID}
+      - DISCORD_BOT_API_SECRET=${DISCORD_BOT_API_SECRET}
+      - BACKEND_URL=http://wawptn:8080
+    command: ["node", "packages/discord/dist/index.js"]
+    depends_on:
+      wawptn:
+        condition: service_healthy
+    networks:
+      lan:
+      backend:
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: wawptn-postgres
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    environment:
+      - POSTGRES_USER=${DB_USER:-wawptn}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-wawptn}
+      - POSTGRES_DB=${DB_NAME:-wawptn}
+      - PGDATA=/var/lib/postgresql/data/pgdata
+      - TZ=Europe/Paris
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-wawptn}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      backend:
+
+volumes:
+  postgres-data:
+
+networks:
+  lan:
+    external: true
+  backend:
+    internal: true
