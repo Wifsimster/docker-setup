@@ -10,7 +10,7 @@ services:
     environment:
       - TZ=Europe/Paris
       - DOCKER_API_VERSION=1.44
-      - WATCHTOWER_SCHEDULE=0 0 6 * * *
+      - WATCHTOWER_SCHEDULE=0 0 * * * *
       - WATCHTOWER_LABEL_ENABLE=true
       - WATCHTOWER_CLEANUP=true
       - WATCHTOWER_REMOVE_VOLUMES=true
