@@ -17,6 +17,7 @@
 !home-assistant/config/.storage/lovelace_dashboards
 !pg-backup/backup.sh
 !pg-backup/crontab
+!reports/*.md
 
 # Explicitly exclude homepage config containing secrets
 homepage/config/services.yaml
