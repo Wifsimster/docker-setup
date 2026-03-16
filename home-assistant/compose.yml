@@ -39,22 +39,12 @@ services:
       retries: 3
       start_period: 60s
     labels:
-      - "traefik.enable=true"
-
-      # Entrypoint
-      - "traefik.http.routers.home-assistant.entrypoints=websecure"
-
-      # Router
-      - "traefik.http.routers.home-assistant.rule=Host(`home-assistant.${DOMAIN}`)"
-
-      # Service
-      - "traefik.http.services.home-assistant.loadBalancer.server.port=8123"
-
       # Watchtower automatic update
       - com.centurylinklabs.watchtower.enable=true
 
-    networks:
-      lan:
+    # Host network required for direct LAN access (Broadlink UDP, mDNS, device discovery)
+    # Traefik routing handled via file provider (traefik/config/home-assistant.yml)
+    network_mode: host
 
 
   mosquitto:
