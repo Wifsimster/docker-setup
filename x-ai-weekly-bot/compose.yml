@@ -19,43 +19,23 @@ services:
     env_file:
       - .env
     environment:
-      - PUID=1000
-      - PGID=1000
       - TZ=Europe/Paris
       - NODE_ENV=production
-      - X_API_KEY=${X_API_KEY}
-      - X_API_SECRET=${X_API_SECRET}
-      - X_ACCESS_TOKEN=${X_ACCESS_TOKEN}
-      - X_ACCESS_TOKEN_SECRET=${X_ACCESS_TOKEN_SECRET}
-      - X_USERNAME=${X_USERNAME}
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
-      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-}
       - WEB_PORT=3000
     volumes:
       - bot-data:/app/data
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/healthz"]
+      test: ["CMD-SHELL", "wget -qS http://localhost:3000/healthz 2>&1 | grep -q 'HTTP/'"]
       interval: 60s
       timeout: 5s
       retries: 3
       start_period: 10s
     labels:
       - "traefik.enable=true"
-
-      # Entrypoint
       - "traefik.http.routers.x-ai-weekly-bot.entrypoints=websecure"
-
-      # Router
       - "traefik.http.routers.x-ai-weekly-bot.rule=Host(`x-ai-weekly-bot.${DOMAIN}`)"
-
-      # TLS
-      - "traefik.docker.network=lan"
-      - "traefik.http.routers.x-ai-weekly-bot.tls=true"
-      - "traefik.http.routers.x-ai-weekly-bot.tls.certresolver=letsencrypt"
-
-      # Service
       - "traefik.http.services.x-ai-weekly-bot.loadBalancer.server.port=3000"
-
+      - "com.centurylinklabs.watchtower.enable=true"
     cap_drop:
       - ALL
     networks:
