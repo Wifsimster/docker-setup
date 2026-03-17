@@ -86,7 +86,7 @@
     id: motion
   - type: turned_on
     device_id: 95f350cd6bf0dee60b2b3c2b8af44e7e
-    entity_id: e32d2c6005adef95310decaac166ab98
+    entity_id: 1502645910f9091ffba23cfe3bac4624
     domain: switch
     trigger: device
     id: gate
@@ -245,14 +245,14 @@
   triggers:
   - type: turned_on
     device_id: 95f350cd6bf0dee60b2b3c2b8af44e7e
-    entity_id: e32d2c6005adef95310decaac166ab98
+    entity_id: 1502645910f9091ffba23cfe3bac4624
     domain: switch
     trigger: device
   conditions: []
   actions:
   - type: turn_off
     device_id: 2a2d0e52ea1bbf8d481dfaab6dc2725b
-    entity_id: 75c98ddf44f9a1e899a86da4a485c4a0
+    entity_id: 2c1e6f0b54feacd60abe6bfbfb69d8c9
     domain: switch
   mode: single
   max_exceeded: warning
@@ -263,14 +263,14 @@
   triggers:
   - type: turned_on
     device_id: 2a2d0e52ea1bbf8d481dfaab6dc2725b
-    entity_id: 75c98ddf44f9a1e899a86da4a485c4a0
+    entity_id: 2c1e6f0b54feacd60abe6bfbfb69d8c9
     domain: switch
     trigger: device
   conditions: []
   actions:
   - type: turn_off
     device_id: 95f350cd6bf0dee60b2b3c2b8af44e7e
-    entity_id: e32d2c6005adef95310decaac166ab98
+    entity_id: 1502645910f9091ffba23cfe3bac4624
     domain: switch
   mode: single
   max_exceeded: warning
@@ -303,7 +303,7 @@
   triggers:
   - type: turned_on
     device_id: 95f350cd6bf0dee60b2b3c2b8af44e7e
-    entity_id: e32d2c6005adef95310decaac166ab98
+    entity_id: 1502645910f9091ffba23cfe3bac4624
     domain: switch
     trigger: device
   conditions:
@@ -322,7 +322,7 @@
   - condition: device
     type: is_on
     device_id: 95f350cd6bf0dee60b2b3c2b8af44e7e
-    entity_id: e32d2c6005adef95310decaac166ab98
+    entity_id: 1502645910f9091ffba23cfe3bac4624
     domain: switch
   actions:
   - delay:
@@ -333,13 +333,13 @@
   - condition: device
     type: is_on
     device_id: 95f350cd6bf0dee60b2b3c2b8af44e7e
-    entity_id: e32d2c6005adef95310decaac166ab98
+    entity_id: 1502645910f9091ffba23cfe3bac4624
     domain: switch
   - action: switch.turn_on
     metadata: {}
     data: {}
     target:
-      entity_id: switch.wifi_smart_switch
+      entity_id: switch.fermeture_portail
   - action: notify.all_mobiles
     data:
       title: Portail fermé automatiquement
@@ -398,7 +398,7 @@
   triggers:
   - type: turned_on
     device_id: 95f350cd6bf0dee60b2b3c2b8af44e7e
-    entity_id: e32d2c6005adef95310decaac166ab98
+    entity_id: 1502645910f9091ffba23cfe3bac4624
     domain: switch
     trigger: device
   conditions:
@@ -413,7 +413,7 @@
   - condition: device
     type: is_on
     device_id: 95f350cd6bf0dee60b2b3c2b8af44e7e
-    entity_id: e32d2c6005adef95310decaac166ab98
+    entity_id: 1502645910f9091ffba23cfe3bac4624
     domain: switch
   - action: notify.all_mobiles
     data:
