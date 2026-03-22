@@ -8,7 +8,7 @@ services:
       mosquitto:
         condition: service_healthy
       matter-server:
-        condition: service_started
+        condition: service_healthy
     volumes:
       - /opt/docker/home-assistant/config:/config
       - /etc/localtime:/etc/localtime:ro
@@ -91,7 +91,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 256M
+          memory: 512M
     logging:
       driver: json-file
       options:
@@ -104,9 +104,16 @@ services:
       - /opt/docker/home-assistant/matter-server/data:/data/
       - /run/dbus:/run/dbus:ro
 
+    healthcheck:
+      test: ["CMD-SHELL", "printf 'GET / HTTP/1.1\\r\\nHost: localhost\\r\\n\\r\\n' | nc -w 5 localhost 5580 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
     # Required for mDNS to work correctly
     network_mode: host
-    
+
     # Accessible at http://192.168.0.237:5580/
 
 networks:
