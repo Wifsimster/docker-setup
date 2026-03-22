@@ -28,6 +28,7 @@ services:
       - API_URL=https://wawptn.${DOMAIN}
       - CORS_ORIGIN=https://wawptn.${DOMAIN}
       - DISCORD_BOT_API_SECRET=${DISCORD_BOT_API_SECRET}
+      - ADMIN_STEAM_ID=${ADMIN_STEAM_ID}
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
       interval: 30s

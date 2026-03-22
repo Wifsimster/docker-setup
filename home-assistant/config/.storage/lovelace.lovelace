@@ -70,7 +70,7 @@
                       "name": "Ouverture"
                     },
                     {
-                      "entity": "switch.wifi_smart_switch",
+                      "entity": "switch.fermeture_portail",
                       "icon": "mdi:gate",
                       "secondary_info": "last-updated",
                       "name": "Fermeture"

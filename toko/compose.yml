@@ -1,0 +1,106 @@
+name: toko
+
+services:
+  toko:
+    image: wifsimster/toko:latest
+    container_name: toko
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    env_file:
+      - .env
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Paris
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://${DB_USER:-toko}:${DB_PASSWORD:-toko}@toko-postgres:5432/${DB_NAME:-toko}
+      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
+      - BETTER_AUTH_URL=https://toko.${DOMAIN}
+      - CORS_ORIGIN=https://toko.${DOMAIN}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - RESEND_API_KEY=${RESEND_API_KEY}
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    depends_on:
+      postgres:
+        condition: service_healthy
+    labels:
+      - "traefik.enable=true"
+
+      # Entrypoint
+      - "traefik.http.routers.toko.entrypoints=websecure"
+
+      # Router
+      - "traefik.http.routers.toko.rule=Host(`toko.${DOMAIN}`)"
+
+      # TLS
+      - "traefik.docker.network=lan"
+      - "traefik.http.routers.toko.tls=true"
+      - "traefik.http.routers.toko.tls.certresolver=letsencrypt"
+
+      # Service
+      - "traefik.http.services.toko.loadBalancer.server.port=8080"
+
+      # Watchtower
+      - "com.centurylinklabs.watchtower.enable=true"
+
+    cap_drop:
+      - ALL
+    networks:
+      lan:
+      backend:
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: toko-postgres
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    environment:
+      - POSTGRES_USER=${DB_USER:-toko}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-toko}
+      - POSTGRES_DB=${DB_NAME:-toko}
+      - PGDATA=/var/lib/postgresql/data/pgdata
+      - TZ=Europe/Paris
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-toko}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      backend:
+
+volumes:
+  postgres-data:
+
+networks:
+  lan:
+    external: true
+  backend:
+    internal: true
