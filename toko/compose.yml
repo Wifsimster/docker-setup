@@ -2,7 +2,7 @@ name: toko
 
 services:
   toko:
-    image: wifsimster/toko:latest
+    image: ghcr.io/wifsimster/toko:latest
     container_name: toko
     restart: unless-stopped
     security_opt:

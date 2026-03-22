@@ -2,7 +2,7 @@ name: copro-pilot
 
 services:
   copro-pilot:
-    image: wifsimster/copro-pilot:latest
+    image: ghcr.io/wifsimster/copro-pilot:latest
     container_name: copro-pilot
     restart: unless-stopped
     security_opt:
