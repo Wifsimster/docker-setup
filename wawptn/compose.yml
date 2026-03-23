@@ -55,6 +55,9 @@ services:
       # Service
       - "traefik.http.services.wawptn.loadBalancer.server.port=8080"
 
+      # Watchtower
+      - "com.centurylinklabs.watchtower.enable=true"
+
     cap_drop:
       - ALL
     networks:
@@ -88,6 +91,8 @@ services:
       - DISCORD_BOT_API_SECRET=${DISCORD_BOT_API_SECRET}
       - BACKEND_URL=http://wawptn:8080
     command: ["node", "packages/discord/dist/index.js"]
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
     healthcheck:
       disable: true
     depends_on:
