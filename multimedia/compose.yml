@@ -1,54 +1,6 @@
 name: multimedia
 
 services:
-  bazarr:
-    image: lscr.io/linuxserver/bazarr:latest
-    container_name: bazarr
-    restart: unless-stopped
-    security_opt:
-      - no-new-privileges:true
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
-    environment:
-      - PUID=${PUID}
-      - PGID=${PGID}
-      - TZ=${TZ}
-      - UMASK=002
-    volumes:
-      - ${BAZARR_CONFIG_PATH}:/config
-      - ${TV_SHOWS_LOCATION}:/data/tv
-      - ${MOVIES_LOCATION}:/data/movies
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:6767"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
-    labels:
-      - "traefik.enable=true"
-
-      # Entrypoint
-      - "traefik.http.routers.bazarr.entrypoints=websecure"
-
-      # Router
-      - "traefik.http.routers.bazarr.rule=Host(`bazarr.${DOMAIN}`)"
-
-      # Service
-      - "traefik.http.services.bazarr.loadBalancer.server.port=6767"
-
-      # Watchtower automatic update
-      - "com.centurylinklabs.watchtower.enable=true"
-
-    networks:
-      lan:
-
   lidarr:
     image: lscr.io/linuxserver/lidarr:latest
     container_name: lidarr
