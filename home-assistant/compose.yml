@@ -111,6 +111,9 @@ services:
       retries: 3
       start_period: 30s
 
+    # Force CHIP SDK to use the real LAN interface for mDNS (not a Docker bridge)
+    command: --storage-path /data --paa-root-cert-dir /data/credentials --primary-interface ens18
+
     # Required for mDNS to work correctly
     network_mode: host
 
