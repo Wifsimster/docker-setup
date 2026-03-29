@@ -1,6 +1,6 @@
 # 🏠 Home Server Platform
 
-> Plateforme auto-hébergée · ~30 services Docker · Debian · HTTPS automatique via `*.example.com`
+> Plateforme auto-hébergée · 57 containers Docker · Debian · HTTPS automatique via `*.battistella.ovh`
 
 Streaming multimédia, domotique, gestion documentaire, galerie photo et outils de productivité — accessible partout, 100% sous votre contrôle.
 
@@ -194,13 +194,27 @@ graph LR
 ```mermaid
 graph LR
     Dev[👨‍💻 Dev] -->|compose.yml| Git[📦 Git]
-    Dev -->|docker compose up -d| Server[🖥️ Serveur]
+    Git -->|push| Runner[🤖 GitHub Actions Runner]
+    Runner -->|docker compose up -d| Server[🖥️ Serveur]
     Watchtower[🔄 Watchtower] -->|MAJ 6h| Server
     LE[🔒 Let's Encrypt] -.->|TLS| Traefik[🔀 Traefik]
     OVH -.->|DNS Challenge| LE
 ```
 
-> Pas de CI/CD — déploiement manuel `docker compose up -d`. Watchtower met à jour les images quotidiennement.
+> Les déploiements se font via 6 runners GitHub Actions self-hosted (`/opt/actions-runner/`). Watchtower met à jour les images quotidiennement.
+
+### GitHub Actions Runners
+
+6 runners self-hosted, un par repo, avec binaires partagés via hardlinks pour économiser ~3.5 Go :
+
+| Runner | Repo | Service |
+|--------|------|---------|
+| `copro-pilot` | Wifsimster/copro-pilot | copro-pilot |
+| `personal-blog` | Wifsimster/personal.blog | blog |
+| `toko` | Wifsimster/toko | toko |
+| `resume` | Wifsimster/resume | resume |
+| `wawptn` | Wifsimster/wawptn | wawptn |
+| `x-ai-weekly-bot` | Wifsimster/x-ai-weekly-bot | bot |
 
 ---
 
@@ -258,6 +272,8 @@ graph LR
 - ~~Domaine variable~~ · ~~Nettoyage labels Traefik~~ · ~~Sécurité conteneurs~~
 - ~~Isolation réseau~~ · ~~Alertes backup Discord~~ · ~~Documentation DR~~
 - ~~Stockage NAS unifié~~ — Montage NFS unique `/mnt/media` (hardlinks + déplacements instantanés)
+- ~~Mutualisation runners~~ — 6 runners avec binaires partagés via hardlinks (~3.5 Go économisés, voir [#13](https://github.com/Wifsimster/docker-setup/issues/13))
+- ~~Optimisation disque~~ — Récupération de 11.8 Go, cleanup automatique hebdomadaire (`/opt/docker/disk-cleanup.sh`)
 
 ---
 
