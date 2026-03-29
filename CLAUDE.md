@@ -179,3 +179,93 @@ Follow the pattern in `paperless-ngx/compose.yml` or `the-box/compose.yml`:
 - **NFS storage**: All media is stored under a single NFS mount `/mnt/media` from Unraid (`192.168.0.240:/mnt/user/media`). Hardlinks work across all subdirectories.
 - **Domain**: The domain `battistella.ovh` is used throughout. Use `${DOMAIN}` variable where possible.
 - **Homepage config**: `homepage/config/services.yaml` is gitignored and uses `{{HOMEPAGE_VAR_*}}` env substitution for secrets. Add new API keys to `homepage/.env` as `HOMEPAGE_VAR_<NAME>=<value>`, then reference them in `services.yaml` as `{{HOMEPAGE_VAR_<NAME>}}`.
+- **Compose working directories**: Live compose projects with `.env` files are under `/opt/docker/<service>/`. The repo at `/home/wifsimster/docker-setup/` tracks only the compose files (gitignored `.env`). Always run `docker compose` from `/opt/docker/<service>/` to get the secrets, not from the repo clone.
+- **matter-server healthcheck**: The `matter-server` container reports `unhealthy` because `nc` is missing from its image. This is a false negative — the service runs correctly. `homeassistant` must be started manually with `docker start homeassistant` if it fails on `depends_on` health check.
+
+## GitHub Actions Runners
+
+6 self-hosted runners are installed in `/opt/actions-runner/`, one per repo. They share a single set of binaries via **hardlinks** to save ~3.5 Go of disk space.
+
+### Architecture
+
+```
+/opt/actions-runner/
+├── copro-pilot/          # Binary source (bin.2.x.x/ and externals.2.x.x/ are real files)
+├── personal-blog/        # bin/ and externals/ are hardlinks → copro-pilot/bin.2.x.x/
+├── toko/                 # idem
+├── resume/               # idem
+├── wawptn/               # idem
+└── x-ai-weekly-bot/      # idem
+```
+
+> **Do not use symlinks** for `bin/` and `externals/`. The runner resolves the real path and looks for `.runner`/`.credentials` in the symlink source directory, breaking independent registration. Use `cp -al` (hardlinks) instead.
+
+### Re-registering a runner
+
+```bash
+# Get a registration token
+TOKEN=$(gh api -X POST repos/Wifsimster/<repo>/actions/runners/registration-token -q '.token')
+
+cd /opt/actions-runner/<dir>
+sudo -u deploy ./svc.sh stop && sudo -u deploy ./svc.sh uninstall
+rm -f .runner .credentials .credentials_rsaparams .runner_migrated .service .env .path
+sudo -u deploy ./config.sh --url https://github.com/Wifsimster/<repo> --token $TOKEN \
+  --name docker-server --labels self-hosted,linux,x64,docker --work _work --replace --unattended
+./svc.sh install deploy && ./svc.sh start
+```
+
+### After a runner auto-update (new bin.2.x.x version)
+
+Recreate hardlinks for secondary runners and delete the old version:
+
+```bash
+NEW="bin.2.334.0"   # adjust version
+NEW_EXT="externals.2.334.0"
+
+for d in personal-blog toko resume wawptn x-ai-weekly-bot; do
+  rm -rf /opt/actions-runner/${d}/bin /opt/actions-runner/${d}/externals
+  cp -al /opt/actions-runner/copro-pilot/${NEW} /opt/actions-runner/${d}/bin
+  cp -al /opt/actions-runner/copro-pilot/${NEW_EXT} /opt/actions-runner/${d}/externals
+done
+
+# Once stable, delete old version from all runners
+OLD="bin.2.333.0"
+for d in copro-pilot personal-blog toko resume wawptn x-ai-weekly-bot; do
+  rm -rf /opt/actions-runner/${d}/${OLD} /opt/actions-runner/${d}/externals${OLD#bin}
+done
+```
+
+## Disk Space Management
+
+### Current state (2026-03-29)
+- Primary partition: 97 Go total, ~74 Go used (81%), ~19 Go free
+- Docker images: ~43 Go (all active, cannot prune without stopping services)
+- `/var/lib/containerd`: ~32 Go (shared layers with Docker/moby namespace)
+
+### Automated cleanup
+
+`/opt/docker/disk-cleanup.sh` runs every **Sunday at 03:00** (root crontab). It handles:
+- Docker prune (dangling images, stopped containers, orphan volumes)
+- Container log truncation (>50 Mo)
+- Systemd journal vacuum (14 days / 500 Mo)
+- APT cache clean
+- Old rotated log files (>30 days)
+- Runner `_work/_update` deduplication
+- Old runner binary versions cleanup
+- Aggressive mode if disk >90%
+
+Logs: `/var/log/disk-cleanup.log`
+
+### Manual cleanup triggers
+
+```bash
+# Quick Docker cleanup
+sudo docker system prune --force
+
+# Full cleanup script
+sudo /opt/docker/disk-cleanup.sh
+
+# Check disk usage breakdown
+sudo docker system df
+sudo du -sh /opt/actions-runner/*/ /var/lib/docker/ /var/log/
+```
