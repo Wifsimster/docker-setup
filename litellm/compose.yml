@@ -1,0 +1,87 @@
+name: litellm
+
+services:
+  db:
+    container_name: litellm-db
+    image: postgres:16-alpine
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: litellm
+      POSTGRES_USER: litellm
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U litellm -d litellm"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - lan
+      - backend
+
+  litellm:
+    container_name: litellm
+    image: ghcr.io/berriai/litellm:main-stable
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    depends_on:
+      db:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    command: --config /app/config.yaml
+    volumes:
+      - ./config.yaml:/app/config.yaml:ro
+    environment:
+      - TZ=Europe/Paris
+      - LITELLM_MASTER_KEY=${LITELLM_MASTER_KEY}
+      - DATABASE_URL=postgresql://litellm:${POSTGRES_PASSWORD}@litellm-db:5432/litellm
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+    labels:
+      - "traefik.enable=true"
+
+      # Entrypoint
+      - "traefik.http.routers.litellm.entrypoints=websecure"
+
+      # Router
+      - "traefik.http.routers.litellm.rule=Host(`litellm.${DOMAIN}`)"
+
+      # Service
+      - "traefik.http.services.litellm.loadBalancer.server.port=4000"
+
+      # Watchtower automatic update
+      - "com.centurylinklabs.watchtower.enable=true"
+
+    networks:
+      - lan
+      - backend
+
+volumes:
+  pg_data:
+    driver: local
+
+networks:
+  lan:
+    external: true
+  backend:
+    internal: true

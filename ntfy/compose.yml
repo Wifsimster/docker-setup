@@ -1,0 +1,61 @@
+name: ntfy
+
+services:
+  ntfy:
+    container_name: ntfy
+    image: binwiederhier/ntfy:latest
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    command: serve
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    environment:
+      - TZ=Europe/Paris
+      - NTFY_AUTH_DEFAULT_ACCESS=deny-all
+      - NTFY_AUTH_FILE=/var/lib/ntfy/auth.db
+      - NTFY_BEHIND_PROXY=true
+      - NTFY_BASE_URL=https://ntfy.${DOMAIN}
+    volumes:
+      - ntfy_cache:/var/cache/ntfy
+      - ntfy_auth:/var/lib/ntfy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --tries=1 http://localhost:80/v1/health -O - | grep -q '\"healthy\":true'"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      - "traefik.enable=true"
+
+      # Entrypoint
+      - "traefik.http.routers.ntfy.entrypoints=websecure"
+
+      # Router
+      - "traefik.http.routers.ntfy.rule=Host(`ntfy.${DOMAIN}`)"
+
+      # Service
+      - "traefik.http.services.ntfy.loadBalancer.server.port=80"
+
+      # Watchtower automatic update
+      - "com.centurylinklabs.watchtower.enable=true"
+
+    networks:
+      lan:
+
+volumes:
+  ntfy_cache:
+    driver: local
+  ntfy_auth:
+    driver: local
+
+networks:
+  lan:
+    external: true

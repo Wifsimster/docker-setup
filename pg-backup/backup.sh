@@ -13,6 +13,8 @@ immich_postgres|postgres|immich|IMMICH_DB_PASSWORD
 the-box-postgres|thebox|thebox|THEBOX_DB_PASSWORD
 copro-pilot-postgres|copro_pilot|copro_pilot|COPROPILOT_DB_PASSWORD
 infisical-db|infisical|infisical|INFISICAL_DB_PASSWORD
+litellm-db|litellm|litellm|LITELLM_DB_PASSWORD
+n8n-db|n8n|n8n|N8N_DB_PASSWORD
 "
 
 echo "=== PostgreSQL backup started at $(date) ==="
