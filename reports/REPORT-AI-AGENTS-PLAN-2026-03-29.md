@@ -18,42 +18,118 @@
 - Budget maîtrisé : seul coût variable = tokens API cloud
 
 **Infra existante :**
-- Proxmox VE 9.1.1 sur Debian 13 (trixie), kernel 6.17.2-1-pve
-- AMD Ryzen 5 3600 (6c/12t), 46 Go RAM
-- VM 100 (Unraid) : NAS, 10 Go RAM, 8x 4 To passthrough
-- VM 101 (Docker) : Ubuntu 24.04, 25.4 Go RAM, 150 Go disque
+- Proxmox VE sur Debian, kernel 6.x-pve
+- AMD Ryzen 5 3600 (6c/12t), 24 Gi RAM allouée à la VM Docker
+- VM Docker : Ubuntu 24.04, 12 vCPU, 24 Gi RAM, 146 Go disque
 - UniFi avec VLAN, SSID "Domotic" (2.4 GHz)
-- NAS Unraid 26 To NFS (192.168.0.240)
-- Services existants sur VM 101 : Home Assistant, Immich, Plex, qBittorrent, Uptime Kuma
+- NAS Unraid 26 To NFS (192.168.0.240:/mnt/user/media) monté sur `/mnt/media`
+- 29 services Docker déjà en production (voir section 2)
 - Pas de GPU dédié (RTX 2070 passthrough abandonné — IOMMU partagé)
 
 ---
 
-## 2. Audit infra — Changements réalisés (29 mars 2026)
+## 2. État actuel de l'infra — Audit du 29 mars 2026
 
-Avant de déployer, l'infra a été optimisée :
+### Ressources système
 
-| Action | Avant | Après |
-|--------|-------|-------|
-| Snapshot `fresh-setup` VM 101 | 63 Go dans le thin pool | **Supprimé** |
-| Disque VM 101 | 100 Go (98.4% plein) | **150 Go (66% plein)** |
-| RAM VM 100 (Unraid) | 18.2 Go | **10 Go** (2 Go utilisés réels) |
-| RAM hôte Proxmox libre | 1.5 Go | **11 Go** |
-| Swap hôte | 6.1 Go utilisé | **890 Mo** |
-| Thin pool `pve/data` | 78% | **72%** |
+| Métrique | Valeur |
+|----------|--------|
+| Disque total | 146 Go |
+| Disque utilisé | 74 Go (53%) |
+| Disque libre | 66 Go |
+| RAM totale | 24 Gi |
+| RAM utilisée | 9.1 Gi |
+| RAM disponible | 15 Gi |
+| Swap | 8 Gi (0 utilisé) |
+| vCPU | 12 |
 
-**Ressources disponibles pour le stack IA :**
-- ~50 Go disque libre sur VM 101
-- ~1.2 Go RAM nécessaire pour le stack minimal (dans les 25.4 Go de VM 101)
-- 12 vCPU alloués à VM 101 (sur-commité, acceptable pour ce workload)
+### Services Docker existants (29 services)
+
+#### Infrastructure & réseau
+
+| Service | Image | Rôle |
+|---------|-------|------|
+| Traefik | `traefik` | Reverse proxy, TLS Let's Encrypt (OVH DNS) |
+| Pi-hole | `pihole` | DNS ad-blocking (port 53) |
+| UniFi | `unifi-network-application` | Contrôleur réseau UniFi |
+| Portainer | `portainer-ce` | Interface Docker web |
+| Dozzle | `amir20/dozzle` | Visualiseur de logs Docker |
+
+#### Monitoring & maintenance
+
+| Service | Image | Rôle |
+|---------|-------|------|
+| Uptime Kuma | `louislam/uptime-kuma:1` | Monitoring uptime des services |
+| Beszel | `beszel` (hub + agent) | Monitoring système (CPU, RAM, disque) + alertes Discord |
+| Watchtower | `containrrr/watchtower` | Auto-update images Docker (cron quotidien 06:00) |
+| pg-backup | `postgres:16-alpine` + crond | Backup PostgreSQL quotidien (03:00), 5 bases, rétention 7 jours |
+| Homepage | `gethomepage/homepage` | Dashboard avec widgets |
+
+#### Multimédia
+
+| Service | Image | Rôle |
+|---------|-------|------|
+| Plex | `plexinc/pms-docker` | Media server (mode host) |
+| Sonarr | `linuxserver/sonarr` | Gestion séries TV |
+| Radarr | `linuxserver/radarr` | Gestion films |
+| Lidarr | `linuxserver/lidarr` | Gestion musique |
+| Bazarr | `linuxserver/bazarr` | Sous-titres |
+| Prowlarr | `linuxserver/prowlarr` | Indexeurs |
+| qBittorrent | `ghcr.io/hotio/qbittorrent` | Téléchargement (VPN intégré) |
+| Seerr | `seerr` | Requêtes média |
+| Tautulli | `tautulli` | Statistiques Plex |
+| Trotarr | `trotarr` | Gestion automatisée |
+
+#### Domotique
+
+| Service | Image | Rôle |
+|---------|-------|------|
+| Home Assistant | `homeassistant` | Hub domotique (mode host) |
+| Mosquitto | `eclipse-mosquitto` | Broker MQTT |
+| Matter Server | `matter-server` | Protocole Matter |
+
+#### Applications
+
+| Service | Image | Rôle |
+|---------|-------|------|
+| Immich | `immich` + PostgreSQL + Valkey | Photos/vidéos avec ML |
+| Paperless-NGX | `paperless-ngx` + PostgreSQL + Redis + Gotenberg + Tika | GED |
+| Vaultwarden | `vaultwarden/server` | Gestionnaire de mots de passe |
+| Infisical | `infisical` + PostgreSQL + Redis | Gestion des secrets |
+| Memos | `memos` | Prise de notes |
+| Wakapi | `wakapi` | Suivi temps de code |
+| Stirling | `stirling-pdf` | Outils PDF |
+| Gramps | `gramps-web` + Redis + Celery | Généalogie |
+
+#### Projets personnels
+
+| Service | Image | Rôle |
+|---------|-------|------|
+| Personal Blog | `wifsimster/wifsimster-blog` | Blog (blog.battistella.ovh) |
+| Resume | `wifsimster/resume` | CV en ligne (cv.battistella.ovh) |
+| Copro-Pilot | `wifsimster/copro-pilot` + PostgreSQL | App copropriété |
+| The-Box | `wifsimster/the-box` + PostgreSQL + Redis | App jeux |
+| Wawptn | `wifsimster/wawptn` + PostgreSQL + Discord bot | Stats de jeu |
+| Toko | `wifsimster/toko` + PostgreSQL | Suivi achievements |
+| Birthday Invitation | `birthday-invitation` | App RSVP |
+| X-AI-Weekly-Bot | `x-ai-weekly-bot` | Bot X/Twitter IA |
+
+### Infrastructure connexe
+
+- **Réseau Docker :** bridge externe `lan` partagé par tous les services
+- **NFS :** `/mnt/media` → sous-dossiers `movies/`, `tv-shows/`, `downloads/`, `musics/`, `photos/`, `documents/`, `data/`
+- **GitHub Actions :** 6 self-hosted runners dans `/opt/actions-runner/` (hardlinks)
+- **Nettoyage automatique :** `/opt/docker/disk-cleanup.sh` chaque dimanche 03:00
+- **Domaine :** `battistella.ovh` (Traefik + Let's Encrypt + OVH DNS challenge)
+- **Bases PostgreSQL existantes :** Immich, Paperless, Infisical, The-Box, Copro-Pilot, Toko, Wawptn
 
 ---
 
-## 3. Architecture cible (révisée)
+## 3. Architecture cible du stack IA
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                        TON TÉLÉPHONE                            │
+│                        TÉLÉPHONE                                │
 │                    ntfy app (push natif)                         │
 └──────────────────────────┬──────────────────────────────────────┘
                            │ push
@@ -64,6 +140,7 @@ Avant de déployer, l'infra a été optimisée :
                            │ HTTP POST
 ┌──────────────────────────▼──────────────────────────────────────┐
 │  COUCHE OBSERVABILITÉ    │  Uptime Kuma (existant)              │
+│                          │  Beszel (existant)                   │
 │                          │  Health checks tous les services     │
 │                          │  Langfuse (Phase 3, plus tard)       │
 └──────────────────────────┬──────────────────────────────────────┘
@@ -89,7 +166,10 @@ Avant de déployer, l'infra a été optimisée :
 - Pas d'Ollama (pas de GPU, CPU trop lent pour 14b)
 - Pas de Dify (trop lourd, redondant avec Open WebUI + n8n)
 - Langfuse reporté en Phase 3
-- Uptime Kuma déjà en place — pas à déployer
+- Uptime Kuma et Beszel déjà en place — pas à déployer
+- Traefik déjà en place comme reverse proxy (pas besoin de Caddy)
+- pg-backup déjà en place pour les sauvegardes PostgreSQL
+- Réseau `lan` existant (pas besoin de créer un réseau `ai-stack`)
 
 ---
 
@@ -106,7 +186,7 @@ Avant de déployer, l'infra a été optimisée :
 
 ---
 
-## 5. Les briques du stack — détail
+## 5. Les briques à déployer — détail
 
 ### 5.1 LiteLLM — Proxy LLM unifié
 
@@ -141,6 +221,12 @@ general_settings:
 
 **Pourquoi c'est critique :** sans LiteLLM, chaque service a sa propre config API, ses propres clés, et tu perds la vue consolidée des coûts. Avec LiteLLM, tu as UN dashboard de dépenses, UN point de fallback, et UN endroit pour changer de modèle.
 
+**Intégration infra existante :**
+- Exposé via Traefik (`litellm.battistella.ovh`)
+- PostgreSQL dédié ou base dans un PostgreSQL existant
+- Rejoint le réseau `lan`
+- Labels Watchtower pour auto-update
+
 ### 5.2 n8n — Orchestration des agents
 
 **Rôle :** cerveau opérationnel. Chaque agent est un workflow visuel qui combine un LLM (via LiteLLM), des outils (HTTP, SSH, DB, Home Assistant), et de la mémoire. Le pattern ReAct (raisonnement → action → observation → boucle) est natif.
@@ -156,10 +242,10 @@ general_settings:
 **Agents concrets à déployer :**
 
 1. **Agent triage email** — trigger Gmail → classification Haiku → routage par catégorie → notification ntfy si urgent
-2. **Agent monitoring infra** — cron → SSH sur les VMs → vérification disque/RAM/containers → alerte ntfy si seuil dépassé
+2. **Agent monitoring infra** — cron → query Beszel API → vérification seuils disque/RAM/containers → alerte ntfy si dépassé
 3. **Agent veille techno** — cron hebdo → recherche web → synthèse Sonnet → envoi résumé par ntfy/email
 4. **Agent domotique** — webhook Home Assistant → analyse Haiku → action HA → notification état
-5. **Agent briefing matinal** — cron 7h → agrège météo + calendrier + emails prioritaires + état infra → envoie résumé ntfy
+5. **Agent briefing matinal** — cron 7h → agrège météo + calendrier + emails prioritaires + état infra via Beszel → envoie résumé ntfy
 
 ### 5.3 Open WebUI — Interface chat
 
@@ -176,6 +262,7 @@ general_settings:
 - Model Builder → créer des "personnages" agents avec system prompts dédiés
 - Python tools natifs → écrire des fonctions custom
 - Pipelines → rate limiting, logging, filtres
+- Exposé via Traefik (`chat.battistella.ovh` ou `ai.battistella.ovh`)
 
 ### 5.4 ntfy — Notifications push auto-hébergées
 
@@ -193,7 +280,7 @@ general_settings:
 | Topic | Source | Priorité | Contenu |
 |-------|--------|----------|---------|
 | `agents` | n8n workflows | Normale | Résultats des agents, tâches terminées |
-| `infra` | Uptime Kuma | Haute | Service down, disque plein, RAM critique |
+| `infra` | Uptime Kuma + Beszel | Haute | Service down, disque plein, RAM critique |
 | `domotique` | Home Assistant + n8n | Normale | Événements domotiques IA |
 | `briefing` | Agent briefing n8n | Basse | Résumé matinal quotidien |
 | `costs` | LiteLLM | Normale | Alerte si budget API dépassé |
@@ -206,22 +293,28 @@ ntfy:
   container_name: ntfy
   restart: unless-stopped
   command: serve
-  ports:
-    - "2586:80"
   environment:
     - TZ=Europe/Paris
     - NTFY_AUTH_DEFAULT_ACCESS=deny-all
     - NTFY_AUTH_FILE=/var/lib/ntfy/auth.db
     - NTFY_BEHIND_PROXY=true
-    - NTFY_BASE_URL=https://ntfy.tondomaine.com
+    - NTFY_BASE_URL=https://ntfy.battistella.ovh
   volumes:
     - ntfy-cache:/var/cache/ntfy
     - ntfy-auth:/var/lib/ntfy
+  labels:
+    - "traefik.enable=true"
+    - "traefik.http.routers.ntfy.entrypoints=websecure"
+    - "traefik.http.routers.ntfy.rule=Host(`ntfy.battistella.ovh`)"
+    - "traefik.http.services.ntfy.loadBalancer.server.port=80"
+    - "com.centurylinklabs.watchtower.enable=true"
+  networks:
+    lan:
 ```
 
 ---
 
-## 6. Inventaire Docker — Stack IA
+## 6. Inventaire Docker — Stack IA à ajouter
 
 | Service | Port | Image | RAM estimée | Rôle |
 |---------|------|-------|-------------|------|
@@ -229,12 +322,18 @@ ntfy:
 | Open WebUI | 3000 | `open-webui/open-webui:main` | ~300 Mo | Interface chat |
 | n8n | 5678 | `n8nio/n8n:latest` | ~300 Mo | Orchestration agents |
 | ntfy | 2586 | `binwiederhier/ntfy` | ~30 Mo | Notifications push |
-| PostgreSQL | 5432 | `postgres:16` | ~200 Mo | Persistance globale |
-| Redis | 6379 | `redis:7-alpine` | ~50 Mo | Cache + queue |
+| PostgreSQL (IA) | 5433 | `postgres:16-alpine` | ~200 Mo | Persistance LiteLLM + n8n |
 
-**Total : ~1.1 Go RAM**
+**Total à ajouter : ~1 Go RAM** (sur 15 Gi disponibles)
 
-### Services reportés (ajout futur)
+**Pas besoin de déployer (déjà en place) :**
+- Traefik (reverse proxy + TLS)
+- Uptime Kuma (health monitoring)
+- Beszel (monitoring système)
+- Watchtower (auto-update)
+- pg-backup (backups PostgreSQL — à configurer pour les nouvelles bases)
+
+### Services reportés (ajout futur conditionnel)
 
 | Service | RAM | Condition d'ajout |
 |---------|-----|-------------------|
@@ -259,45 +358,41 @@ ntfy:
 
 ## 8. Plan de déploiement
 
-### ~~Étape 0 — Préparer l'infra (FAIT ✅)~~
+### ~~Étape 0 — Auditer l'infra (FAIT ✅)~~
 
-- [x] Supprimer le snapshot `fresh-setup` de VM 101
-- [x] Agrandir disque VM 101 : 100 Go → 150 Go
-- [x] Étendre le filesystem dans la VM
-- [x] Réduire RAM Unraid : 18 Go → 10 Go
-- [x] Vérifier : hôte Proxmox a 11 Go libres, swap < 1 Go
+- [x] Inventorier les 29 services Docker existants
+- [x] Vérifier les ressources disponibles (15 Gi RAM libre, 66 Go disque libre)
+- [x] Confirmer Traefik, Uptime Kuma, Beszel, pg-backup déjà en place
+- [x] Identifier le réseau `lan` comme réseau cible (pas besoin de `ai-stack`)
 
 ### Étape 1 — Stack minimal viable (1-2 jours)
 
 > **Prérequis :** clé API Anthropic
 
-1. Créer le réseau Docker dédié `ai-stack`
-2. Déployer PostgreSQL 16 + Redis 7 (services partagés)
-3. Déployer LiteLLM avec config Anthropic (Haiku + Sonnet)
-4. Déployer Open WebUI pointant vers LiteLLM (`http://litellm:4000`)
-5. Déployer n8n avec PostgreSQL
-6. Déployer ntfy, créer les topics et l'auth
-7. Ajouter les monitors dans Uptime Kuma (déjà en place)
+1. Déployer PostgreSQL 16 dédié IA (port 5433, base `litellm` + base `n8n`)
+2. Déployer LiteLLM avec config Anthropic (Haiku + Sonnet), Traefik labels, réseau `lan`
+3. Déployer Open WebUI pointant vers LiteLLM (`http://litellm:4000`), Traefik labels
+4. Déployer ntfy, créer les topics et l'auth, Traefik labels
+5. Déployer n8n avec la base PostgreSQL IA
+6. Ajouter les nouvelles bases dans pg-backup (`backup.sh` existant)
+7. Ajouter les monitors dans Uptime Kuma (health endpoints)
 8. **Test :** envoyer un message dans Open WebUI → vérifier le passage par LiteLLM → Anthropic
 9. **Test :** envoyer une notification ntfy depuis curl → vérifier réception sur mobile
 
-### Étape 2 — Sécurité + premiers agents (2-3 jours)
+### Étape 2 — Premiers agents (2-3 jours)
 
-1. Déployer Caddy en reverse proxy devant Open WebUI + ntfy (TLS + auth)
-2. Configurer WireGuard pour accès mobile sécurisé
-3. Mettre en place un backup vzdump cron hebdomadaire vers NAS Unraid (192.168.0.240)
-4. Créer le workflow n8n "agent triage email" : Gmail trigger → Haiku classification → routing → ntfy
-5. Créer le workflow n8n "monitoring infra" : cron → SSH checks → ntfy
-6. Connecter Uptime Kuma → ntfy pour les alertes down
-7. Installer l'app ntfy sur le téléphone, souscrire aux topics
-8. **Test :** envoyer un email test → vérifier triage + notification
+1. Créer le workflow n8n "agent triage email" : Gmail trigger → Haiku classification → routing → ntfy
+2. Créer le workflow n8n "monitoring infra" : cron → Beszel API → seuils → ntfy
+3. Connecter Uptime Kuma → ntfy pour les alertes down
+4. Installer l'app ntfy sur le téléphone, souscrire aux topics
+5. **Test :** envoyer un email test → vérifier triage + notification
 
-### Étape 3 — Observabilité (quand 2-3 agents sont stables)
+### Étape 3 — Observabilité avancée (quand 2-3 agents sont stables)
 
 1. Déployer Langfuse + ClickHouse
 2. Ajouter `success_callback: ["langfuse"]` dans LiteLLM
 3. Créer un workflow n8n de surveillance des coûts → alerte ntfy si seuil dépassé
-4. Créer l'agent briefing matinal (météo + calendrier + emails + état infra → ntfy)
+4. Créer l'agent briefing matinal (météo + calendrier + emails + état infra via Beszel → ntfy)
 5. Connecter n8n à Home Assistant pour les agents domotiques
 
 ### Étape 4 — RAG et agents avancés (optionnel)
@@ -329,10 +424,14 @@ ntfy:
 
 | Besoin | Solution | Pourquoi |
 |--------|----------|----------|
+| Reverse proxy + TLS | Traefik | **Déjà en place**, Let's Encrypt + OVH DNS |
 | Proxy LLM unifié | LiteLLM | Multi-provider, cost tracking, fallback, MIT |
 | Orchestration agents | n8n | GUI visuelle, 400+ intégrations, ReAct natif |
 | Interface chat | Open WebUI | Référence du marché, PWA, function calling |
-| Health monitoring | Uptime Kuma | Déjà en place, intégration ntfy native, MIT |
+| Health monitoring | Uptime Kuma | **Déjà en place**, intégration ntfy native, MIT |
+| Monitoring système | Beszel | **Déjà en place**, CPU/RAM/disque + alertes |
+| Auto-update | Watchtower | **Déjà en place**, cron quotidien |
+| Backup PostgreSQL | pg-backup | **Déjà en place**, à étendre aux nouvelles bases |
 | Notifications push | ntfy | Auto-hébergé, 30 Mo RAM, app mobile, Apache 2.0 |
 | LLM cloud | Anthropic (Haiku/Sonnet) | Meilleur tool-calling, 1M contexte, coût OK |
 | **Reporté** | Ollama | Pas de GPU, CPU lent — à évaluer plus tard |
@@ -341,4 +440,4 @@ ntfy:
 
 ---
 
-*Rapport v2 — Mis à jour le 29 mars 2026 après audit et optimisation de l'infrastructure Proxmox.*
+*Rapport v2 — Mis à jour le 29 mars 2026 après audit complet de l'infrastructure Docker (29 services en production).*
