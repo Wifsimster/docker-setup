@@ -365,35 +365,34 @@ ntfy:
 - [x] Confirmer Traefik, Uptime Kuma, Beszel, pg-backup déjà en place
 - [x] Identifier le réseau `lan` comme réseau cible (pas besoin de `ai-stack`)
 
-### Étape 1 — Stack minimal viable (1-2 jours)
+### ~~Étape 1 — Stack minimal viable (FAIT ✅)~~
 
-> **Prérequis :** clé API Anthropic
+- [x] Déployer LiteLLM + PostgreSQL avec config Anthropic (Haiku + Sonnet)
+- [x] Déployer Open WebUI pointant vers LiteLLM (`https://ai.battistella.ovh`)
+- [x] Déployer ntfy, créer admin + 6 topics (infra, agents, domotique, briefing, costs, urgent)
+- [x] Déployer n8n + PostgreSQL (`https://n8n.battistella.ovh`)
+- [x] Ajouter les nouvelles bases dans pg-backup
+- [x] Ajouter 4 monitors dans Uptime Kuma (LiteLLM, Open WebUI, n8n, ntfy)
+- [x] Connecter les 33 monitors Uptime Kuma → ntfy topic `infra`
+- [x] Ajouter section "IA" dans Homepage (4 services)
+- [x] Test : chat Open WebUI → LiteLLM → Anthropic ✅
+- [x] Test : notification ntfy → réception mobile ✅
 
-1. Déployer PostgreSQL 16 dédié IA (port 5433, base `litellm` + base `n8n`)
-2. Déployer LiteLLM avec config Anthropic (Haiku + Sonnet), Traefik labels, réseau `lan`
-3. Déployer Open WebUI pointant vers LiteLLM (`http://litellm:4000`), Traefik labels
-4. Déployer ntfy, créer les topics et l'auth, Traefik labels
-5. Déployer n8n avec la base PostgreSQL IA
-6. Ajouter les nouvelles bases dans pg-backup (`backup.sh` existant)
-7. Ajouter les monitors dans Uptime Kuma (health endpoints)
-8. **Test :** envoyer un message dans Open WebUI → vérifier le passage par LiteLLM → Anthropic
-9. **Test :** envoyer une notification ntfy depuis curl → vérifier réception sur mobile
+### ~~Étape 2 — Premiers agents (FAIT ✅)~~
 
-### Étape 2 — Premiers agents (2-3 jours)
-
-1. Créer le workflow n8n "agent triage email" : Gmail trigger → Haiku classification → routing → ntfy
-2. Créer le workflow n8n "monitoring infra" : cron → Beszel API → seuils → ntfy
-3. Connecter Uptime Kuma → ntfy pour les alertes down
-4. Installer l'app ntfy sur le téléphone, souscrire aux topics
-5. **Test :** envoyer un email test → vérifier triage + notification
+- [x] Agent Monitoring Infra : cron 5 min → health checks LiteLLM/OpenWebUI/ntfy → ntfy `infra`
+- [x] Agent Triage Email : Gmail trigger → Haiku classification → ntfy `urgent`/`agents`
+- [x] Agent Briefing Matinal : cron 7h → météo (Open-Meteo) + état infra → ntfy `briefing`
+- [x] Agent Veille Techno : cron lundi 8h → HN + Reddit + Lobsters → Sonnet résumé → ntfy `agents`
+- [x] Agent Domotique : webhook n8n → Haiku analyse → ntfy `domotique`
+- [x] Connecter Home Assistant → n8n via `rest_command` (porte/fenêtre ouverte, batterie faible)
+- [x] Installer ntfy sur mobile, souscrire aux 6 topics ✅
 
 ### Étape 3 — Observabilité avancée (quand 2-3 agents sont stables)
 
 1. Déployer Langfuse + ClickHouse
 2. Ajouter `success_callback: ["langfuse"]` dans LiteLLM
 3. Créer un workflow n8n de surveillance des coûts → alerte ntfy si seuil dépassé
-4. Créer l'agent briefing matinal (météo + calendrier + emails + état infra via Beszel → ntfy)
-5. Connecter n8n à Home Assistant pour les agents domotiques
 
 ### Étape 4 — RAG et agents avancés (optionnel)
 
@@ -440,4 +439,4 @@ ntfy:
 
 ---
 
-*Rapport v2 — Mis à jour le 29 mars 2026 après audit complet de l'infrastructure Docker (29 services en production).*
+*Rapport v3 — Mis à jour le 29 mars 2026 après déploiement complet des étapes 1 et 2 (4 services IA + 5 agents n8n en production).*

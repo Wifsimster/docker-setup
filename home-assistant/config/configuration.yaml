@@ -6,6 +6,14 @@ frontend:
   themes: !include_dir_merge_named themes
 
 automation: !include automations.yaml
+
+# n8n AI agent webhook
+rest_command:
+  n8n_domotique:
+    url: "https://n8n.battistella.ovh/webhook/domotique"
+    method: POST
+    content_type: "application/json"
+    payload: '{{ payload }}'
 script: !include scripts.yaml
 scene: !include scenes.yaml
 

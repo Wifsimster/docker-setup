@@ -564,3 +564,41 @@
       entity_id: light.yeelight_color_0x52bf405
   mode: single
   max_exceeded: warning
+- id: 'n8n_domotique_door_window'
+  alias: n8n - Alerte porte/fenêtre ouverte
+  description: Envoie un événement à n8n si une porte ou fenêtre reste ouverte plus de 5 minutes
+  triggers:
+  - trigger: state
+    entity_id:
+    - group.all_doors
+    - group.all_windows
+    to: 'on'
+    for:
+      minutes: 5
+  conditions: []
+  actions:
+  - action: rest_command.n8n_domotique
+    data:
+      payload: >-
+        {"event": "door_window_open", "entity_id": "{{ trigger.entity_id }}",
+         "state": "{{ trigger.to_state.state }}",
+         "friendly_name": "{{ trigger.to_state.attributes.friendly_name }}",
+         "duration": "open for 5+ minutes"}
+  mode: single
+- id: 'n8n_domotique_battery_low'
+  alias: n8n - Alerte batterie faible
+  description: Envoie un événement à n8n quand un capteur a une batterie sous 15%
+  triggers:
+  - trigger: numeric_state
+    entity_id:
+    - sensor.all_battery
+    below: 15
+  conditions: []
+  actions:
+  - action: rest_command.n8n_domotique
+    data:
+      payload: >-
+        {"event": "battery_low", "entity_id": "{{ trigger.entity_id }}",
+         "battery_level": "{{ trigger.to_state.state }}%",
+         "friendly_name": "{{ trigger.to_state.attributes.friendly_name }}"}
+  mode: single
