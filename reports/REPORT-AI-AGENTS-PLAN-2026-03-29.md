@@ -46,7 +46,7 @@
 | Volumes Docker | 8.9 Go (40 volumes) |
 | vCPU | 12 |
 
-### Services Docker en production (44 services, 69 containers)
+### Services Docker en production (43 services, 68 containers)
 
 #### Infrastructure & réseau
 
@@ -97,7 +97,6 @@
 | Paperless-NGX | `ghcr.io/paperless-ngx/paperless-ngx:latest` + PostgreSQL + Redis + Gotenberg + Tika | GED |
 | Vaultwarden | `vaultwarden/server:latest` | Gestionnaire de mots de passe |
 | Infisical | `infisical/infisical:latest-postgres` + PostgreSQL + Redis | Gestion des secrets |
-| Memos | `neosmemo/memos:stable` | Prise de notes |
 | Wakapi | `ghcr.io/muety/wakapi:2.16.1` | Suivi temps de code |
 | Stirling PDF | `docker.stirlingpdf.com/stirlingtools/stirling-pdf:latest` | Outils PDF |
 | Gramps | `ghcr.io/gramps-project/grampsweb:latest` + Redis + Celery | Généalogie |
