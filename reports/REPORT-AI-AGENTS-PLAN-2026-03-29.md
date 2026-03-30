@@ -121,7 +121,6 @@
 | LiteLLM | `ghcr.io/berriai/litellm:main-stable` + PostgreSQL | Proxy LLM unifié (Haiku, Sonnet, qwen2.5:7b) |
 | Open WebUI | `ghcr.io/open-webui/open-webui:main` | Interface chat IA (ai.battistella.ovh) |
 | n8n | `n8nio/n8n:latest` + PostgreSQL | Orchestration 6 agents + workflows |
-| ntfy | `binwiederhier/ntfy` | Alertes push légères (infra, domotique, urgent) |
 | Langfuse | `langfuse/langfuse:3` + worker + PostgreSQL + ClickHouse + MinIO + Redis | Observabilité LLM (traces, coûts) |
 | Ollama | `ollama/ollama:latest` | LLM local qwen2.5:7b (CPU, 4.5 Go) |
 | discord-bridge | Python discord.py (custom) | Bot Jarvis — écoute Discord → forward n8n |
@@ -349,7 +348,7 @@ general_settings:
 
 - [x] Déployer LiteLLM + PostgreSQL avec config Anthropic (Haiku + Sonnet)
 - [x] Déployer Open WebUI pointant vers LiteLLM (`https://ai.battistella.ovh`)
-- [x] Déployer ntfy (conservé en service, non utilisé par les workflows IA)
+- [x] ~~ntfy~~ retiré — remplacé par Discord
 - [x] Déployer n8n + PostgreSQL (`https://n8n.battistella.ovh`)
 - [x] Ajouter les nouvelles bases dans pg-backup
 - [x] Ajouter 4 monitors dans Uptime Kuma (LiteLLM, Open WebUI, n8n, ntfy)
@@ -619,4 +618,4 @@ Tous les workflows n8n envoient exclusivement vers Discord (ntfy retiré) :
 
 ---
 
-*Rapport v9 — Mis à jour le 30 mars 2026. Étapes 1-4 et 6 déployées ✅. Stack IA complet opérationnel : LiteLLM (Haiku + Sonnet + qwen2.5:7b local) + Open WebUI + n8n (6 agents) + Langfuse + Ollama + Discord bot Jarvis (8 channels, tout passe par Discord). ntfy retiré des workflows IA. Seule étape optionnelle restante : Step 5 RAG (Dify + Qdrant).*
+*Rapport v10 — Mis à jour le 30 mars 2026. Étapes 1-4 et 6 déployées ✅. Stack IA complet : LiteLLM (Haiku + Sonnet + qwen2.5:7b) + Open WebUI + n8n (6 agents) + Langfuse + Ollama + Discord bot Jarvis (8 channels). ntfy supprimé. Interface unique Discord pour tout (notifications + conversations + agents). Seule étape optionnelle restante : Step 5 RAG.*
