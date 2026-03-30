@@ -2,7 +2,7 @@ name: wakapi
 
 services:
   wakapi:
-    image: ghcr.io/muety/wakapi:latest
+    image: ghcr.io/muety/wakapi:2.16.1
     container_name: wakapi
     restart: unless-stopped
     security_opt:
