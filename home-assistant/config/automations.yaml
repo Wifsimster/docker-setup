@@ -587,12 +587,12 @@
   mode: single
 - id: 'n8n_domotique_battery_low'
   alias: n8n - Alerte batterie faible
-  description: Envoie un événement à n8n quand un capteur a une batterie sous 15%
+  description: Envoie un événement à n8n quand un capteur a une batterie sous 5%
   triggers:
   - trigger: numeric_state
     entity_id:
     - sensor.all_battery
-    below: 15
+    below: 5
   conditions: []
   actions:
   - action: rest_command.n8n_domotique
