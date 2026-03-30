@@ -1,8 +1,8 @@
-# Agents IA Homelab — Rapport complet (v11)
+# Agents IA Homelab — Rapport complet (v12)
 
 > Stack autonome, observable, auto-hébergé sur Proxmox / Docker / UniFi
 > Damien Battistella — Mars 2026
-> **Mis à jour le 30 mars 2026 — Étapes 1, 2, 3, 4 et 5 déployées ✅**
+> **Mis à jour le 30 mars 2026 — Étapes 1, 2, 3, 4, 5 et 6 déployées ✅**
 
 ---
 
@@ -143,33 +143,34 @@
 ┌─────────────────────────────────────────────────────────────────┐
 │                   TÉLÉPHONE / DESKTOP                           │
 │                    Discord app (bot Jarvis)                     │
-│   #chat #media #maison #docs #infra #briefing #alerts #veille   │
+│                       #chat (canal unique)                      │
 └──────────────────────────┬──────────────────────────────────────┘
-                           │ discord-bridge (Python)
-                           │ → POST webhook n8n
-┌──────▼──────────────────────────────────────────────────────────┐
-│  COUCHE OBSERVABILITÉ    │  Uptime Kuma (existant)              │
-│                          │  Beszel (existant)                   │
-│                          │  Langfuse (traces + coûts)           │
-└──────────────────────────┬──────────────────────────────────────┘
-                           │ callbacks
+                           │ discord-bridge (Python discord.py)
+                           │ → POST webhook n8n (payload JSON)
 ┌──────────────────────────▼──────────────────────────────────────┐
-│  COUCHE ORCHESTRATION    │  n8n (port 5678) — agents + workflows│
-│                          │  Agent Chat (classifier + routing)   │
-│                          │  Agents spécialisés (media, home,    │
-│                          │  docs, infra, notes, général)        │
-└──────────┬───────────────┼───────────────┬──────────────────────┘
+│  n8n — Agent Chat Discord (webhook /discord-chat)               │
+│  ┌─────────────────────────────────────────────────────────┐    │
+│  │  1. Filter & Route (ignore bots, identifie channel)      │    │
+│  │  2. HTTP Request → LiteLLM (Sonnet + 20 outils)          │    │
+│  │  3. Code node : Parse réponse, exécute tool calls        │    │
+│  │     (require('http') → Docker services internes)         │    │
+│  │  4. Si tool calls : second appel LiteLLM avec résultats  │    │
+│  │  5. Respond to Webhook → JSON {reply, channelId}         │    │
+│  └─────────────────────────────────────────────────────────┘    │
+└──────────┬───────────────┬───────────────┬──────────────────────┘
            │               │               │
            ▼               ▼               ▼
 ┌──────────────┐ ┌─────────────────┐ ┌────────────────────────┐
-│ PROXY LLM    │ │ SERVICES DOCKER │ │ INTERFACE WEB          │
-│ LiteLLM 4000 │ │ Sonarr, Radarr  │ │ Open WebUI (port 3000) │
-│ → Haiku      │ │ Plex, Tautulli  │ │ Chat, RAG, PWA mobile  │
-│ → Sonnet     │ │ Home Assistant  │ └────────────────────────┘
-│ → fallback   │ │ Paperless, Immich│
-│ Cost tracking│ │ Beszel, Portainer│
-└──────────────┘ │ Memos, Pi-hole  │
-                 └─────────────────┘
+│ PROXY LLM    │ │ SERVICES DOCKER │ │ OBSERVABILITÉ          │
+│ LiteLLM 4000 │ │ Sonarr, Radarr  │ │ Langfuse (traces)      │
+│ → Sonnet 4.6 │ │ Tautulli        │ │ Uptime Kuma            │
+│ → Haiku 4.5  │ │ Home Assistant  │ │ Beszel (CPU/RAM)       │
+│ Cost tracking│ │ Paperless-NGX   │ └────────────────────────┘
+└──────────────┘ │ Beszel, Uptime K│ ┌────────────────────────┐
+                 └─────────────────┘ │ INTERFACE WEB          │
+                                     │ Open WebUI (port 3000) │
+                                     │ Chat, PWA mobile       │
+                                     └────────────────────────┘
 ```
 
 **Changements vs plan initial :**
@@ -180,8 +181,10 @@
 - Traefik déjà en place comme reverse proxy (pas besoin de Caddy)
 - pg-backup étendu aux nouvelles bases (LiteLLM, n8n, Langfuse)
 - Réseau `lan` existant (pas besoin de créer un réseau `ai-stack`)
-- **Discord comme interface conversationnelle** : bot Jarvis (discord-bridge) écoute #chat #media #maison #docs #infra → forward vers n8n webhook → Sonnet → réponse Discord
+- **Discord canal unique `#chat`** : bot Jarvis (discord-bridge) écoute uniquement `#chat`, forward vers n8n → agent unifié avec 20 outils (Sonnet + tool-calling) → réponse via `message.reply()`
 - n8n node discordTrigger absent → bridge Python discord.py (`discord-bridge` container) comme forwarder léger
+- **Tool-calling réel** : n8n Code nodes exécutent les appels HTTP aux services Docker via `require('http')` (fetch indisponible dans le sandbox n8n), puis envoient les résultats à Sonnet pour formulation finale
+- **NODE_FUNCTION_ALLOW_BUILTIN=\*** ajouté à n8n pour autoriser les modules Node.js natifs dans les Code nodes
 
 ---
 
@@ -251,14 +254,17 @@ general_settings:
 | Licence | Fair-code (Apache 2.0 + restrictions commerciales) |
 | Intégrations | 400+ connecteurs natifs |
 
-**Agents concrets à déployer :**
+**Agents concrets déployés :**
 
-1. **Agent triage email** — trigger Gmail → classification Haiku → routage par catégorie → résumé Discord `#chat`
-2. **Agent monitoring infra** — cron 5 min → health checks services → alerte Discord `#alerts` si anomalie
-3. **Agent veille techno** — cron lundi 8h → HN + Reddit + Lobsters → synthèse Sonnet → Discord `#veille`
-4. **Agent domotique** — webhook Home Assistant → analyse Haiku → Discord `#maison`
-5. **Agent briefing matinal** — cron 7h → météo + état infra → Discord `#briefing`
-6. **Agent Chat Discord** — bot Jarvis écoute #chat #media #maison #docs #infra → Sonnet → réponse dans le channel source
+1. **Agent triage email** — trigger Gmail → classification Haiku → résumé Discord `#chat`
+2. **Agent monitoring infra** — cron 5 min → health checks services → alerte Discord `#chat` si anomalie
+3. **Agent veille techno** — cron lundi 8h → HN + Reddit + Lobsters → synthèse Sonnet → Discord `#chat`
+4. **Agent domotique** — webhook Home Assistant → analyse Haiku → Discord `#chat`
+5. **Agent briefing matinal** — cron 7h → météo + état infra → Discord `#chat`
+6. **Agent suivi coûts** — cron 20h → LiteLLM spend API → Discord `#chat`
+7. **Agent Chat Discord** ✅ bot Jarvis écoute `#chat` → Sonnet avec 20 outils (tool-calling) → réponse inline dans `#chat`
+
+**Workflows n8n :** tous les 7 workflows envoient vers `#chat` via HTTP Request → Discord Bot API (plus aucun canal dédié).
 
 ### 5.3 Open WebUI — Interface chat
 
@@ -279,18 +285,13 @@ general_settings:
 
 ### 5.4 Discord — Interface unique (notifications + conversations)
 
-**Rôle :** interface centrale pour toutes les interactions avec les agents. Discord remplace ntfy pour les notifications — les agents postent directement dans les channels dédiés. ntfy est conservé en service mais n'est plus utilisé par les workflows IA.
+**Rôle :** interface centrale pour toutes les interactions avec les agents. Discord remplace ntfy pour les notifications — tous les agents postent dans **`#chat`**, canal unique. ntfy est conservé en service mais n'est plus utilisé par les workflows IA.
 
 | Channel | Source | Contenu |
 |---------|--------|---------|
-| `#chat` | Agent Chat (Sonnet) | Questions libres, conversation générale |
-| `#media` | Agent Média | Sonarr/Radarr/Plex, requêtes contenu |
-| `#maison` | Agent Maison | Home Assistant, domotique |
-| `#docs` | Agent Documents | Paperless, Immich |
-| `#infra` | Agent Infra + Monitoring | Beszel, Uptime Kuma, alertes infra |
-| `#briefing` | Agent Briefing | Résumé matinal quotidien (cron 7h) |
-| `#alerts` | Agent Monitoring | Alertes infra automatiques (cron 5 min) |
-| `#veille` | Agent Veille Techno | Résumé hebdo actualités IA (lundi 8h) |
+| `#chat` | Tous les agents + bot Jarvis | Conversations, alertes, briefings, notifications — tout converge ici |
+
+**Architecture simplifiée :** un canal unique `#chat` remplace l'architecture initiale à 8 canaux. L'agent unifié (Sonnet + 20 outils) répond à toutes les questions depuis ce canal. Les notifications automatiques (briefing, monitoring, triage email, veille, coûts) arrivent aussi dans `#chat`.
 
 ---
 
@@ -370,7 +371,7 @@ general_settings:
 
 > Déployé le 2026-03-30
 
-> **Objectif final :** discuter avec des agents IA depuis Discord (mobile/desktop). Envoyer un message en langage naturel dans un channel, un agent le traite, interroge les services Docker existants, et répond dans le même channel. Discord est l'interface unique — notifications push, conversations et alertes.
+> **Objectif final :** discuter avec des agents IA depuis Discord (mobile/desktop). Envoyer un message en langage naturel dans `#chat`, l'agent le traite, interroge les services Docker existants via tool-calling, et répond dans le même canal. Discord est l'interface unique — notifications push, conversations et alertes.
 
 #### 4.1 Pourquoi Discord plutôt que ntfy
 
@@ -389,39 +390,58 @@ general_settings:
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │  TÉLÉPHONE / DESKTOP — Discord app                              │
-│  ► Message dans #media, #maison, #docs, #infra, #chat           │
-│  ► Réponse de l'agent dans le même channel (avec historique)    │
+│  ► Message dans #chat                                           │
+│  ► Réponse de Jarvis dans #chat (message.reply)                 │
 └──────────────────────────┬──────────────────────────────────────┘
-                           │ Discord Trigger (n8n natif)
+                           │ discord-bridge (Python, typing indicator)
+                           │ POST {channelId, content, author, messageId, guildId}
 ┌──────────────────────────▼──────────────────────────────────────┐
-│  n8n — Discord Trigger                                          │
+│  n8n — Webhook /discord-chat                                    │
 │  ┌─────────────────────────────────────────────────────────┐    │
-│  │  1. Réception message (channel source = contexte)        │    │
-│  │  2. Ignorer les messages du bot (éviter boucles)         │    │
-│  │  3. Classification intention (Haiku) si #chat général    │    │
-│  │  4. Routing vers agent spécialisé selon channel/intent   │    │
-│  │  5. Exécution agent (Sonnet + appels API Docker)         │    │
-│  │  6. Réponse formatée → Discord Send Message              │    │
+│  │  1. Filter & Route — ignorer bots, vérifier channelId    │    │
+│  │  2. Build requestBody — messages + 20 outils définis     │    │
+│  │  3. HTTP Request → LiteLLM (claude-sonnet-4-6)           │    │
+│  │  4. Code node "Extract Reply" :                          │    │
+│  │     - Parse JSON response                                │    │
+│  │     - Si tool_calls → exécute via require('http')        │    │
+│  │     - Agrège tool_results, met needsSecondCall=true      │    │
+│  │  5. Si needsSecondCall → HTTP Request LiteLLM (round 2)  │    │
+│  │  6. Extract Final Reply → formule réponse finale         │    │
+│  │  7. Respond to Webhook → {reply, channelId}              │    │
 │  └─────────────────────────────────────────────────────────┘    │
-│                           │                                      │
-│              ┌────────────┼────────────┐                         │
-│              ▼            ▼            ▼                          │
-│     Services Docker  LiteLLM    Home Assistant                   │
+│                                                                  │
+│              ┌──────────────────────────────┐                   │
+│              ▼                              ▼                    │
+│     LiteLLM :4000                 Services Docker internes      │
+│     (Sonnet 4.6)                  Sonarr, Radarr, Tautulli      │
+│                                   Home Assistant, Paperless      │
+│                                   Beszel, Uptime Kuma            │
 └─────────────────────────────────────────────────────────────────┘
+                           │
+                           ▼ JSON {reply, channelId}
+┌──────────────────────────────────────────────────────────────────┐
+│  discord-bridge — bot.py                                         │
+│  await message.reply(data["reply"], mention_author=False)        │
+└──────────────────────────────────────────────────────────────────┘
 ```
 
-#### 4.3 Channels Discord et agents associés
+#### 4.3 Canal Discord et agent unifié
 
-| Channel | Agent | Services interrogés | Exemples de commandes |
-|---------|-------|---------------------|----------------------|
-| `#chat` | Agent Général + Classifier | LiteLLM (Sonnet) → routing | Questions libres, aide rédaction, commandes mixtes |
-| `#media` | Agent Média | Sonarr, Radarr, Plex, Tautulli, Seerr, qBittorrent | "Ajoute Breaking Bad", "Qui regarde Plex ?" |
-| `#maison` | Agent Maison | Home Assistant | "Allume le salon", "Température ?", "Ferme le volet" |
-| `#docs` | Agent Documents | Paperless-NGX, Immich | "Trouve ma facture Free de janvier" |
-| `#infra` | Agent Infra | Beszel, Uptime Kuma, Portainer, Pi-hole | "État serveur ?", "Combien de DNS bloqués ?" |
-| `#briefing` | Agent Briefing | Auto-post cron 7h | Résumé matinal quotidien |
-| `#alerts` | Monitoring | Beszel, Uptime Kuma | Alertes infra automatiques |
-| `#veille` | Agent Veille | Auto-post hebdo | Résumé actualités IA |
+**Un seul canal `#chat`, un seul agent avec 20 outils.** L'agent Sonnet choisit lui-même les outils à appeler selon la question posée.
+
+| Canal | Agent | Services disponibles | Exemples de commandes |
+|-------|-------|---------------------|----------------------|
+| `#chat` | Agent Jarvis (Sonnet 4.6 + 20 outils) | Sonarr, Radarr, Tautulli, Home Assistant, Paperless, Beszel, Uptime Kuma | "Quelles séries arrivent ?", "Température salon ?", "État serveur ?", "Qui a détecté le portail ?" |
+
+**20 outils disponibles :**
+
+| Catégorie | Outils |
+|-----------|--------|
+| Multimédia | `sonarr_series`, `sonarr_calendar`, `sonarr_queue`, `radarr_movies`, `radarr_queue`, `tautulli_activity`, `tautulli_history`, `tautulli_stats` |
+| Domotique | `ha_states`, `ha_entity`, `ha_service`, `ha_history`, `ha_detection_history` |
+| Infrastructure | `beszel_systems`, `beszel_records`, `uptime_kuma_monitors` |
+| Documents | `paperless_documents`, `paperless_search` |
+| Général | `get_date_time` |
 
 #### 4.4 Inventaire des APIs Docker accessibles par les agents
 
@@ -479,65 +499,91 @@ Tous les services sont joignables depuis n8n via le réseau Docker `lan` (DNS in
 #### 4.5 Flux n8n — Agent Chat Discord
 
 **Nom :** `Agent Chat Discord`
-**Trigger :** n8n Discord Trigger (natif, écoute les messages des channels configurés)
+**Trigger :** n8n Webhook (POST `/discord-chat`) — discord-bridge envoie le payload JSON
 
 ```
-Message Discord reçu
+discord-bridge POST → n8n webhook /discord-chat
+    │ {channelId, channelName, content, author, messageId, guildId}
+    ▼
+Filter & Route
+    │  → ignore si auteur.bot = true (éviter boucle)
+    │  → vérifie channelId = 1488101544753893396 (#chat)
     │
     ▼
-Ignorer si auteur = bot (éviter boucle)
+Build requestBody (Code node)
+    │  → messages: [{role: "user", content: message.content}]
+    │  → tools: [20 outils définis avec JSON Schema]
+    │  → model: "sonnet", max_tokens: 1024
     │
     ▼
-Identifier le channel source
-    │  → #media  : Agent Média directement
-    │  → #maison : Agent Maison directement
-    │  → #docs   : Agent Documents directement
-    │  → #infra  : Agent Infra directement
-    │  → #chat   : Classifier Haiku → routing
+HTTP Request → LiteLLM :4000/chat/completions
+    │  → Authorization: Bearer <LITELLM_MASTER_KEY>
     │
     ▼
-Exécuter l'agent spécialisé (Sonnet + tool-calling)
-    │  → Appels HTTP aux APIs Docker internes
-    │  → Contexte : 10 derniers messages du channel (Discord history API)
+Extract Reply (Code node)
+    │  → Parse response.choices[0].message
+    │  → Si tool_calls présents :
+    │      pour chaque tool_call :
+    │        → require('http') + parseUrl() → GET service Docker interne
+    │        → stocker {tool_call_id, name, content: résultat}
+    │  → Si tool_calls : needsSecondCall = true
+    │  → Si text : reply = content, needsSecondCall = false
     │
     ▼
-Formater la réponse (Discord Markdown, mobile-friendly)
+Needs Second Call? (Switch node)
+    │  → true  : HTTP Request LiteLLM (round 2 avec tool_results)
+    │  → false : Respond to Webhook directement
     │
     ▼
-Discord Send Message → channel source (ou thread si longue réponse)
+Extract Final Reply (Code node)
+    │  → Parse réponse LiteLLM (text seulement après tool_results)
+    │
+    ▼
+Respond to Webhook
+    │  → respondWith: 'text'
+    │  → body: JSON.stringify({reply: ..., channelId: ...})
+    │
+    ▼
+discord-bridge reçoit {reply, channelId}
+    │
+    ▼
+message.reply(reply, mention_author=False)
 ```
 
 #### 4.6 Gestion du contexte conversationnel
 
-Discord fournit nativement l'historique de channel — l'agent peut récupérer les N derniers messages via l'API Discord pour construire le contexte multi-tours :
+Contexte limité à 1 tour (le message entrant) — pas d'historique multi-tours pour l'instant.
+L'historique Discord visible dans le channel constitue la mémoire de facto pour l'utilisateur.
 
-```
-GET /channels/{channel_id}/messages?limit=10
-→ injecter dans le prompt comme historique de conversation
-```
-
-Pas besoin de base de données supplémentaire. L'historique Discord EST la mémoire.
+Ajout futur possible : `GET /channels/{channel_id}/messages?limit=10` → injecter dans le prompt.
 
 #### 4.7 Workflows Discord ✅
 
-Tous les workflows n8n envoient exclusivement vers Discord (ntfy retiré) :
+Tous les workflows n8n envoient exclusivement vers Discord `#chat` via **HTTP Request → Discord Bot API** (plus de node Discord natif — il était cassé en n8n 2.13.4) :
 
-| Workflow | Channel Discord | Déclencheur |
-|---------|----------------|-------------|
-| Briefing Matinal | `#briefing` | Cron 7h |
-| Veille Techno | `#veille` | Cron lundi 8h |
-| Monitoring Infra | `#alerts` | Cron 5 min |
+```
+POST https://discord.com/api/v10/channels/{CHANNEL_CHAT}/messages
+Authorization: Bot {DISCORD_BOT_TOKEN}
+{"content": "..."}
+```
+
+| Workflow | Canal Discord | Déclencheur |
+|---------|--------------|-------------|
+| Briefing Matinal | `#chat` | Cron 7h |
+| Veille Techno | `#chat` | Cron lundi 8h |
+| Monitoring Infra | `#chat` | Cron 5 min |
 | Triage Email | `#chat` | Gmail trigger |
-| Domotique | `#maison` | Webhook HA |
-| Suivi Coûts | `#infra` | Cron 20h |
+| Domotique | `#chat` | Webhook HA |
+| Suivi Coûts | `#chat` | Cron 20h |
+| Agent Chat Discord | `#chat` | Webhook (discord-bridge) |
 
 #### 4.8 Sécurité
 
-- Discord bot token stocké dans n8n Credentials (jamais en clair)
+- Discord bot token stocké dans les env vars du container `discord-bridge` (`.env` gitignorée)
+- Bot token aussi présent dans les Code nodes n8n pour l'envoi Discord — à migrer vers n8n Credentials si besoin
 - Bot limité au serveur Discord personnel uniquement
-- API keys services (Sonarr, Radarr, HA token, etc.) dans n8n Credentials
-- Actions destructives (restart container, supprimer document) → demander confirmation avant exécution (`@bot confirm`)
-- Rate limiting Discord natif : 5 req/s par bot
+- API keys services (Sonarr, Radarr, Tautulli, HA token, Paperless token) hardcodées dans les Code nodes (architecture actuelle — acceptable pour usage personnel)
+- Actions destructives : `ha_service` peut contrôler les équipements HA → requiert Intents activés
 
 #### 4.9 Prérequis Discord ✅
 
@@ -546,24 +592,62 @@ Tous les workflows n8n envoient exclusivement vers Discord (ntfy retiré) :
   - Intents `MESSAGE_CONTENT` + `GUILD_MESSAGES` activés
   - Permissions : Administrator
 - [x] Bot invité sur le serveur
-- [x] Channels créés via script Python (API Discord) : `#chat`, `#media`, `#maison`, `#docs`, `#infra`, `#briefing`, `#alerts`, `#veille`
+- [x] Canal actif : `#chat` (ID: 1488101544753893396) — canal unique
 
 #### 4.10 Tâches de déploiement ✅
 
-- [x] Credential "Discord Bot Homelab" créée dans n8n (ID: nZjeiz1Vi2ZaFIhZ)
-- [x] Container `discord-bridge` déployé — bot Python discord.py, écoute 5 channels, forward vers n8n
-- [x] Workflow `Agent Chat Discord` créé et actif dans n8n (webhook `/discord-chat`)
-  - Routing par channel → system prompt spécialisé → Sonnet → réponse Discord
-- [x] Workflows existants mis à jour pour poster aussi sur Discord :
-  - Briefing Matinal → `#briefing`
-  - Veille Techno → `#veille`
-  - Monitoring Infra → `#alerts`
-  - Suivi Coûts → `#infra`
+- [x] Container `discord-bridge` déployé — bot Python discord.py, écoute `#chat` uniquement, forward vers n8n
+  - `CHANNEL_CHAT` comme seule variable d'env canal (suppression de `CHANNEL_MEDIA`, `CHANNEL_MAISON`, `CHANNEL_DOCS`, `CHANNEL_INFRA`)
+  - Timeout 120s, typing indicator, `message.reply()` avec JSON response
+- [x] Workflow `Agent Chat Discord` actif dans n8n (webhook `/discord-chat`)
+  - Agent unifié : Sonnet 4.6 + 20 outils — toutes catégories (media, domotique, infra, docs)
+  - Tool-calling via Code nodes + `require('http')` + manual URL parser (contournement sandbox)
+- [x] `NODE_FUNCTION_ALLOW_BUILTIN=*` ajouté à n8n (compose.yml) pour modules Node.js natifs
+- [x] Tous les workflows existants mis à jour pour poster vers `#chat` :
+  - Briefing Matinal → `#chat`
+  - Veille Techno → `#chat`
+  - Monitoring Infra → `#chat`
+  - Suivi Coûts → `#chat`
   - Triage Email → `#chat`
-  - Domotique → `#maison`
-- [x] Test end-to-end validé : message Discord → Jarvis → n8n → Sonnet → réponse Discord
+  - Domotique → `#chat`
+- [x] Test end-to-end validé : message Discord → Jarvis (typing) → n8n → Sonnet → tool call → service Docker → réponse Discord
 
-### Étape 5 — RAG et agents avancés (optionnel)
+#### 4.11 APIs Docker connectées — état réel
+
+| Service | URL interne | Clé/Token | Outils exposés | Statut |
+|---------|-------------|-----------|----------------|--------|
+| Sonarr | `http://sonarr:8989/api/v3` | API key | `sonarr_series`, `sonarr_calendar`, `sonarr_queue` | ✅ |
+| Radarr | `http://radarr:7878/api/v3` | API key | `radarr_movies`, `radarr_queue` | ✅ |
+| Tautulli | `http://tautulli:8181/api/v2` | API key (`dae7a941...`) | `tautulli_activity`, `tautulli_history`, `tautulli_stats` | ✅ |
+| Home Assistant | `http://homeassistant:8123/api` | Long-lived token (JWT) | `ha_states`, `ha_entity`, `ha_service`, `ha_history`, `ha_detection_history` | ✅ |
+| Paperless-NGX | `http://paperless-webserver:8000/api` | Token API (user `jarvis`) | `paperless_documents`, `paperless_search` | ✅ (0 docs) |
+| Beszel | `http://beszel:8090/api` | Admin credentials | `beszel_systems`, `beszel_records` | ✅ |
+| Uptime Kuma | `http://uptime-kuma:3001` | — | `uptime_kuma_monitors` | ✅ |
+
+**Home Assistant — caméras de détection :**
+- `portail` → `camera.lts_ipc_f42feux_g3s_portail`
+- `atelier/bullet` → `camera.lts_ipc_f22feux_g5_bullet_atelier`
+- `allée/garage` → `camera.lts_ipc_f22feux_g5_bullet_allee_garage`
+
+Outil `ha_detection_history` : retourne le nombre de détections et les timestamps des N dernières heures par caméra et type de mouvement.
+
+### ~~Étape 5 — Canal unique + tool-calling réel (FAIT ✅)~~
+
+> Déployé le 2026-03-30
+
+- [x] Simplification architecture Discord : 8 canaux → `#chat` uniquement
+- [x] discord-bridge mis à jour : écoute uniquement `CHANNEL_CHAT` (suppression des 4 autres canaux)
+- [x] Agent Chat Discord refactorisé : agent unifié avec 20 outils (Sonnet 4.6)
+  - Tool-calling via Code nodes n8n + `require('http')` (pas de fetch dans le sandbox)
+  - Manual URL parser regex (contournement `url.parse()` deprecated)
+  - Second appel LiteLLM avec `tool_results` pour formulation finale
+- [x] `NODE_FUNCTION_ALLOW_BUILTIN=*` ajouté à n8n compose.yml
+- [x] Tous les workflows (6) mis à jour pour envoyer vers `#chat` via Discord Bot API HTTP
+- [x] APIs connectées : Sonarr, Radarr, Tautulli, Home Assistant (avec token JWT), Paperless-NGX, Beszel, Uptime Kuma
+- [x] Home Assistant : détection caméras (portail, atelier, allée/garage) via history API
+- [x] Paperless-NGX : user `jarvis` créé via Django shell, token API récupéré
+
+### Étape 6 — RAG et agents avancés (optionnel)
 
 > Conditionnel : seulement si Open WebUI RAG ne suffit pas
 
@@ -571,7 +655,7 @@ Tous les workflows n8n envoient exclusivement vers Discord (ntfy retiré) :
 2. Uploader la documentation Hexagone/Hexaflux
 3. Assistant property management (documents locatifs, ALUR, charges)
 
-### ~~Étape 6 — LLM local (FAIT ✅)~~
+### ~~Étape 7 — LLM local (FAIT ✅)~~
 
 > Déployé le 2026-03-30
 
@@ -600,7 +684,7 @@ Tous les workflows n8n envoient exclusivement vers Discord (ntfy retiré) :
 | Monitoring système | Beszel | **Déjà en place**, CPU/RAM/disque + alertes |
 | Auto-update | Watchtower | **Déjà en place**, cron quotidien |
 | Backup PostgreSQL | pg-backup | **Déjà en place**, à étendre aux nouvelles bases |
-| Notifications + conversations | Discord (bot Jarvis + channels) | discord-bridge Python, n8n webhook, 8 channels dédiés |
+| Notifications + conversations | Discord (bot Jarvis + `#chat`) | discord-bridge Python, n8n webhook, canal unique `#chat`, agent unifié 20 outils |
 | LLM local | Ollama (qwen2.5:7b) | CPU, 4.5 Go RAM, 0 coût API, accessible via LiteLLM + Open WebUI |
 | Accès services Docker | n8n + APIs REST | 20+ services exposent une API, n8n les orchestre |
 | LLM cloud | Anthropic (Haiku/Sonnet) | Meilleur tool-calling, 1M contexte, coût OK |
@@ -609,4 +693,4 @@ Tous les workflows n8n envoient exclusivement vers Discord (ntfy retiré) :
 
 ---
 
-*Rapport v10 — Mis à jour le 30 mars 2026. Étapes 1-4 et 6 déployées ✅. Stack IA complet : LiteLLM (Haiku + Sonnet + qwen2.5:7b) + Open WebUI + n8n (6 agents) + Langfuse + Ollama + Discord bot Jarvis (8 channels). ntfy supprimé. Interface unique Discord pour tout (notifications + conversations + agents). Seule étape optionnelle restante : Step 5 RAG.*
+*Rapport v12 — Mis à jour le 30 mars 2026. Étapes 1-5 et 7 déployées ✅. Stack IA complet : LiteLLM (Haiku + Sonnet + qwen2.5:7b) + Open WebUI + n8n (7 workflows) + Langfuse + Ollama + Discord bot Jarvis. ntfy supprimé. Interface unique Discord `#chat` pour tout (notifications + conversations + agents). Agent unifié Sonnet 4.6 avec 20 outils (Sonarr, Radarr, Tautulli, Home Assistant, Paperless, Beszel, Uptime Kuma). Tool-calling réel via `require('http')` dans Code nodes n8n. Seule étape optionnelle restante : Étape 6 RAG.*

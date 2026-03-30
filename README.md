@@ -1,8 +1,8 @@
 # 🏠 Home Server Platform
 
-> Plateforme auto-hébergée · 57 containers Docker · Debian · HTTPS automatique via `*.battistella.ovh`
+> Plateforme auto-hébergée · 68 containers Docker · Debian · HTTPS automatique via `*.battistella.ovh`
 
-Streaming multimédia, domotique, gestion documentaire, galerie photo et outils de productivité — accessible partout, 100% sous votre contrôle.
+Streaming multimédia, domotique, gestion documentaire, galerie photo, outils de productivité et agents IA — accessible partout, 100% sous votre contrôle.
 
 ---
 
@@ -17,6 +17,7 @@ Streaming multimédia, domotique, gestion documentaire, galerie photo et outils 
 | 📄 | **GED intelligente** | Numérisation OCR et classement automatique |
 | 🔐 | **Sécurité** | Mots de passe, secrets, blocage pub DNS |
 | 📊 | **Supervision 24/7** | Métriques, logs, alertes Discord, mises à jour auto |
+| 🤖 | **Agents IA (Jarvis)** | Bot Discord conversationnel — interroge tous les services en langage naturel |
 
 ---
 
@@ -32,9 +33,18 @@ graph TB
     Traefik --> Tools[🔧 Outils]
     Traefik --> Sec[🔐 Sécurité]
     Traefik --> Ops[📊 Supervision]
+    Traefik --> AI[🤖 Stack IA]
 
     NAS[(💾 NAS Unraid)] -.->|NFS| Media
     NAS -.->|NFS| Photos
+
+    Discord([💬 Discord #chat]) -->|discord-bridge| n8n
+    n8n --> LiteLLM[LiteLLM]
+    n8n -->|tool calls| Media
+    n8n -->|tool calls| Home
+    n8n -->|tool calls| Ops
+    LiteLLM -->|Sonnet / Haiku| Anthropic((☁️ Anthropic API))
+    LiteLLM --> Ollama[Ollama local]
 ```
 
 ---
@@ -163,17 +173,57 @@ graph LR
 
 ---
 
+## 🤖 Stack IA — Bot Jarvis
+
+```mermaid
+graph LR
+    User([👤 Discord #chat]) -->|message| Bridge[discord-bridge\nPython discord.py]
+    Bridge -->|POST webhook| n8n[n8n\nAgent Chat Discord]
+    n8n -->|chat/completions| LiteLLM[LiteLLM :4000]
+    LiteLLM --> Sonnet([Claude Sonnet 4.6])
+    LiteLLM --> Haiku([Claude Haiku 4.5])
+    LiteLLM --> Ollama[Ollama\nqwen2.5:7b]
+    n8n -->|tool calls HTTP| Services[(Services Docker\nSonarr · Radarr · Tautulli\nHome Assistant · Paperless\nBeszel · Uptime Kuma)]
+    n8n -->|reply JSON| Bridge
+    Bridge -->|message.reply| User
+    n8n -.->|traces| Langfuse[Langfuse\nObservabilité]
+```
+
+| Service | Rôle | URL |
+|---|---|---|
+| 🤖 **discord-bridge (Jarvis)** | Bot Discord — écoute `#chat`, forward vers n8n, renvoie la réponse | _interne_ |
+| 🔗 **n8n** | Orchestration — 7 workflows (agent chat + 6 automatisations) | `n8n.example.com` |
+| ⚡ **LiteLLM** | Proxy LLM unifié — Sonnet, Haiku, qwen2.5:7b, cost tracking | `litellm.example.com` |
+| 💬 **Open WebUI** | Interface chat web — PWA mobile, tous modèles | `ai.example.com` |
+| 🦙 **Ollama** | LLM local CPU — qwen2.5:7b (4.5 Go RAM, 0 coût API) | _interne_ |
+| 📈 **Langfuse** | Observabilité LLM — traces, coûts, latences | `langfuse.example.com` |
+
+### 20 outils disponibles via `#chat`
+
+| Catégorie | Outils |
+|---|---|
+| 🎬 Multimédia | `sonarr_series`, `sonarr_calendar`, `sonarr_queue`, `radarr_movies`, `radarr_queue`, `tautulli_activity`, `tautulli_history`, `tautulli_stats` |
+| 🏡 Domotique | `ha_states`, `ha_entity`, `ha_service`, `ha_history`, `ha_detection_history` |
+| 📊 Infrastructure | `beszel_systems`, `beszel_records`, `uptime_kuma_monitors` |
+| 📄 Documents | `paperless_documents`, `paperless_search` |
+| 🕐 Général | `get_date_time` |
+
+> 💬 Exemples : _"Quelles séries arrivent cette semaine ?"_ · _"Température du salon ?"_ · _"Qui a détecté le portail ce matin ?"_ · _"État du serveur ?"_
+
+---
+
 ## 📊 Supervision & Opérations
 
 ```mermaid
 graph LR
     Homepage[📊 Homepage] -->|Dashboard| S([Services])
     Beszel[📈 Beszel] -->|Métriques| Srv([Serveur])
-    Beszel -->|⚠️ Alertes| Discord([💬 Discord])
+    Beszel -->|⚠️ Alertes| Discord([💬 Discord #chat])
     Watchtower[🔄 Watchtower] -->|MAJ 6h| S
     Watchtower -->|📢 Notif| Discord
     UptimeKuma[⏱️ Uptime Kuma] -->|Ping| S
-    PgBackup[💾 pg-backup] -->|Dump 3h| DB[(🐘 PostgreSQL x5)]
+    PgBackup[💾 pg-backup] -->|Dump 3h| DB[(🐘 PostgreSQL x10)]
+    n8n[🤖 n8n agents] -->|Briefing/Alertes/Email| Discord
 ```
 
 | Service | Rôle | URL |
@@ -224,12 +274,15 @@ graph LR
 |---|---|
 | 🐳 Orchestration | Docker + Docker Compose |
 | 🔀 Proxy inverse | Traefik v3.6 (Let's Encrypt / OVH DNS) |
-| 🐘 Bases de données | PostgreSQL 16, Redis / Valkey |
+| 🐘 Bases de données | PostgreSQL 16, Redis / Valkey (10 instances PostgreSQL) |
 | 💾 Sauvegarde | pg-backup — dump quotidien 3h, rétention 7j |
 | 📁 Stockage | NAS Unraid via NFS (montage unique `/mnt/media`) |
-| 📊 Supervision | Beszel, Uptime Kuma, Dozzle, Portainer, Homepage |
+| 📊 Supervision | Beszel, Uptime Kuma, Dozzle, Portainer, Homepage, Langfuse |
 | 🔒 Sécurité | `no-new-privileges`, réseaux internes isolés |
 | 🌐 Domaine | `example.com` (sous-domaine par service) |
+| 🤖 Agents IA | n8n (orchestration) + LiteLLM (proxy) + discord-bridge (bot Jarvis) |
+| ☁️ LLM cloud | Anthropic Claude Sonnet 4.6 / Haiku 4.5 via LiteLLM |
+| 🦙 LLM local | Ollama — qwen2.5:7b (CPU, 4.5 Go RAM) |
 
 ---
 
@@ -242,6 +295,11 @@ graph LR
 | 🎲 The Box | `the-box-postgres` |
 | 🏢 Copro-Pilot | `copro-pilot-postgres` |
 | 🔐 Infisical | `infisical-db` |
+| 🔗 n8n | `n8n-db` |
+| ⚡ LiteLLM | `litellm-db` |
+| 📈 Langfuse | `langfuse-db` |
+| 🌳 Gramps | `gramps-db` |
+| 🎮 Toko | `toko-db` |
 
 > ⏰ Dump quotidien à 3h · Format `pg_dump -Fc` · Rétention 7 jours · Restauration via `pg_restore`
 
@@ -274,6 +332,8 @@ graph LR
 - ~~Stockage NAS unifié~~ — Montage NFS unique `/mnt/media` (hardlinks + déplacements instantanés)
 - ~~Mutualisation runners~~ — 6 runners avec binaires partagés via hardlinks (~3.5 Go économisés, voir [#13](https://github.com/Wifsimster/docker-setup/issues/13))
 - ~~Optimisation disque~~ — Récupération de 11.8 Go, cleanup automatique hebdomadaire (`/opt/docker/disk-cleanup.sh`)
+- ~~Stack IA complète~~ — LiteLLM + Open WebUI + n8n (7 workflows) + Langfuse + Ollama + bot Jarvis
+- ~~Bot Discord Jarvis~~ — Agent unifié Sonnet 4.6 avec 20 outils, canal unique `#chat`, tool-calling réel vers tous les services Docker
 
 ---
 
