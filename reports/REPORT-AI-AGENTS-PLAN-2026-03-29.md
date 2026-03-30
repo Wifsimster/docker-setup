@@ -2,7 +2,7 @@
 
 > Stack autonome, observable, auto-hébergé sur Proxmox / Docker / UniFi
 > Damien Battistella — Mars 2026
-> **Mis à jour le 30 mars 2026 — Étapes 1, 2, 3 et 6 déployées — Étape 4 replanifiée sur Discord**
+> **Mis à jour le 30 mars 2026 — Étapes 1, 2, 3, 4 et 6 déployées ✅**
 
 ---
 
@@ -416,7 +416,9 @@ ntfy:
 - [x] Ajouter Langfuse dans Homepage section IA
 - [x] Ajouter langfuse-db dans pg-backup
 
-### Étape 4 — Agents conversationnels via Discord
+### ~~Étape 4 — Agents conversationnels via Discord (FAIT ✅)~~
+
+> Déployé le 2026-03-30
 
 > **Objectif final :** discuter avec des agents IA depuis Discord (mobile/desktop). Envoyer un message en langage naturel dans un channel, un agent le traite, interroge les services Docker existants, et répond dans le même channel. Discord remplace ntfy comme interface bidirectionnelle — ntfy reste pour les alertes push légères.
 
@@ -656,4 +658,4 @@ Les workflows n8n déjà déployés envoient actuellement vers ntfy. Il faudra a
 
 ---
 
-*Rapport v6 — Mis à jour le 30 mars 2026. Étapes 1-3 et 6 déployées. Étape 4 replanifiée : agents conversationnels via Discord bot (trigger natif n8n, 0 infra supplémentaire) avec accès aux 20+ services Docker existants. ntfy conservé pour les alertes push urgentes uniquement.*
+*Rapport v7 — Mis à jour le 30 mars 2026. Étapes 1-4 et 6 déployées ✅. Stack IA complet : LiteLLM + Open WebUI + n8n (6 agents) + Langfuse + ntfy + Ollama + Discord bot (Jarvis). Agent Chat Discord opérationnel sur #chat #media #maison #docs #infra. ntfy conservé pour les alertes push urgentes.*
