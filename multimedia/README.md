@@ -10,7 +10,6 @@ Pile de services Docker pour l'acquisition, l'organisation et le streaming de co
 | **Sonarr** | `lscr.io/linuxserver/sonarr` | 8989 | `sonarr.battistella.ovh` | Gestion automatisée des séries |
 | **Radarr** | `lscr.io/linuxserver/radarr` | 7878 | `radarr.battistella.ovh` | Gestion automatisée des films |
 | **Lidarr** | `lscr.io/linuxserver/lidarr` | 8686 | `lidarr.battistella.ovh` | Gestion automatisée de la musique |
-| **Bazarr** | `lscr.io/linuxserver/bazarr` | 6767 | `bazarr.battistella.ovh` | Gestion des sous-titres |
 | **Prowlarr** | `lscr.io/linuxserver/prowlarr` | 9696 | `indexer.battistella.ovh` | Gestion des indexeurs de recherche |
 | **qBittorrent** | `ghcr.io/hotio/qbittorrent` | 8080 | `qbittorrent.battistella.ovh` | Client de téléchargement avec VPN (ProtonVPN) |
 | **Seerr** | `ghcr.io/hotio/seerr` | 5055 | `seerr.battistella.ovh` | Demande et découverte de contenu |
@@ -27,7 +26,6 @@ graph LR
     Lidarr[Lidarr - Musique] --> Prowlarr
     Prowlarr --> qBit[qBittorrent + VPN]
     qBit --> Plex[Plex - Lecture]
-    Bazarr -.->|Sous-titres| Plex
     Tautulli -.->|Statistiques| Plex
 ```
 
@@ -82,7 +80,6 @@ Chaque service stocke ses données persistantes dans un répertoire relatif :
 
 | Variable | Défaut |
 |---|---|
-| `BAZARR_CONFIG_PATH` | `../bazarr/data` |
 | `LIDARR_CONFIG_PATH` | `../lidarr/config` |
 | `SEERR_CONFIG_PATH` | `../overseerr/data` |
 | `PLEX_CONFIG_PATH` | `../plex/library` |
@@ -122,7 +119,6 @@ Remplacer `<HOST_IP>` par l'adresse IP LAN du serveur dans ce fichier.
 
 | Service | Configuration | Médias / Données |
 |---|---|---|
-| Bazarr | `/config` | `/tv`, `/movies` |
 | Lidarr | `/config` | `/music`, `/downloads` |
 | Seerr | `/config` | — |
 | Plex | `/config` | `/tv`, `/movies`, `/musics` |

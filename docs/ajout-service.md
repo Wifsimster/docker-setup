@@ -24,6 +24,17 @@ services:
     container_name: nom-du-service
     image: registry/image:tag
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     environment:
       - TZ=Europe/Paris
       - PUID=1000
@@ -154,7 +165,10 @@ volumes:
 - [ ] Répertoire créé en minuscules avec tirets
 - [ ] `compose.yml` avec labels Traefik cohérents
 - [ ] Label Watchtower pour les mises à jour automatiques
+- [ ] `security_opt: no-new-privileges:true` activé
+- [ ] Limites mémoire et rotation des logs configurées
 - [ ] Réseau `lan` déclaré comme externe
 - [ ] Fichier `.env` pour les secrets (jamais de valeurs en dur)
 - [ ] Service démarré et accessible en HTTPS
+- [ ] Ajouté au `pg-backup` si le service utilise PostgreSQL
 - [ ] README.md mis à jour

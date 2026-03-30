@@ -15,7 +15,7 @@ Traefik est le **proxy inverse** de la plateforme. Il remplit trois fonctions :
 ```mermaid
 graph LR
     Internet((Internet)) -->|Port 80/443| Traefik[Traefik v3.6]
-    Traefik -->|Labels Docker| Conteneurs([~30 conteneurs])
+    Traefik -->|Labels Docker| Conteneurs([~65 conteneurs])
     Traefik -->|Provider fichier| Plex[Plex - host network]
     LetsEncrypt[Let's Encrypt] -.->|Certificats TLS| Traefik
     OVH[OVH DNS] -.->|Challenge DNS| LetsEncrypt

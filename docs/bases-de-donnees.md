@@ -16,6 +16,12 @@ graph TD
     Infisical[Infisical] --> PG5[(PostgreSQL)]
     Infisical --> R4[(Redis)]
     Gramps[Gramps Web] --> R5[(Redis)]
+    n8n[n8n] --> PG6[(PostgreSQL)]
+    LiteLLM[LiteLLM] --> PG7[(PostgreSQL)]
+    Langfuse[Langfuse] --> PG8[(PostgreSQL)]
+    Langfuse --> R6[(Redis)]
+    Toko[Toko] --> PG9[(PostgreSQL)]
+    WAWPTN[WAWPTN] --> PG10[(PostgreSQL)]
 ```
 
 Chaque service qui a besoin d'une base de données embarque **ses propres conteneurs** PostgreSQL et/ou Redis. Il n'y a pas de serveur de base de données partagé.
@@ -29,6 +35,11 @@ Chaque service qui a besoin d'une base de données embarque **ses propres conten
 | **The Box** | `the-box-postgres` | `postgres:16-alpine` | Variable `.env` |
 | **Copro-Pilot** | `copro-pilot-postgres` | `postgres:16-alpine` | Variable `.env` |
 | **Infisical** | `infisical-db` | `postgres:14-alpine` | Variable `.env` |
+| **n8n** | `n8n-db` | `postgres:16-alpine` | `n8n` |
+| **LiteLLM** | `litellm-db` | `postgres:16-alpine` | `litellm` |
+| **Langfuse** | `langfuse-db` | `postgres:16-alpine` | `langfuse` |
+| **Toko** | `toko-db` | `postgres:16-alpine` | Variable `.env` |
+| **WAWPTN** | `wawptn-db` | `postgres:16-alpine` | Variable `.env` |
 
 ## Services utilisant Redis / Valkey
 
@@ -39,6 +50,7 @@ Chaque service qui a besoin d'une base de données embarque **ses propres conten
 | **The Box** | `the-box-redis` | `redis:alpine` | Cache |
 | **Infisical** | `infisical-redis` | `redis:7-alpine` | Cache |
 | **Gramps Web** | `grampsweb-redis` | `redis:7.2.4-alpine` | File de tâches Celery |
+| **Langfuse** | `langfuse-redis` | `redis:7-alpine` | Cache |
 
 ## Healthchecks
 

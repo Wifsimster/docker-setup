@@ -29,8 +29,8 @@ Un seul partage NFS est monté sur l'hôte :
 
 | Chemin | Contenu | Services utilisateurs |
 |---|---|---|
-| `/mnt/media/movies` | Films | Plex, Radarr, Bazarr |
-| `/mnt/media/tv-shows` | Séries TV | Plex, Sonarr, Bazarr |
+| `/mnt/media/movies` | Films | Plex, Radarr |
+| `/mnt/media/tv-shows` | Séries TV | Plex, Sonarr |
 | `/mnt/media/musics` | Musique | Plex, Lidarr |
 | `/mnt/media/downloads` | Téléchargements en cours | qBittorrent, Sonarr, Radarr, Lidarr |
 | `/mnt/media/documents` | Documents numérisés | Paperless-ngx |

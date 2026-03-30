@@ -29,15 +29,18 @@ docker network create lan
 Vérifier que les montages Unraid sont opérationnels dans `/etc/fstab` :
 
 ```bash
-# Montages NFS attendus
-mount | grep /mnt/
+# Montage NFS unique attendu
+mount | grep /mnt/media
 
-# Chemins critiques :
-# /mnt/movies       → Films (Radarr/Plex)
-# /mnt/tv-shows     → Séries TV (Sonarr/Plex)
-# /mnt/music        → Musique (Lidarr/Plex)
-# /mnt/downloads    → Téléchargements (qBittorrent)
-# /mnt/documents    → Données Paperless
+# Point de montage unique :
+# /mnt/media → NAS Unraid (192.168.0.240:/mnt/user/media)
+#   ├── movies/      → Films (Radarr/Plex)
+#   ├── tv-shows/    → Séries TV (Sonarr/Plex)
+#   ├── musics/      → Musique (Lidarr/Plex)
+#   ├── downloads/   → Téléchargements (qBittorrent)
+#   ├── documents/   → Données Paperless
+#   ├── photos/      → Photos (Immich)
+#   └── data/        → Données diverses
 ```
 
 ## 3. Démarrer l'infrastructure critique
@@ -68,6 +71,11 @@ cd /opt/docker/immich-app && docker compose up -d database
 cd /opt/docker/the-box && docker compose up -d postgres
 cd /opt/docker/copro-pilot && docker compose up -d postgres
 cd /opt/docker/infisical && docker compose up -d db
+cd /opt/docker/n8n && docker compose up -d db
+cd /opt/docker/litellm && docker compose up -d db
+cd /opt/docker/langfuse && docker compose up -d db
+cd /opt/docker/toko && docker compose up -d postgres
+cd /opt/docker/wawptn && docker compose up -d postgres
 ```
 
 Attendre que les healthchecks passent :
@@ -105,6 +113,21 @@ docker exec -i copro-pilot-postgres pg_restore \
 docker exec -i infisical-db pg_restore \
   -U infisical -d infisical --clean --if-exists \
   < pg-backup/backups/infisical_YYYY-MM-DD_HHMMSS.dump
+
+# LiteLLM
+docker exec -i litellm-db pg_restore \
+  -U litellm -d litellm --clean --if-exists \
+  < pg-backup/backups/litellm_YYYY-MM-DD_HHMMSS.dump
+
+# n8n
+docker exec -i n8n-db pg_restore \
+  -U n8n -d n8n --clean --if-exists \
+  < pg-backup/backups/n8n_YYYY-MM-DD_HHMMSS.dump
+
+# Langfuse
+docker exec -i langfuse-db pg_restore \
+  -U langfuse -d langfuse --clean --if-exists \
+  < pg-backup/backups/langfuse_YYYY-MM-DD_HHMMSS.dump
 ```
 
 > **Note :** Remplacer `YYYY-MM-DD_HHMMSS` par le timestamp du dump le plus récent.
@@ -126,14 +149,25 @@ cd /opt/docker/immich-app && docker compose up -d
 cd /opt/docker/the-box && docker compose up -d
 cd /opt/docker/copro-pilot && docker compose up -d
 cd /opt/docker/infisical && docker compose up -d
+cd /opt/docker/n8n && docker compose up -d
+cd /opt/docker/litellm && docker compose up -d
+cd /opt/docker/langfuse && docker compose up -d
+cd /opt/docker/toko && docker compose up -d
+cd /opt/docker/wawptn && docker compose up -d
 
 # Stack multimédia
 cd /opt/docker/multimedia && docker compose up -d
 
+# Stack IA
+cd /opt/docker/ollama && docker compose up -d
+cd /opt/docker/open-webui && docker compose up -d
+cd /opt/docker/discord-bridge && docker compose up -d
+
 # Autres services
-for svc in home-assistant vaultwarden gramps memos wakapi stirling \
+for svc in home-assistant vaultwarden gramps wakapi stirling \
            personal-blog resume homepage portainer watchtower \
-           techney unifi birthday-invitation pg-backup; do
+           unifi birthday-invitation pg-backup ntfy \
+           x-ai-weekly-bot dev-agents; do
   cd /opt/docker/$svc && docker compose up -d
   cd /opt/docker
 done
@@ -148,8 +182,9 @@ Vérifier que chaque service répond via Traefik :
 ```bash
 # Liste des sous-domaines à tester
 for sub in paperless immich the-box copro-pilot infisical \
-           gramps memos wakapi plex sonarr radarr homepage \
-           vaultwarden dozzle portainer beszel uptime stirling; do
+           gramps wakapi plex sonarr radarr homepage \
+           vaultwarden dozzle portainer beszel uptime stirling \
+           n8n litellm langfuse ai toko wawptn; do
   STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://${sub}.${DOMAIN}")
   echo "${sub}: ${STATUS}"
 done

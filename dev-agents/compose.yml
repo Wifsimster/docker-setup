@@ -3,7 +3,7 @@ name: dev-agents
 services:
   dev-agents:
     container_name: dev-agents
-    build: .
+    image: ghcr.io/wifsimster/devteam:latest
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true

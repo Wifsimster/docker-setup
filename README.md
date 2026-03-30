@@ -1,6 +1,6 @@
 # 🏠 Home Server Platform
 
-> Plateforme auto-hébergée · 68 containers Docker · Debian · HTTPS automatique via `*.battistella.ovh`
+> Plateforme auto-hébergée · ~65 containers Docker · Debian · HTTPS automatique via `*.battistella.ovh`
 
 Streaming multimédia, domotique, gestion documentaire, galerie photo, outils de productivité et agents IA — accessible partout, 100% sous votre contrôle.
 
@@ -59,7 +59,6 @@ graph LR
     Sonarr & Radarr & Lidarr --> Prowlarr
     Prowlarr --> qBit[qBittorrent + VPN 🔒]
     qBit --> Plex[🎬 Plex]
-    Bazarr -.->|Sous-titres| Plex
     Tautulli -.->|Stats| Plex
     U -->|Regarde| Plex
 ```
@@ -71,7 +70,6 @@ graph LR
 | <img src="https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/sonarr.svg" width="16"/> **Sonarr** | Gestion automatisée des séries | `sonarr.example.com` |
 | <img src="https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/radarr.svg" width="16"/> **Radarr** | Gestion automatisée des films | `radarr.example.com` |
 | <img src="https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/lidarr.svg" width="16"/> **Lidarr** | Gestion automatisée de la musique | `lidarr.example.com` |
-| <img src="https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/bazarr.svg" width="16"/> **Bazarr** | Sous-titres automatiques | `bazarr.example.com` |
 | <img src="https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/prowlarr.svg" width="16"/> **Prowlarr** | Gestion des indexeurs | `indexer.example.com` |
 | <img src="https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/qbittorrent.svg" width="16"/> **qBittorrent** | Téléchargement (VPN intégré) | `qbittorrent.example.com` |
 | <img src="https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/tautulli.svg" width="16"/> **Tautulli** | Statistiques Plex | `tautulli.example.com` |
@@ -147,6 +145,10 @@ graph LR
 | 📋 **CV en ligne** | Curriculum vitae interactif | `cv.example.com` |
 | 🏢 **Copro-Pilot** | Gestion de copropriété | `copro-pilot.example.com` |
 | 🎲 **The Box** | Collection de jeux | `the-box.example.com` |
+| 🛒 **Toko** | Application e-commerce | `toko.example.com` |
+| 🏘️ **WAWPTN** | Gestion de copropriété (v2) + bot Discord | `wawptn.example.com` |
+| 🐦 **X AI Weekly Bot** | Bot automatisé de veille IA sur X | `x-ai-weekly-bot.example.com` |
+| 🎂 **Birthday Invitation** | Invitation anniversaire | `leo-birthday.example.com` |
 
 ---
 
@@ -155,7 +157,6 @@ graph LR
 | Service | Rôle | URL |
 |---|---|---|
 | <img src="https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/stirling-pdf.svg" width="16"/> **Stirling PDF** | Manipulation PDF | `stirling.example.com` |
-| <img src="https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/memos.svg" width="16"/> **Memos** | Notes rapides | `memos.example.com` |
 | <img src="https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/wakapi.svg" width="16"/> **Wakapi** | Suivi temps de dev | `wakapi.example.com` |
 | 🌳 **Gramps Web** | Généalogie | `gramps.example.com` |
 
@@ -222,7 +223,7 @@ graph LR
     Watchtower[🔄 Watchtower] -->|MAJ 6h| S
     Watchtower -->|📢 Notif| Discord
     UptimeKuma[⏱️ Uptime Kuma] -->|Ping| S
-    PgBackup[💾 pg-backup] -->|Dump 3h| DB[(🐘 PostgreSQL x10)]
+    PgBackup[💾 pg-backup] -->|Dump 3h| DB[(🐘 PostgreSQL x8)]
     n8n[🤖 n8n agents] -->|Briefing/Alertes/Email| Discord
 ```
 
@@ -234,7 +235,7 @@ graph LR
 | <img src="https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/portainer.svg" width="16"/> **Portainer** | Gestion Docker | `portainer.example.com` |
 | <img src="https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/dozzle.svg" width="16"/> **Dozzle** | Logs temps réel | `dozzle.example.com` |
 | 🔄 **Watchtower** | MAJ auto quotidiennes + alertes Discord | _arrière-plan_ |
-| 💾 **pg-backup** | Backup PostgreSQL (5 bases, rétention 7j) | _arrière-plan_ |
+| 💾 **pg-backup** | Backup PostgreSQL (8 bases, rétention 7j) | _arrière-plan_ |
 | <img src="https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/unifi.svg" width="16"/> **Unifi** | Contrôleur réseau | `unifi.example.com` |
 
 ---
@@ -274,8 +275,8 @@ graph LR
 |---|---|
 | 🐳 Orchestration | Docker + Docker Compose |
 | 🔀 Proxy inverse | Traefik v3.6 (Let's Encrypt / OVH DNS) |
-| 🐘 Bases de données | PostgreSQL 16, Redis / Valkey (10 instances PostgreSQL) |
-| 💾 Sauvegarde | pg-backup — dump quotidien 3h, rétention 7j |
+| 🐘 Bases de données | PostgreSQL 16, Redis / Valkey (~15 instances PostgreSQL) |
+| 💾 Sauvegarde | pg-backup — dump quotidien 3h, 8 bases, rétention 7j |
 | 📁 Stockage | NAS Unraid via NFS (montage unique `/mnt/media`) |
 | 📊 Supervision | Beszel, Uptime Kuma, Dozzle, Portainer, Homepage, Langfuse |
 | 🔒 Sécurité | `no-new-privileges`, réseaux internes isolés |
@@ -295,13 +296,11 @@ graph LR
 | 🎲 The Box | `the-box-postgres` |
 | 🏢 Copro-Pilot | `copro-pilot-postgres` |
 | 🔐 Infisical | `infisical-db` |
-| 🔗 n8n | `n8n-db` |
 | ⚡ LiteLLM | `litellm-db` |
+| 🔗 n8n | `n8n-db` |
 | 📈 Langfuse | `langfuse-db` |
-| 🌳 Gramps | `gramps-db` |
-| 🎮 Toko | `toko-db` |
 
-> ⏰ Dump quotidien à 3h · Format `pg_dump -Fc` · Rétention 7 jours · Restauration via `pg_restore`
+> ⏰ Dump quotidien à 3h · Format `pg_dump -Fc` · 8 bases · Rétention 7 jours · Restauration via `pg_restore`
 
 ---
 

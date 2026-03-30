@@ -4,7 +4,7 @@ Instructions pour les agents IA autonomes travaillant sur ce dépôt.
 
 ## Résumé du projet
 
-Infrastructure Docker auto-hébergée pour un serveur domestique Debian. ~30 services orchestrés avec Docker Compose, exposés via Traefik avec HTTPS automatique. Dépôt de configuration uniquement — pas de code source, pas de build, pas de tests.
+Infrastructure Docker auto-hébergée pour un serveur domestique Debian. ~36 services (~65 conteneurs) orchestrés avec Docker Compose, exposés via Traefik avec HTTPS automatique. Dépôt de configuration uniquement — pas de code source, pas de build, pas de tests.
 
 ## Structure du dépôt
 
@@ -12,7 +12,7 @@ Chaque service a son propre répertoire contenant un `compose.yml`. Le répertoi
 
 Répertoires importants :
 - `traefik/` — Proxy inverse, point d'entrée de toute l'infrastructure
-- `multimedia/` — Pile multimédia unifiée (9 services)
+- `multimedia/` — Pile multimédia unifiée (8 services, Bazarr retiré)
 - `homepage/config/` — Configuration du tableau de bord (contient des clés API)
 - `immich-app/` — Gestion photo avec fichiers hwaccel
 
