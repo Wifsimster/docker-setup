@@ -388,11 +388,14 @@ ntfy:
 - [x] Connecter Home Assistant → n8n via `rest_command` (porte/fenêtre ouverte, batterie faible)
 - [x] Installer ntfy sur mobile, souscrire aux 6 topics ✅
 
-### Étape 3 — Observabilité avancée (quand 2-3 agents sont stables)
+### ~~Étape 3 — Observabilité avancée (FAIT ✅)~~
 
-1. Déployer Langfuse + ClickHouse
-2. Ajouter `success_callback: ["langfuse"]` dans LiteLLM
-3. Créer un workflow n8n de surveillance des coûts → alerte ntfy si seuil dépassé
+- [x] Déployer Langfuse v3 (web + worker + PostgreSQL + ClickHouse + Redis + MinIO)
+- [x] Ajouter `success_callback: ["langfuse"]` et `failure_callback: ["langfuse"]` dans LiteLLM
+- [x] Créer workflow n8n "Agent Suivi Coûts API" : cron 20h → LiteLLM spend API → ntfy `costs`/`urgent`
+- [x] Ajouter Langfuse dans Uptime Kuma + ntfy
+- [x] Ajouter Langfuse dans Homepage section IA
+- [x] Ajouter langfuse-db dans pg-backup
 
 ### Étape 4 — RAG et agents avancés (optionnel)
 
@@ -439,4 +442,4 @@ ntfy:
 
 ---
 
-*Rapport v3 — Mis à jour le 29 mars 2026 après déploiement complet des étapes 1 et 2 (4 services IA + 5 agents n8n en production).*
+*Rapport v4 — Mis à jour le 30 mars 2026 après déploiement complet des étapes 1, 2 et 3 (5 services IA + 6 agents n8n + observabilité Langfuse en production).*
