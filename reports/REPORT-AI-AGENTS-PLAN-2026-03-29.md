@@ -1,4 +1,4 @@
-# Agents IA Homelab — Rapport complet (v5)
+# Agents IA Homelab — Rapport complet (v8)
 
 > Stack autonome, observable, auto-hébergé sur Proxmox / Docker / UniFi
 > Damien Battistella — Mars 2026
@@ -28,22 +28,22 @@
 
 ---
 
-## 2. État actuel de l'infra — Audit du 29 mars 2026
+## 2. État actuel de l'infra — Mis à jour le 30 mars 2026
 
 ### Ressources système
 
 | Métrique | Valeur |
 |----------|--------|
 | Disque total | 146 Go |
-| Disque utilisé | 74 Go (53%) |
-| Disque libre | 66 Go |
+| Disque utilisé | 104 Go (75%) |
+| Disque libre | 37 Go |
 | RAM totale | 24 Gi |
-| RAM utilisée | 9.1 Gi |
-| RAM disponible | 15 Gi |
-| Swap | 8 Gi (0 utilisé) |
+| RAM utilisée | 15 Gi |
+| RAM disponible | 9.8 Gi |
+| Swap | 8 Gi |
 | vCPU | 12 |
 
-### Services Docker existants (29 services)
+### Services Docker en production (35+ services, 70+ containers)
 
 #### Infrastructure & réseau
 
@@ -114,6 +114,18 @@
 | Birthday Invitation | `birthday-invitation` | App RSVP |
 | X-AI-Weekly-Bot | `x-ai-weekly-bot` | Bot X/Twitter IA |
 
+#### Stack IA (ajouté mars 2026) ✅
+
+| Service | Image | Rôle |
+|---------|-------|------|
+| LiteLLM | `ghcr.io/berriai/litellm:main-stable` + PostgreSQL | Proxy LLM unifié (Haiku, Sonnet, qwen2.5:7b) |
+| Open WebUI | `ghcr.io/open-webui/open-webui:main` | Interface chat IA (ai.battistella.ovh) |
+| n8n | `n8nio/n8n:latest` + PostgreSQL | Orchestration 6 agents + workflows |
+| ntfy | `binwiederhier/ntfy` | Alertes push légères (infra, domotique, urgent) |
+| Langfuse | `langfuse/langfuse:3` + worker + PostgreSQL + ClickHouse + MinIO + Redis | Observabilité LLM (traces, coûts) |
+| Ollama | `ollama/ollama:latest` | LLM local qwen2.5:7b (CPU, 4.5 Go) |
+| discord-bridge | Python discord.py (custom) | Bot Jarvis — écoute Discord → forward n8n |
+
 ### Infrastructure connexe
 
 - **Réseau Docker :** bridge externe `lan` partagé par tous les services
@@ -121,7 +133,7 @@
 - **GitHub Actions :** 6 self-hosted runners dans `/opt/actions-runner/` (hardlinks)
 - **Nettoyage automatique :** `/opt/docker/disk-cleanup.sh` chaque dimanche 03:00
 - **Domaine :** `battistella.ovh` (Traefik + Let's Encrypt + OVH DNS challenge)
-- **Bases PostgreSQL existantes :** Immich, Paperless, Infisical, The-Box, Copro-Pilot, Toko, Wawptn
+- **Bases PostgreSQL :** Immich, Paperless, Infisical, The-Box, Copro-Pilot, Toko, Wawptn, LiteLLM, n8n, Langfuse
 
 ---
 
@@ -169,15 +181,15 @@
 ```
 
 **Changements vs plan initial :**
-- Pas d'Ollama (pas de GPU, CPU trop lent pour 14b)
+- Ollama déployé avec `qwen2.5:7b` (4-bit, CPU) — pas de 14b (trop lent)
 - Pas de Dify (trop lourd, redondant avec Open WebUI + n8n)
 - Langfuse déployé en étape 3 (traces + coûts)
 - Uptime Kuma et Beszel déjà en place — pas à déployer
 - Traefik déjà en place comme reverse proxy (pas besoin de Caddy)
-- pg-backup déjà en place pour les sauvegardes PostgreSQL
+- pg-backup étendu aux nouvelles bases (LiteLLM, n8n, Langfuse)
 - Réseau `lan` existant (pas besoin de créer un réseau `ai-stack`)
-- **Discord comme interface conversationnelle** : les agents répondent dans des channels dédiés (#chat, #media, #maison, etc.) — ntfy reste pour les alertes push urgentes uniquement
-- n8n dispose d'un trigger Discord natif → pas de forwarder supplémentaire nécessaire
+- **Discord comme interface conversationnelle** : bot Jarvis (discord-bridge) écoute #chat #media #maison #docs #infra → forward vers n8n webhook → Sonnet → réponse Discord
+- n8n node discordTrigger absent → bridge Python discord.py (`discord-bridge` container) comme forwarder léger
 
 ---
 
@@ -588,29 +600,29 @@ Les workflows n8n déjà déployés envoient actuellement vers ntfy. Il faudra a
 - Actions destructives (restart container, supprimer document) → demander confirmation avant exécution (`@bot confirm`)
 - Rate limiting Discord natif : 5 req/s par bot
 
-#### 4.9 Prérequis Discord (à faire manuellement)
+#### 4.9 Prérequis Discord ✅
 
-- [ ] Créer un serveur Discord dédié homelab (ou utiliser un existant)
-- [ ] Créer un bot Discord : [discord.com/developers/applications](https://discord.com/developers/applications)
-  - Activer les intents : `MESSAGE_CONTENT`, `GUILD_MESSAGES`
-  - Copier le Bot Token → n8n Credential
-- [ ] Inviter le bot sur le serveur avec les permissions : `Send Messages`, `Read Message History`, `View Channels`
-- [ ] Créer les channels : `#chat`, `#media`, `#maison`, `#docs`, `#infra`, `#briefing`, `#alerts`, `#veille`
+- [x] Serveur Discord existant (beta — ID: 134048232257880064)
+- [x] Bot **Jarvis Wifsimster** créé (Application ID: 1488100441039568896)
+  - Intents `MESSAGE_CONTENT` + `GUILD_MESSAGES` activés
+  - Permissions : Administrator
+- [x] Bot invité sur le serveur
+- [x] Channels créés via script Python (API Discord) : `#chat`, `#media`, `#maison`, `#docs`, `#infra`, `#briefing`, `#alerts`, `#veille`
 
-#### 4.10 Tâches de déploiement n8n
+#### 4.10 Tâches de déploiement ✅
 
-- [ ] Créer la Credential "Discord Bot" dans n8n (Bot Token)
-- [ ] Créer le workflow `Agent Chat Discord` avec Discord Trigger
-- [ ] Implémenter le classifier d'intention Haiku (pour channel #chat)
-- [ ] Créer les credentials n8n pour chaque service (API keys Sonarr, Radarr, HA token, etc.)
-- [ ] Implémenter l'Agent Média (Sonarr + Radarr + Plex + Tautulli)
-- [ ] Implémenter l'Agent Maison (Home Assistant REST API)
-- [ ] Implémenter l'Agent Documents (Paperless-NGX + Immich)
-- [ ] Implémenter l'Agent Infra (Beszel + Uptime Kuma + Portainer + Pi-hole)
-- [ ] Implémenter l'Agent Notes (Memos)
-- [ ] Mettre à jour les workflows existants pour envoyer aussi vers Discord
-- [ ] Tester le flux complet : message Discord → agent → réponse Discord
-- [ ] Ajouter le monitor "Agent Chat Discord" dans Uptime Kuma
+- [x] Credential "Discord Bot Homelab" créée dans n8n (ID: nZjeiz1Vi2ZaFIhZ)
+- [x] Container `discord-bridge` déployé — bot Python discord.py, écoute 5 channels, forward vers n8n
+- [x] Workflow `Agent Chat Discord` créé et actif dans n8n (webhook `/discord-chat`)
+  - Routing par channel → system prompt spécialisé → Sonnet → réponse Discord
+- [x] Workflows existants mis à jour pour poster aussi sur Discord :
+  - Briefing Matinal → `#briefing`
+  - Veille Techno → `#veille`
+  - Monitoring Infra → `#alerts`
+  - Suivi Coûts → `#infra`
+  - Triage Email → `#chat`
+  - Domotique → `#maison`
+- [x] Test end-to-end validé : message Discord → Jarvis → n8n → Sonnet → réponse Discord
 
 ### Étape 5 — RAG et agents avancés (optionnel)
 
@@ -650,7 +662,8 @@ Les workflows n8n déjà déployés envoient actuellement vers ntfy. Il faudra a
 | Auto-update | Watchtower | **Déjà en place**, cron quotidien |
 | Backup PostgreSQL | pg-backup | **Déjà en place**, à étendre aux nouvelles bases |
 | Notifications push urgentes | ntfy | Auto-hébergé, 30 Mo RAM, alertes légères, Apache 2.0 |
-| Interface conversationnelle | Discord (bot + channels) | Trigger natif n8n, historique natif, 0 infra supplémentaire |
+| Interface conversationnelle | Discord (bot Jarvis + channels) | discord-bridge Python, n8n webhook, historique natif Discord |
+| LLM local | Ollama (qwen2.5:7b) | CPU, 4.5 Go RAM, 0 coût API, accessible via LiteLLM + Open WebUI |
 | Accès services Docker | n8n + APIs REST | 20+ services exposent une API, n8n les orchestre |
 | LLM cloud | Anthropic (Haiku/Sonnet) | Meilleur tool-calling, 1M contexte, coût OK |
 | **Reporté** | Ollama | Pas de GPU, CPU lent — à évaluer plus tard |
@@ -658,4 +671,4 @@ Les workflows n8n déjà déployés envoient actuellement vers ntfy. Il faudra a
 
 ---
 
-*Rapport v7 — Mis à jour le 30 mars 2026. Étapes 1-4 et 6 déployées ✅. Stack IA complet : LiteLLM + Open WebUI + n8n (6 agents) + Langfuse + ntfy + Ollama + Discord bot (Jarvis). Agent Chat Discord opérationnel sur #chat #media #maison #docs #infra. ntfy conservé pour les alertes push urgentes.*
+*Rapport v8 — Mis à jour le 30 mars 2026. Étapes 1-4 et 6 déployées ✅. Stack IA complet opérationnel : LiteLLM (Haiku + Sonnet + qwen2.5:7b local) + Open WebUI + n8n (6 agents actifs) + Langfuse (traces + coûts) + ntfy (alertes push) + Ollama + Discord bot Jarvis (5 channels, routing par domaine). Seule étape optionnelle restante : Step 5 RAG (Dify + Qdrant) si besoin d'un assistant documentaire avancé.*
