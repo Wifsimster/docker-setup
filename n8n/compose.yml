@@ -62,6 +62,8 @@ services:
       - N8N_PROTOCOL=https
       - WEBHOOK_URL=https://n8n.${DOMAIN}/
       - N8N_EDITOR_BASE_URL=https://n8n.${DOMAIN}/
+      - NODE_FUNCTION_ALLOW_BUILTIN=*
+      - NODE_FUNCTION_ALLOW_EXTERNAL=*
     labels:
       - "traefik.enable=true"
 
