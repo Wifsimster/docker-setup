@@ -1,8 +1,8 @@
-# Agents IA Homelab — Rapport complet (v8)
+# Agents IA Homelab — Rapport complet (v11)
 
 > Stack autonome, observable, auto-hébergé sur Proxmox / Docker / UniFi
 > Damien Battistella — Mars 2026
-> **Mis à jour le 30 mars 2026 — Étapes 1, 2, 3, 4 et 6 déployées ✅**
+> **Mis à jour le 30 mars 2026 — Étapes 1, 2, 3, 4 et 5 déployées ✅**
 
 ---
 
@@ -36,31 +36,34 @@
 |----------|--------|
 | Disque total | 146 Go |
 | Disque utilisé | 104 Go (75%) |
-| Disque libre | 37 Go |
+| Disque libre | 36 Go |
 | RAM totale | 24 Gi |
 | RAM utilisée | 15 Gi |
-| RAM disponible | 9.8 Gi |
-| Swap | 8 Gi |
+| RAM disponible | 9.7 Gi |
+| Swap total | 8 Gi |
+| Swap utilisé | 4.3 Gi |
+| Images Docker | 68 Go (58 images, 56 actives) |
+| Volumes Docker | 8.9 Go (40 volumes) |
 | vCPU | 12 |
 
-### Services Docker en production (35+ services, 70+ containers)
+### Services Docker en production (44 services, 69 containers)
 
 #### Infrastructure & réseau
 
 | Service | Image | Rôle |
 |---------|-------|------|
-| Traefik | `traefik` | Reverse proxy, TLS Let's Encrypt (OVH DNS) |
-| Pi-hole | `pihole` | DNS ad-blocking (port 53) |
-| UniFi | `unifi-network-application` | Contrôleur réseau UniFi |
-| Portainer | `portainer-ce` | Interface Docker web |
-| Dozzle | `amir20/dozzle` | Visualiseur de logs Docker |
+| Traefik | `traefik:v3.6` | Reverse proxy, TLS Let's Encrypt (OVH DNS) |
+| Pi-hole | `pihole/pihole:latest` | DNS ad-blocking (port 53) |
+| UniFi | `jacobalberty/unifi:v10.0` | Contrôleur réseau UniFi |
+| Portainer | `portainer/portainer-ce:latest` | Interface Docker web |
+| Dozzle | `amir20/dozzle:latest` | Visualiseur de logs Docker |
 
 #### Monitoring & maintenance
 
 | Service | Image | Rôle |
 |---------|-------|------|
-| Uptime Kuma | `louislam/uptime-kuma:1` | Monitoring uptime des services |
-| Beszel | `beszel` (hub + agent) | Monitoring système (CPU, RAM, disque) + alertes Discord |
+| Uptime Kuma | `louislam/uptime-kuma:latest` | Monitoring uptime des services |
+| Beszel | `henrygd/beszel:latest` (hub + agent) | Monitoring système (CPU, RAM, disque) + alertes Discord |
 | Watchtower | `containrrr/watchtower` | Auto-update images Docker (cron quotidien 06:00) |
 | pg-backup | `postgres:16-alpine` + crond | Backup PostgreSQL quotidien (03:00), 5 bases, rétention 7 jours |
 | Homepage | `gethomepage/homepage` | Dashboard avec widgets |
@@ -69,50 +72,49 @@
 
 | Service | Image | Rôle |
 |---------|-------|------|
-| Plex | `plexinc/pms-docker` | Media server (mode host) |
-| Sonarr | `linuxserver/sonarr` | Gestion séries TV |
-| Radarr | `linuxserver/radarr` | Gestion films |
-| Lidarr | `linuxserver/lidarr` | Gestion musique |
-| Bazarr | `linuxserver/bazarr` | Sous-titres |
-| Prowlarr | `linuxserver/prowlarr` | Indexeurs |
-| qBittorrent | `ghcr.io/hotio/qbittorrent` | Téléchargement (VPN intégré) |
-| Seerr | `seerr` | Requêtes média |
-| Tautulli | `tautulli` | Statistiques Plex |
-| Trotarr | `trotarr` | Gestion automatisée |
+| Plex | `lscr.io/linuxserver/plex:latest` | Media server (mode host) |
+| Sonarr | `lscr.io/linuxserver/sonarr:latest` | Gestion séries TV |
+| Radarr | `lscr.io/linuxserver/radarr:latest` | Gestion films |
+| Lidarr | `lscr.io/linuxserver/lidarr:latest` | Gestion musique |
+| Prowlarr | `lscr.io/linuxserver/prowlarr:latest` | Indexeurs |
+| qBittorrent | `ghcr.io/hotio/qbittorrent:latest` | Téléchargement (VPN intégré) |
+| Seerr | `ghcr.io/hotio/seerr:latest` | Requêtes média |
+| Tautulli | `lscr.io/linuxserver/tautulli:latest` | Statistiques Plex |
 
 #### Domotique
 
 | Service | Image | Rôle |
 |---------|-------|------|
-| Home Assistant | `homeassistant` | Hub domotique (mode host) |
-| Mosquitto | `eclipse-mosquitto` | Broker MQTT |
-| Matter Server | `matter-server` | Protocole Matter |
+| Home Assistant | `ghcr.io/home-assistant/home-assistant:stable` | Hub domotique (mode host) |
+| Mosquitto | `eclipse-mosquitto:2` | Broker MQTT |
+| Matter Server | `ghcr.io/home-assistant-libs/python-matter-server:stable` | Protocole Matter (healthcheck false-negative) |
 
 #### Applications
 
 | Service | Image | Rôle |
 |---------|-------|------|
-| Immich | `immich` + PostgreSQL + Valkey | Photos/vidéos avec ML |
-| Paperless-NGX | `paperless-ngx` + PostgreSQL + Redis + Gotenberg + Tika | GED |
-| Vaultwarden | `vaultwarden/server` | Gestionnaire de mots de passe |
-| Infisical | `infisical` + PostgreSQL + Redis | Gestion des secrets |
-| Memos | `memos` | Prise de notes |
-| Wakapi | `wakapi` | Suivi temps de code |
-| Stirling | `stirling-pdf` | Outils PDF |
-| Gramps | `gramps-web` + Redis + Celery | Généalogie |
+| Immich | `ghcr.io/immich-app/immich-server:v2` + ML + PostgreSQL + Valkey | Photos/vidéos avec ML |
+| Paperless-NGX | `ghcr.io/paperless-ngx/paperless-ngx:latest` + PostgreSQL + Redis + Gotenberg + Tika | GED |
+| Vaultwarden | `vaultwarden/server:latest` | Gestionnaire de mots de passe |
+| Infisical | `infisical/infisical:latest-postgres` + PostgreSQL + Redis | Gestion des secrets |
+| Memos | `neosmemo/memos:stable` | Prise de notes |
+| Wakapi | `ghcr.io/muety/wakapi:2.16.1` | Suivi temps de code |
+| Stirling PDF | `docker.stirlingpdf.com/stirlingtools/stirling-pdf:latest` | Outils PDF |
+| Gramps | `ghcr.io/gramps-project/grampsweb:latest` + Redis + Celery | Généalogie |
+| Protonmail Bridge | `shenxn/protonmail-bridge:latest` | Bridge IMAP/SMTP ProtonMail |
 
 #### Projets personnels
 
 | Service | Image | Rôle |
 |---------|-------|------|
-| Personal Blog | `wifsimster/wifsimster-blog` | Blog (blog.battistella.ovh) |
-| Resume | `wifsimster/resume` | CV en ligne (cv.battistella.ovh) |
-| Copro-Pilot | `wifsimster/copro-pilot` + PostgreSQL | App copropriété |
-| The-Box | `wifsimster/the-box` + PostgreSQL + Redis | App jeux |
-| Wawptn | `wifsimster/wawptn` + PostgreSQL + Discord bot | Stats de jeu |
-| Toko | `wifsimster/toko` + PostgreSQL | Suivi achievements |
-| Birthday Invitation | `birthday-invitation` | App RSVP |
-| X-AI-Weekly-Bot | `x-ai-weekly-bot` | Bot X/Twitter IA |
+| Personal Blog | `wifsimster/wifsimster-blog:latest` | Blog (blog.battistella.ovh) |
+| Resume | `wifsimster/resume:latest` | CV en ligne (cv.battistella.ovh) |
+| Copro-Pilot | `ghcr.io/wifsimster/copro-pilot:latest` + PostgreSQL | App copropriété |
+| The-Box | `wifsimster/the-box:latest` + PostgreSQL + Redis | App jeux |
+| Wawptn | `ghcr.io/wifsimster/wawptn:latest` + PostgreSQL + wawptn-discord | Stats de jeu (3 containers) |
+| Toko | `ghcr.io/wifsimster/toko:latest` + PostgreSQL | App TDAH |
+| Birthday Invitation | `wifsimster/birthday-invitation:latest` | App RSVP |
+| X-AI-Weekly-Bot | `ghcr.io/wifsimster/x-ai-weekly-bot:latest` | Bot X/Twitter IA |
 
 #### Stack IA (ajouté mars 2026) ✅
 
@@ -132,7 +134,7 @@
 - **GitHub Actions :** 6 self-hosted runners dans `/opt/actions-runner/` (hardlinks)
 - **Nettoyage automatique :** `/opt/docker/disk-cleanup.sh` chaque dimanche 03:00
 - **Domaine :** `battistella.ovh` (Traefik + Let's Encrypt + OVH DNS challenge)
-- **Bases PostgreSQL :** Immich, Paperless, Infisical, The-Box, Copro-Pilot, Toko, Wawptn, LiteLLM, n8n, Langfuse
+- **Bases PostgreSQL :** Immich, Paperless, Infisical, The-Box, Copro-Pilot, Toko, Wawptn, LiteLLM, n8n, Langfuse (10 instances PostgreSQL)
 
 ---
 
@@ -293,32 +295,22 @@ general_settings:
 
 ---
 
-## 6. Inventaire Docker — Stack IA à ajouter
+## 6. Inventaire Docker — Stack IA déployée ✅
 
-| Service | Port | Image | RAM estimée | Rôle |
-|---------|------|-------|-------------|------|
-| LiteLLM | 4000 | `litellm-database:main-stable` | ~200 Mo | Proxy LLM + coûts |
-| Open WebUI | 3000 | `open-webui/open-webui:main` | ~300 Mo | Interface chat |
-| n8n | 5678 | `n8nio/n8n:latest` | ~300 Mo | Orchestration agents |
-| discord-bridge | — | Python discord.py (custom) | ~50 Mo | Bot Jarvis → forward n8n |
-| PostgreSQL (IA) | 5433 | `postgres:16-alpine` | ~200 Mo | Persistance LiteLLM + n8n |
+| Service | Port | Image | Rôle |
+|---------|------|-------|------|
+| LiteLLM | 4000 | `ghcr.io/berriai/litellm:main-stable` + PostgreSQL | Proxy LLM unifié (Haiku, Sonnet, qwen2.5:7b) |
+| Open WebUI | 8080 | `ghcr.io/open-webui/open-webui:main` | Interface chat IA (ai.battistella.ovh) |
+| n8n | 5678 | `n8nio/n8n:latest` + PostgreSQL | Orchestration 6 agents + workflows |
+| Ollama | 11434 | `ollama/ollama:latest` | LLM local qwen2.5:7b (CPU, ~4.5 Go) |
+| Langfuse | — | `langfuse/langfuse:3` + worker + PostgreSQL + ClickHouse + MinIO + Redis | Observabilité LLM (traces, coûts) |
+| discord-bridge | — | Python discord.py (custom build) | Bot Jarvis — écoute Discord → forward n8n webhook |
 
-**Total à ajouter : ~1 Go RAM** (sur 15 Gi disponibles)
-
-**Pas besoin de déployer (déjà en place) :**
-- Traefik (reverse proxy + TLS)
-- Uptime Kuma (health monitoring)
-- Beszel (monitoring système)
-- Watchtower (auto-update)
-- pg-backup (backups PostgreSQL — à configurer pour les nouvelles bases)
-
-### Services reportés (ajout futur conditionnel)
+### Services optionnels non déployés
 
 | Service | RAM | Condition d'ajout |
 |---------|-----|-------------------|
-| Langfuse + ClickHouse | ~1.5 Go | Phase 3, quand 2-3 agents sont stables |
-| Ollama (qwen2.5:7b) | ~5 Go | Si besoin offline/privé confirmé, accepter la lenteur CPU |
-| Dify + Qdrant | ~3 Go | Si Open WebUI RAG insuffisant pour les docs |
+| Dify + Qdrant | ~3 Go | Si Open WebUI RAG insuffisant pour les docs Hexagone/Hexaflux |
 
 ---
 
@@ -379,7 +371,7 @@ general_settings:
 
 > Déployé le 2026-03-30
 
-> **Objectif final :** discuter avec des agents IA depuis Discord (mobile/desktop). Envoyer un message en langage naturel dans un channel, un agent le traite, interroge les services Docker existants, et répond dans le même channel. Discord remplace ntfy comme interface bidirectionnelle — ntfy reste pour les alertes push légères.
+> **Objectif final :** discuter avec des agents IA depuis Discord (mobile/desktop). Envoyer un message en langage naturel dans un channel, un agent le traite, interroge les services Docker existants, et répond dans le même channel. Discord est l'interface unique — notifications push, conversations et alertes.
 
 #### 4.1 Pourquoi Discord plutôt que ntfy
 
