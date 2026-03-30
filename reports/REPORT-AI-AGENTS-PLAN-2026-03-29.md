@@ -1,4 +1,4 @@
-# Agents IA Homelab — Rapport complet (v4)
+# Agents IA Homelab — Rapport complet (v5)
 
 > Stack autonome, observable, auto-hébergé sur Proxmox / Docker / UniFi
 > Damien Battistella — Mars 2026
@@ -130,46 +130,51 @@
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                        TÉLÉPHONE                                │
-│                    ntfy app (push natif)                         │
+│            ntfy app (push natif + envoi messages)                │
+│            "Ajoute ce film" → topic chat → réponse agent        │
+└──────────────────────────┬──────────┬──────────────────────────┘
+                   publish │          │ push réponse
+┌──────────────────────────▼──────────▼──────────────────────────┐
+│  COUCHE CONVERSATION     │  ntfy (self-hosted, port 2586)       │
+│  (bidirectionnelle)      │  Topics: chat, media, home, docs,    │
+│                          │  infra, agents, briefing, costs,     │
+│                          │  urgent, domotique                   │
 └──────────────────────────┬──────────────────────────────────────┘
-                           │ push
-┌──────────────────────────▼──────────────────────────────────────┐
-│  COUCHE NOTIFICATION     │  ntfy (self-hosted, port 2586)       │
-│                          │  Topics: agents, infra, domotique    │
-└──────────────────────────┬──────────────────────────────────────┘
-                           │ HTTP POST
+                           │ webhook + HTTP POST
 ┌──────────────────────────▼──────────────────────────────────────┐
 │  COUCHE OBSERVABILITÉ    │  Uptime Kuma (existant)              │
 │                          │  Beszel (existant)                   │
-│                          │  Health checks tous les services     │
-│                          │  Langfuse (Phase 3, plus tard)       │
+│                          │  Langfuse (traces + coûts)           │
 └──────────────────────────┬──────────────────────────────────────┘
                            │ callbacks
 ┌──────────────────────────▼──────────────────────────────────────┐
 │  COUCHE ORCHESTRATION    │  n8n (port 5678) — agents + workflows│
-└──────────────────────────┬──────────────────────────────────────┘
-                           │ /chat/completions
-┌──────────────────────────▼──────────────────────────────────────┐
-│  COUCHE PROXY LLM        │  LiteLLM (port 4000)                │
-│                          │  → Anthropic API (Haiku/Sonnet)      │
-│                          │  → OpenAI fallback                   │
-│                          │  Cost tracking + routing + retry     │
-└──────────────────────────┬──────────────────────────────────────┘
-                           │
-┌──────────────────────────▼──────────────────────────────────────┐
-│  COUCHE INTERFACE        │  Open WebUI (port 3000)              │
-│                          │  Chat quotidien, RAG docs, PWA mobile│
-└─────────────────────────────────────────────────────────────────┘
+│                          │  Agent Chat (classifier + routing)   │
+│                          │  Agents spécialisés (media, home,    │
+│                          │  docs, infra, notes, général)        │
+└──────────┬───────────────┼───────────────┬──────────────────────┘
+           │               │               │
+           ▼               ▼               ▼
+┌──────────────┐ ┌─────────────────┐ ┌────────────────────────┐
+│ PROXY LLM    │ │ SERVICES DOCKER │ │ INTERFACE WEB          │
+│ LiteLLM 4000 │ │ Sonarr, Radarr  │ │ Open WebUI (port 3000) │
+│ → Haiku      │ │ Plex, Tautulli  │ │ Chat, RAG, PWA mobile  │
+│ → Sonnet     │ │ Home Assistant  │ └────────────────────────┘
+│ → fallback   │ │ Paperless, Immich│
+│ Cost tracking│ │ Beszel, Portainer│
+└──────────────┘ │ Memos, Pi-hole  │
+                 └─────────────────┘
 ```
 
 **Changements vs plan initial :**
 - Pas d'Ollama (pas de GPU, CPU trop lent pour 14b)
 - Pas de Dify (trop lourd, redondant avec Open WebUI + n8n)
-- Langfuse reporté en Phase 3
+- Langfuse déployé en étape 3 (traces + coûts)
 - Uptime Kuma et Beszel déjà en place — pas à déployer
 - Traefik déjà en place comme reverse proxy (pas besoin de Caddy)
 - pg-backup déjà en place pour les sauvegardes PostgreSQL
 - Réseau `lan` existant (pas besoin de créer un réseau `ai-stack`)
+- **ntfy devient bidirectionnel** : pas juste des notifications push, mais une interface de conversation avec les agents via topics
 
 ---
 
@@ -397,7 +402,179 @@ ntfy:
 - [x] Ajouter Langfuse dans Homepage section IA
 - [x] Ajouter langfuse-db dans pg-backup
 
-### Étape 4 — RAG et agents avancés (optionnel)
+### Étape 4 — Agents conversationnels via ntfy
+
+> **Objectif final :** pouvoir discuter avec des agents IA depuis le téléphone via ntfy. Envoyer un message en langage naturel sur un topic, un agent le traite, interroge les services Docker existants, et répond sur le même topic.
+
+#### 4.1 Architecture conversationnelle
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  TÉLÉPHONE — ntfy app                                           │
+│  ► Envoyer un message sur topic `chat`                          │
+│  ► Recevoir la réponse de l'agent sur le même topic             │
+└──────────────────────────┬──────────┬──────────────────────────┘
+                   publish │          │ push réponse
+┌──────────────────────────▼──────────▼──────────────────────────┐
+│  ntfy (self-hosted)                                             │
+│  Topic `chat` — bidirectionnel (user ↔ agent)                   │
+│  Topics spécialisés : `media`, `home`, `docs`, `infra`          │
+└──────────────────────────┬──────────────────────────────────────┘
+                           │ webhook POST sur message reçu
+┌──────────────────────────▼──────────────────────────────────────┐
+│  n8n — Webhook Trigger                                          │
+│  ┌─────────────────────────────────────────────────────────┐    │
+│  │  1. Réception message utilisateur                        │    │
+│  │  2. Classification intention (Haiku) → routing           │    │
+│  │  3. Exécution agent spécialisé (Sonnet + tools)          │    │
+│  │  4. Appel API services Docker concernés                  │    │
+│  │  5. Réponse formatée → POST ntfy                         │    │
+│  └─────────────────────────────────────────────────────────┘    │
+│                           │                                      │
+│              ┌────────────┼────────────┐                         │
+│              ▼            ▼            ▼                          │
+│     Services Docker  LiteLLM    Home Assistant                   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+#### 4.2 Inventaire des APIs Docker accessibles par les agents
+
+Tous les services sont joignables depuis n8n via le réseau Docker `lan` (DNS interne).
+
+**Multimédia**
+
+| Service | URL interne | API | Cas d'usage agent |
+|---------|-------------|-----|-------------------|
+| Plex | `http://plex:32400` | REST | "Qu'est-ce qui tourne sur Plex ?", stats sessions |
+| Sonarr | `http://sonarr:8989/api/v3/` | REST + API key | "Quelles séries arrivent cette semaine ?", ajouter une série |
+| Radarr | `http://radarr:7878/api/v3/` | REST + API key | "Ajoute ce film", "Combien de films en attente ?" |
+| Lidarr | `http://lidarr:8686/api/v1/` | REST + API key | "Ajoute cet artiste", état des téléchargements |
+| Prowlarr | `http://prowlarr:9696/api/v1/` | REST + API key | Recherche indexeurs |
+| Seerr | `http://seerr:5055/api/v1/` | REST + API key | "Demande ce film/série", liste des requêtes |
+| qBittorrent | `http://qbittorrent:8080/api/v2/` | REST + session | "Quels torrents en cours ?", vitesse, pause/resume |
+| Tautulli | `http://tautulli:8181/api/v2/` | REST + API key | "Qui regarde quoi ?", historique, stats |
+
+**Domotique**
+
+| Service | URL interne | API | Cas d'usage agent |
+|---------|-------------|-----|-------------------|
+| Home Assistant | `http://homeassistant:8123/api/` | REST + Bearer token | "Allume le salon", "Quelle température ?", états capteurs |
+| Mosquitto | `mqtt://mosquitto:1883` | MQTT | Pub/sub événements IoT |
+
+**Documents & Photos**
+
+| Service | URL interne | API | Cas d'usage agent |
+|---------|-------------|-----|-------------------|
+| Immich | `http://immich_server:2283/api/` | REST + API key | "Combien de photos ce mois ?", recherche, albums |
+| Paperless-NGX | `http://paperless-webserver:8000/api/` | REST + token | "Trouve ma facture EDF", recherche documents, tags |
+
+**Infrastructure & Monitoring**
+
+| Service | URL interne | API | Cas d'usage agent |
+|---------|-------------|-----|-------------------|
+| Uptime Kuma | `http://uptime-kuma:3001/api/` | REST | "Quel service est down ?", statut monitors |
+| Beszel | `http://beszel:8090/api/` | REST | "Combien de RAM libre ?", état CPU/disque |
+| Pi-hole | `http://pihole:80/admin/api.php` | REST + API key | "Combien de requêtes bloquées ?", stats DNS |
+| Portainer | `http://portainer:9000/api/` | REST + JWT | "Liste les containers", restart service |
+
+**Notes & Outils**
+
+| Service | URL interne | API | Cas d'usage agent |
+|---------|-------------|-----|-------------------|
+| Memos | `http://memos:5230/api/v1/` | REST | "Note ça", "Quelles notes récentes ?", créer/lister memos |
+
+**Stack IA**
+
+| Service | URL interne | API | Cas d'usage agent |
+|---------|-------------|-----|-------------------|
+| LiteLLM | `http://litellm:4000/v1/` | OpenAI-compatible | Chat completions, coûts, modèles |
+| Langfuse | `http://langfuse-web:3000/api/` | REST | Traces, coûts, scores |
+
+#### 4.3 Workflow n8n — Agent Conversationnel (nouveau)
+
+**Nom :** `Agent Chat ntfy`
+**Trigger :** Webhook déclenché par ntfy sur réception de message topic `chat`
+
+**Flux :**
+
+```
+ntfy message reçu (webhook)
+    │
+    ▼
+Extraire texte + metadata (topic source, user)
+    │
+    ▼
+Classifier l'intention avec Haiku
+    │  → media : Sonarr/Radarr/Plex/Tautulli
+    │  → home  : Home Assistant
+    │  → docs  : Paperless-NGX/Immich
+    │  → infra : Beszel/Uptime Kuma/Portainer
+    │  → notes : Memos
+    │  → general : question libre → Sonnet
+    │
+    ▼
+Exécuter l'agent spécialisé (Sonnet + tool-calling)
+    │  → Appels HTTP aux APIs Docker internes
+    │  → Agrégation des résultats
+    │
+    ▼
+Formater la réponse (concise, mobile-friendly)
+    │
+    ▼
+POST réponse sur ntfy topic `chat`
+```
+
+**Configuration ntfy requise :**
+- Activer les webhooks sortants sur le topic `chat` → `https://n8n.battistella.ovh/webhook/ntfy-chat`
+- Créer un token d'accès read/write pour le topic `chat` côté n8n
+- Optionnel : topics spécialisés (`media`, `home`, `docs`, `infra`) pour des conversations thématiques
+
+#### 4.4 Agents spécialisés à créer
+
+| Agent | Topic ntfy | Services interrogés | Exemples de commandes |
+|-------|-----------|---------------------|----------------------|
+| **Agent Média** | `chat` / `media` | Sonarr, Radarr, Plex, Tautulli, Seerr, qBittorrent | "Ajoute Breaking Bad", "Quels films sortent cette semaine ?", "Qui regarde Plex ?" |
+| **Agent Maison** | `chat` / `home` | Home Assistant, Mosquitto | "Allume la lumière du salon", "Température extérieure ?", "Ferme le volet" |
+| **Agent Documents** | `chat` / `docs` | Paperless-NGX, Immich | "Trouve ma facture Free de janvier", "Combien de photos cette semaine ?" |
+| **Agent Infra** | `chat` / `infra` | Beszel, Uptime Kuma, Portainer, Pi-hole | "État du serveur ?", "Redémarre Plex", "Combien de requêtes DNS bloquées ?" |
+| **Agent Notes** | `chat` / `notes` | Memos | "Note : appeler plombier demain", "Quelles notes cette semaine ?" |
+| **Agent Général** | `chat` | LiteLLM (Sonnet) | Questions libres, résumés, aide rédaction |
+
+#### 4.5 Gestion du contexte conversationnel
+
+Pour garder une mémoire de conversation (multi-tours) :
+- **Option A — n8n + code node :** stocker les N derniers messages par user dans une variable n8n ou Redis (léger, rapide)
+- **Option B — PostgreSQL :** table `chat_history(id, user, topic, role, content, timestamp)` dans la base n8n, fenêtre glissante de 10 messages
+- **Option C — Memos comme mémoire :** chaque échange est sauvé comme memo tagué `#chat`, l'agent peut relire le contexte récent
+
+**Recommandation :** Option B (PostgreSQL) — la base n8n-db existe déjà, pas de service supplémentaire.
+
+#### 4.6 Sécurité
+
+- ntfy auth `deny-all` déjà en place → seuls les users avec token peuvent publier
+- n8n webhook protégé par un secret header (`X-Webhook-Secret`)
+- Les API keys des services (Sonarr, Radarr, HA token, etc.) stockées dans n8n Credentials
+- Rate limiting côté n8n : max 10 messages/minute par user pour éviter les abus de tokens
+- Actions destructives (restart container, supprimer document) → demander confirmation avant exécution
+
+#### 4.7 Tâches de déploiement
+
+- [ ] Créer le topic `chat` dans ntfy avec accès read/write pour l'user mobile
+- [ ] Configurer ntfy pour envoyer un webhook à n8n sur chaque message reçu sur `chat`
+- [ ] Créer le workflow n8n "Agent Chat ntfy" avec le webhook trigger
+- [ ] Implémenter le classifier d'intention (Haiku) avec routing vers sous-workflows
+- [ ] Créer les credentials n8n pour chaque service (API keys Sonarr, Radarr, HA token, etc.)
+- [ ] Implémenter l'agent Média (Sonarr + Radarr + Plex + Tautulli)
+- [ ] Implémenter l'agent Maison (Home Assistant REST API)
+- [ ] Implémenter l'agent Documents (Paperless-NGX + Immich)
+- [ ] Implémenter l'agent Infra (Beszel + Uptime Kuma + Portainer)
+- [ ] Implémenter l'agent Notes (Memos)
+- [ ] Ajouter la table `chat_history` dans n8n-db pour le contexte multi-tours
+- [ ] Tester le flux complet : message ntfy → agent → réponse ntfy
+- [ ] Ajouter le monitor "Agent Chat" dans Uptime Kuma
+- [ ] Documenter les commandes disponibles par agent
+
+### Étape 5 — RAG et agents avancés (optionnel)
 
 > Conditionnel : seulement si Open WebUI RAG ne suffit pas
 
@@ -405,13 +582,13 @@ ntfy:
 2. Uploader la documentation Hexagone/Hexaflux
 3. Assistant property management (documents locatifs, ALUR, charges)
 
-### Étape 5 — LLM local (optionnel, conditionnel)
+### ~~Étape 6 — LLM local (FAIT ✅)~~
 
-> Seulement si besoin offline/privé confirmé
+> Déployé le 2026-03-30
 
-1. Déployer Ollama avec `qwen2.5:7b` (pas 14b — trop lent en CPU)
-2. Ajouter le modèle local dans LiteLLM
-3. Cas d'usage : embeddings locaux, tâches privées, fallback offline
+1. ~~Déployer Ollama avec `qwen2.5:7b` (pas 14b — trop lent en CPU)~~ → `/opt/docker/ollama/`
+2. ~~Ajouter le modèle local dans LiteLLM~~ → `ollama/qwen2.5:7b` disponible via LiteLLM proxy
+3. Cas d'usage : embeddings locaux, tâches privées, fallback offline — modèle accessible dans Open WebUI
 
 ### Phase continue — Consolidation
 
@@ -435,11 +612,12 @@ ntfy:
 | Auto-update | Watchtower | **Déjà en place**, cron quotidien |
 | Backup PostgreSQL | pg-backup | **Déjà en place**, à étendre aux nouvelles bases |
 | Notifications push | ntfy | Auto-hébergé, 30 Mo RAM, app mobile, Apache 2.0 |
+| Interface conversationnelle | ntfy (bidirectionnel) | Pas besoin d'app custom, ntfy = chat mobile natif |
+| Accès services Docker | n8n + APIs REST | 20+ services exposent une API, n8n les orchestre |
 | LLM cloud | Anthropic (Haiku/Sonnet) | Meilleur tool-calling, 1M contexte, coût OK |
 | **Reporté** | Ollama | Pas de GPU, CPU lent — à évaluer plus tard |
 | **Reporté** | Dify | Lourd, redondant avec Open WebUI + n8n |
-| **Reporté** | Langfuse | Phase 3, quand le volume d'agents le justifie |
 
 ---
 
-*Rapport v4 — Mis à jour le 30 mars 2026 après déploiement complet des étapes 1, 2 et 3 (5 services IA + 6 agents n8n + observabilité Langfuse en production).*
+*Rapport v5 — Mis à jour le 30 mars 2026. Étapes 1-3 déployées. Étape 4 planifiée : agents conversationnels via ntfy avec accès aux 20+ services Docker existants.*

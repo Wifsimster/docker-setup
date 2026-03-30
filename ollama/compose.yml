@@ -1,0 +1,29 @@
+name: ollama
+
+services:
+  ollama:
+    container_name: ollama
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    environment:
+      - OLLAMA_KEEP_ALIVE=24h
+      - OLLAMA_NUM_PARALLEL=1
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - lan
+
+volumes:
+  ollama_data:
+    driver: local
+
+networks:
+  lan:
+    external: true
