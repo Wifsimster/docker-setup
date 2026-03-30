@@ -1,8 +1,8 @@
-# Agents IA Homelab — Rapport complet (v2)
+# Agents IA Homelab — Rapport complet (v4)
 
 > Stack autonome, observable, auto-hébergé sur Proxmox / Docker / UniFi
 > Damien Battistella — Mars 2026
-> **Mis à jour le 29 mars 2026 — Plan révisé après audit infra réel**
+> **Mis à jour le 30 mars 2026 — Étapes 1, 2 et 3 déployées**
 
 ---
 
