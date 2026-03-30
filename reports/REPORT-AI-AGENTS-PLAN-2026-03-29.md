@@ -14,7 +14,7 @@
 - Mise en place 100 % en autonomie, pas de SaaS obligatoire
 - Tout en Docker sur Proxmox, pas de dépendance externe hors API LLM
 - Observabilité complète : traces, coûts, erreurs, latence, état des agents
-- Notifications push en temps réel sur mobile (ntfy pour les alertes, Discord pour les conversations)
+- Notifications et conversations centralisées sur Discord (mobile + desktop)
 - Budget maîtrisé : seul coût variable = tokens API cloud
 
 **Infra existante :**
@@ -141,20 +141,12 @@
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                        TÉLÉPHONE                                │
-│   Discord app  ──────────────────  ntfy app                     │
-│   "Ajoute ce film" #media            alertes push urgentes      │
-│   Conversations bidirectionnelles    infra, briefing, domotique │
-└──────┬───────────────────────────────────────────────────────────┘
-       │ message Discord                │ push ntfy
-┌──────▼──────────────────────┐  ┌─────▼──────────────────────────┐
-│  COUCHE CONVERSATION        │  │  COUCHE ALERTES PUSH           │
-│  Discord (bot + channels)   │  │  ntfy (self-hosted, port 2586) │
-│  #chat #media #maison       │  │  Topics: urgent, infra,        │
-│  #docs #infra #briefing     │  │  domotique, briefing           │
-│  #alerts #veille            │  │                                │
-└──────┬──────────────────────┘  └────────────────────────────────┘
-       │ Discord Trigger (n8n natif)
+│                   TÉLÉPHONE / DESKTOP                           │
+│                    Discord app (bot Jarvis)                     │
+│   #chat #media #maison #docs #infra #briefing #alerts #veille   │
+└──────────────────────────┬──────────────────────────────────────┘
+                           │ discord-bridge (Python)
+                           │ → POST webhook n8n
 ┌──────▼──────────────────────────────────────────────────────────┐
 │  COUCHE OBSERVABILITÉ    │  Uptime Kuma (existant)              │
 │                          │  Beszel (existant)                   │
@@ -261,12 +253,12 @@ general_settings:
 
 **Agents concrets à déployer :**
 
-1. **Agent triage email** — trigger Gmail → classification Haiku → routage par catégorie → notification ntfy (urgent) + résumé Discord #chat
-2. **Agent monitoring infra** — cron → query Beszel API → vérification seuils disque/RAM/containers → alerte ntfy + Discord #alerts si dépassé
-3. **Agent veille techno** — cron hebdo → recherche web → synthèse Sonnet → envoi résumé Discord #veille + ntfy
-4. **Agent domotique** — webhook Home Assistant → analyse Haiku → action HA → notification ntfy + Discord #maison
-5. **Agent briefing matinal** — cron 7h → agrège météo + calendrier + emails prioritaires + état infra via Beszel → poste résumé Discord #briefing + ntfy
-6. **Agent Chat Discord** — trigger Discord → classifier Haiku → agents spécialisés (media, maison, docs, infra, notes) → réponse dans le channel source
+1. **Agent triage email** — trigger Gmail → classification Haiku → routage par catégorie → résumé Discord `#chat`
+2. **Agent monitoring infra** — cron 5 min → health checks services → alerte Discord `#alerts` si anomalie
+3. **Agent veille techno** — cron lundi 8h → HN + Reddit + Lobsters → synthèse Sonnet → Discord `#veille`
+4. **Agent domotique** — webhook Home Assistant → analyse Haiku → Discord `#maison`
+5. **Agent briefing matinal** — cron 7h → météo + état infra → Discord `#briefing`
+6. **Agent Chat Discord** — bot Jarvis écoute #chat #media #maison #docs #infra → Sonnet → réponse dans le channel source
 
 ### 5.3 Open WebUI — Interface chat
 
@@ -285,63 +277,20 @@ general_settings:
 - Pipelines → rate limiting, logging, filtres
 - Exposé via Traefik (`chat.battistella.ovh` ou `ai.battistella.ovh`)
 
-### 5.4 ntfy — Alertes push légères (rôle réduit)
+### 5.4 Discord — Interface unique (notifications + conversations)
 
-**Rôle :** notifications push one-way uniquement (alertes urgentes, domotique critique). L'interface conversationnelle avec les agents est assurée par Discord. ntfy reste pour les push natifs rapides sans ouvrir une app de chat.
+**Rôle :** interface centrale pour toutes les interactions avec les agents. Discord remplace ntfy pour les notifications — les agents postent directement dans les channels dédiés. ntfy est conservé en service mais n'est plus utilisé par les workflows IA.
 
-| | |
-|---|---|
-| Image Docker | `binwiederhier/ntfy` |
-| Port | 2586 |
-| RAM | ~30 Mo |
-| Licence | Apache 2.0 + GPL |
-
-**Topics actifs (alertes push uniquement) :**
-
-| Topic | Source | Priorité | Contenu |
-|-------|--------|----------|---------|
-| `infra` | Uptime Kuma + Beszel | Haute | Service down, disque plein, RAM critique |
-| `domotique` | Home Assistant + n8n | Normale | Portes ouvertes, batterie faible |
-| `urgent` | Tous | Urgente | Alertes critiques cross-système |
-
-**Discord prend en charge :**
-
-| Channel Discord | Source | Contenu |
-|----------------|--------|---------|
-| `#chat` | Agent Chat | Questions libres, conversation générale |
+| Channel | Source | Contenu |
+|---------|--------|---------|
+| `#chat` | Agent Chat (Sonnet) | Questions libres, conversation générale |
 | `#media` | Agent Média | Sonarr/Radarr/Plex, requêtes contenu |
 | `#maison` | Agent Maison | Home Assistant, domotique |
 | `#docs` | Agent Documents | Paperless, Immich |
-| `#infra` | Agent Infra | Beszel, Uptime Kuma, Portainer |
-| `#briefing` | Agent Briefing | Résumé matinal quotidien |
-| `#alerts` | Monitoring | Alertes infra (miroir Discord des alerts ntfy) |
-| `#veille` | Agent Veille | Résumé hebdo actualités IA |
-
-**Config Docker :**
-```yaml
-ntfy:
-  image: binwiederhier/ntfy:latest
-  container_name: ntfy
-  restart: unless-stopped
-  command: serve
-  environment:
-    - TZ=Europe/Paris
-    - NTFY_AUTH_DEFAULT_ACCESS=deny-all
-    - NTFY_AUTH_FILE=/var/lib/ntfy/auth.db
-    - NTFY_BEHIND_PROXY=true
-    - NTFY_BASE_URL=https://ntfy.battistella.ovh
-  volumes:
-    - ntfy-cache:/var/cache/ntfy
-    - ntfy-auth:/var/lib/ntfy
-  labels:
-    - "traefik.enable=true"
-    - "traefik.http.routers.ntfy.entrypoints=websecure"
-    - "traefik.http.routers.ntfy.rule=Host(`ntfy.battistella.ovh`)"
-    - "traefik.http.services.ntfy.loadBalancer.server.port=80"
-    - "com.centurylinklabs.watchtower.enable=true"
-  networks:
-    lan:
-```
+| `#infra` | Agent Infra + Monitoring | Beszel, Uptime Kuma, alertes infra |
+| `#briefing` | Agent Briefing | Résumé matinal quotidien (cron 7h) |
+| `#alerts` | Agent Monitoring | Alertes infra automatiques (cron 5 min) |
+| `#veille` | Agent Veille Techno | Résumé hebdo actualités IA (lundi 8h) |
 
 ---
 
@@ -352,7 +301,7 @@ ntfy:
 | LiteLLM | 4000 | `litellm-database:main-stable` | ~200 Mo | Proxy LLM + coûts |
 | Open WebUI | 3000 | `open-webui/open-webui:main` | ~300 Mo | Interface chat |
 | n8n | 5678 | `n8nio/n8n:latest` | ~300 Mo | Orchestration agents |
-| ntfy | 2586 | `binwiederhier/ntfy` | ~30 Mo | Notifications push |
+| discord-bridge | — | Python discord.py (custom) | ~50 Mo | Bot Jarvis → forward n8n |
 | PostgreSQL (IA) | 5433 | `postgres:16-alpine` | ~200 Mo | Persistance LiteLLM + n8n |
 
 **Total à ajouter : ~1 Go RAM** (sur 15 Gi disponibles)
@@ -400,31 +349,30 @@ ntfy:
 
 - [x] Déployer LiteLLM + PostgreSQL avec config Anthropic (Haiku + Sonnet)
 - [x] Déployer Open WebUI pointant vers LiteLLM (`https://ai.battistella.ovh`)
-- [x] Déployer ntfy, créer admin + 6 topics (infra, agents, domotique, briefing, costs, urgent)
+- [x] Déployer ntfy (conservé en service, non utilisé par les workflows IA)
 - [x] Déployer n8n + PostgreSQL (`https://n8n.battistella.ovh`)
 - [x] Ajouter les nouvelles bases dans pg-backup
 - [x] Ajouter 4 monitors dans Uptime Kuma (LiteLLM, Open WebUI, n8n, ntfy)
-- [x] Connecter les 33 monitors Uptime Kuma → ntfy topic `infra`
 - [x] Ajouter section "IA" dans Homepage (4 services)
 - [x] Test : chat Open WebUI → LiteLLM → Anthropic ✅
-- [x] Test : notification ntfy → réception mobile ✅
+- [x] Test : notification Discord → réception mobile ✅
 
 ### ~~Étape 2 — Premiers agents (FAIT ✅)~~
 
-- [x] Agent Monitoring Infra : cron 5 min → health checks LiteLLM/OpenWebUI/ntfy → ntfy `infra`
-- [x] Agent Triage Email : Gmail trigger → Haiku classification → ntfy `urgent`/`agents`
-- [x] Agent Briefing Matinal : cron 7h → météo (Open-Meteo) + état infra → ntfy `briefing`
-- [x] Agent Veille Techno : cron lundi 8h → HN + Reddit + Lobsters → Sonnet résumé → ntfy `agents`
-- [x] Agent Domotique : webhook n8n → Haiku analyse → ntfy `domotique`
+- [x] Agent Monitoring Infra : cron 5 min → health checks LiteLLM/OpenWebUI → Discord `#alerts`
+- [x] Agent Triage Email : Gmail trigger → Haiku classification → Discord `#chat`
+- [x] Agent Briefing Matinal : cron 7h → météo (Open-Meteo) + état infra → Discord `#briefing`
+- [x] Agent Veille Techno : cron lundi 8h → HN + Reddit + Lobsters → Sonnet résumé → Discord `#veille`
+- [x] Agent Domotique : webhook n8n → Haiku analyse → Discord `#maison`
 - [x] Connecter Home Assistant → n8n via `rest_command` (porte/fenêtre ouverte, batterie faible)
-- [x] Installer ntfy sur mobile, souscrire aux 6 topics ✅
+- [x] Discord mobile configuré — bot Jarvis actif sur serveur beta ✅
 
 ### ~~Étape 3 — Observabilité avancée (FAIT ✅)~~
 
 - [x] Déployer Langfuse v3 (web + worker + PostgreSQL + ClickHouse + Redis + MinIO)
 - [x] Ajouter `success_callback: ["langfuse"]` et `failure_callback: ["langfuse"]` dans LiteLLM
-- [x] Créer workflow n8n "Agent Suivi Coûts API" : cron 20h → LiteLLM spend API → ntfy `costs`/`urgent`
-- [x] Ajouter Langfuse dans Uptime Kuma + ntfy
+- [x] Créer workflow n8n "Agent Suivi Coûts API" : cron 20h → LiteLLM spend API → Discord `#infra`
+- [x] Ajouter Langfuse dans Uptime Kuma
 - [x] Ajouter Langfuse dans Homepage section IA
 - [x] Ajouter langfuse-db dans pg-backup
 
@@ -580,17 +528,18 @@ GET /channels/{channel_id}/messages?limit=10
 
 Pas besoin de base de données supplémentaire. L'historique Discord EST la mémoire.
 
-#### 4.7 Migrations des workflows existants vers Discord
+#### 4.7 Workflows Discord ✅
 
-Les workflows n8n déjà déployés envoient actuellement vers ntfy. Il faudra ajouter en parallèle un envoi Discord :
+Tous les workflows n8n envoient exclusivement vers Discord (ntfy retiré) :
 
-| Workflow | Actuel (ntfy) | Ajout Discord |
-|---------|---------------|---------------|
-| Briefing Matinal | topic `briefing` | channel `#briefing` |
-| Veille Techno | topic `agents` | channel `#veille` |
-| Monitoring Infra | topic `infra` | channel `#alerts` |
-| Triage Email | topic `agents` | channel `#chat` (résumé) |
-| Domotique | topic `domotique` | channel `#maison` |
+| Workflow | Channel Discord | Déclencheur |
+|---------|----------------|-------------|
+| Briefing Matinal | `#briefing` | Cron 7h |
+| Veille Techno | `#veille` | Cron lundi 8h |
+| Monitoring Infra | `#alerts` | Cron 5 min |
+| Triage Email | `#chat` | Gmail trigger |
+| Domotique | `#maison` | Webhook HA |
+| Suivi Coûts | `#infra` | Cron 20h |
 
 #### 4.8 Sécurité
 
@@ -657,12 +606,11 @@ Les workflows n8n déjà déployés envoient actuellement vers ntfy. Il faudra a
 | Proxy LLM unifié | LiteLLM | Multi-provider, cost tracking, fallback, MIT |
 | Orchestration agents | n8n | GUI visuelle, 400+ intégrations, ReAct natif |
 | Interface chat | Open WebUI | Référence du marché, PWA, function calling |
-| Health monitoring | Uptime Kuma | **Déjà en place**, intégration ntfy native, MIT |
+| Health monitoring | Uptime Kuma | **Déjà en place**, MIT |
 | Monitoring système | Beszel | **Déjà en place**, CPU/RAM/disque + alertes |
 | Auto-update | Watchtower | **Déjà en place**, cron quotidien |
 | Backup PostgreSQL | pg-backup | **Déjà en place**, à étendre aux nouvelles bases |
-| Notifications push urgentes | ntfy | Auto-hébergé, 30 Mo RAM, alertes légères, Apache 2.0 |
-| Interface conversationnelle | Discord (bot Jarvis + channels) | discord-bridge Python, n8n webhook, historique natif Discord |
+| Notifications + conversations | Discord (bot Jarvis + channels) | discord-bridge Python, n8n webhook, 8 channels dédiés |
 | LLM local | Ollama (qwen2.5:7b) | CPU, 4.5 Go RAM, 0 coût API, accessible via LiteLLM + Open WebUI |
 | Accès services Docker | n8n + APIs REST | 20+ services exposent une API, n8n les orchestre |
 | LLM cloud | Anthropic (Haiku/Sonnet) | Meilleur tool-calling, 1M contexte, coût OK |
@@ -671,4 +619,4 @@ Les workflows n8n déjà déployés envoient actuellement vers ntfy. Il faudra a
 
 ---
 
-*Rapport v8 — Mis à jour le 30 mars 2026. Étapes 1-4 et 6 déployées ✅. Stack IA complet opérationnel : LiteLLM (Haiku + Sonnet + qwen2.5:7b local) + Open WebUI + n8n (6 agents actifs) + Langfuse (traces + coûts) + ntfy (alertes push) + Ollama + Discord bot Jarvis (5 channels, routing par domaine). Seule étape optionnelle restante : Step 5 RAG (Dify + Qdrant) si besoin d'un assistant documentaire avancé.*
+*Rapport v9 — Mis à jour le 30 mars 2026. Étapes 1-4 et 6 déployées ✅. Stack IA complet opérationnel : LiteLLM (Haiku + Sonnet + qwen2.5:7b local) + Open WebUI + n8n (6 agents) + Langfuse + Ollama + Discord bot Jarvis (8 channels, tout passe par Discord). ntfy retiré des workflows IA. Seule étape optionnelle restante : Step 5 RAG (Dify + Qdrant).*
