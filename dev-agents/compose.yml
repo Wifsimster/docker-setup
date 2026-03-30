@@ -1,8 +1,8 @@
-name: discord-bridge
+name: dev-agents
 
 services:
-  discord-bridge:
-    container_name: discord-bridge
+  dev-agents:
+    container_name: dev-agents
     build: .
     restart: unless-stopped
     security_opt:
@@ -10,18 +10,21 @@ services:
     deploy:
       resources:
         limits:
-          memory: 128M
+          memory: 2G
     logging:
       driver: json-file
       options:
         max-size: "10m"
         max-file: "3"
+    volumes:
+      - /mnt/media/data/workspace:/workspace
+      - /home/wifsimster/.claude:/home/node/.claude
     environment:
       - DISCORD_BOT_TOKEN=${DISCORD_BOT_TOKEN}
-      - N8N_WEBHOOK_URL=${N8N_WEBHOOK_URL}
-      - CHANNEL_CHAT=${CHANNEL_CHAT}
-      - CHANNEL_DEV=${CHANNEL_DEV}
-      - DEV_AGENTS_URL=${DEV_AGENTS_URL}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - WORKSPACE=/workspace
+      - CLAUDE_MODEL=${CLAUDE_MODEL:-claude-sonnet-4-6}
+      - MAX_TURNS=${MAX_TURNS:-50}
     networks:
       - lan
 
