@@ -2,7 +2,7 @@
 
 > Stack autonome, observable, auto-hébergé sur Proxmox / Docker / UniFi
 > Damien Battistella — Mars 2026
-> **Mis à jour le 30 mars 2026 — Étapes 1, 2 et 3 déployées**
+> **Mis à jour le 30 mars 2026 — Étapes 1, 2, 3 et 6 déployées — Étape 4 replanifiée sur Discord**
 
 ---
 
@@ -14,7 +14,7 @@
 - Mise en place 100 % en autonomie, pas de SaaS obligatoire
 - Tout en Docker sur Proxmox, pas de dépendance externe hors API LLM
 - Observabilité complète : traces, coûts, erreurs, latence, état des agents
-- Notifications push en temps réel sur mobile (pas de dépendance Discord/Slack)
+- Notifications push en temps réel sur mobile (ntfy pour les alertes, Discord pour les conversations)
 - Budget maîtrisé : seul coût variable = tokens API cloud
 
 **Infra existante :**
@@ -130,18 +130,20 @@
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                        TÉLÉPHONE                                │
-│            ntfy app (push natif + envoi messages)                │
-│            "Ajoute ce film" → topic chat → réponse agent        │
-└──────────────────────────┬──────────┬──────────────────────────┘
-                   publish │          │ push réponse
-┌──────────────────────────▼──────────▼──────────────────────────┐
-│  COUCHE CONVERSATION     │  ntfy (self-hosted, port 2586)       │
-│  (bidirectionnelle)      │  Topics: chat, media, home, docs,    │
-│                          │  infra, agents, briefing, costs,     │
-│                          │  urgent, domotique                   │
-└──────────────────────────┬──────────────────────────────────────┘
-                           │ webhook + HTTP POST
-┌──────────────────────────▼──────────────────────────────────────┐
+│   Discord app  ──────────────────  ntfy app                     │
+│   "Ajoute ce film" #media            alertes push urgentes      │
+│   Conversations bidirectionnelles    infra, briefing, domotique │
+└──────┬───────────────────────────────────────────────────────────┘
+       │ message Discord                │ push ntfy
+┌──────▼──────────────────────┐  ┌─────▼──────────────────────────┐
+│  COUCHE CONVERSATION        │  │  COUCHE ALERTES PUSH           │
+│  Discord (bot + channels)   │  │  ntfy (self-hosted, port 2586) │
+│  #chat #media #maison       │  │  Topics: urgent, infra,        │
+│  #docs #infra #briefing     │  │  domotique, briefing           │
+│  #alerts #veille            │  │                                │
+└──────┬──────────────────────┘  └────────────────────────────────┘
+       │ Discord Trigger (n8n natif)
+┌──────▼──────────────────────────────────────────────────────────┐
 │  COUCHE OBSERVABILITÉ    │  Uptime Kuma (existant)              │
 │                          │  Beszel (existant)                   │
 │                          │  Langfuse (traces + coûts)           │
@@ -174,7 +176,8 @@
 - Traefik déjà en place comme reverse proxy (pas besoin de Caddy)
 - pg-backup déjà en place pour les sauvegardes PostgreSQL
 - Réseau `lan` existant (pas besoin de créer un réseau `ai-stack`)
-- **ntfy devient bidirectionnel** : pas juste des notifications push, mais une interface de conversation avec les agents via topics
+- **Discord comme interface conversationnelle** : les agents répondent dans des channels dédiés (#chat, #media, #maison, etc.) — ntfy reste pour les alertes push urgentes uniquement
+- n8n dispose d'un trigger Discord natif → pas de forwarder supplémentaire nécessaire
 
 ---
 
@@ -246,11 +249,12 @@ general_settings:
 
 **Agents concrets à déployer :**
 
-1. **Agent triage email** — trigger Gmail → classification Haiku → routage par catégorie → notification ntfy si urgent
-2. **Agent monitoring infra** — cron → query Beszel API → vérification seuils disque/RAM/containers → alerte ntfy si dépassé
-3. **Agent veille techno** — cron hebdo → recherche web → synthèse Sonnet → envoi résumé par ntfy/email
-4. **Agent domotique** — webhook Home Assistant → analyse Haiku → action HA → notification état
-5. **Agent briefing matinal** — cron 7h → agrège météo + calendrier + emails prioritaires + état infra via Beszel → envoie résumé ntfy
+1. **Agent triage email** — trigger Gmail → classification Haiku → routage par catégorie → notification ntfy (urgent) + résumé Discord #chat
+2. **Agent monitoring infra** — cron → query Beszel API → vérification seuils disque/RAM/containers → alerte ntfy + Discord #alerts si dépassé
+3. **Agent veille techno** — cron hebdo → recherche web → synthèse Sonnet → envoi résumé Discord #veille + ntfy
+4. **Agent domotique** — webhook Home Assistant → analyse Haiku → action HA → notification ntfy + Discord #maison
+5. **Agent briefing matinal** — cron 7h → agrège météo + calendrier + emails prioritaires + état infra via Beszel → poste résumé Discord #briefing + ntfy
+6. **Agent Chat Discord** — trigger Discord → classifier Haiku → agents spécialisés (media, maison, docs, infra, notes) → réponse dans le channel source
 
 ### 5.3 Open WebUI — Interface chat
 
@@ -269,9 +273,9 @@ general_settings:
 - Pipelines → rate limiting, logging, filtres
 - Exposé via Traefik (`chat.battistella.ovh` ou `ai.battistella.ovh`)
 
-### 5.4 ntfy — Notifications push auto-hébergées
+### 5.4 ntfy — Alertes push légères (rôle réduit)
 
-**Rôle :** service de notifications pub/sub ultra-léger. Tout ce qui peut faire un `curl` peut envoyer une notification. App mobile Android/iOS pour les recevoir en push.
+**Rôle :** notifications push one-way uniquement (alertes urgentes, domotique critique). L'interface conversationnelle avec les agents est assurée par Discord. ntfy reste pour les push natifs rapides sans ouvrir une app de chat.
 
 | | |
 |---|---|
@@ -280,16 +284,26 @@ general_settings:
 | RAM | ~30 Mo |
 | Licence | Apache 2.0 + GPL |
 
-**Topics à créer :**
+**Topics actifs (alertes push uniquement) :**
 
 | Topic | Source | Priorité | Contenu |
 |-------|--------|----------|---------|
-| `agents` | n8n workflows | Normale | Résultats des agents, tâches terminées |
 | `infra` | Uptime Kuma + Beszel | Haute | Service down, disque plein, RAM critique |
-| `domotique` | Home Assistant + n8n | Normale | Événements domotiques IA |
-| `briefing` | Agent briefing n8n | Basse | Résumé matinal quotidien |
-| `costs` | LiteLLM | Normale | Alerte si budget API dépassé |
+| `domotique` | Home Assistant + n8n | Normale | Portes ouvertes, batterie faible |
 | `urgent` | Tous | Urgente | Alertes critiques cross-système |
+
+**Discord prend en charge :**
+
+| Channel Discord | Source | Contenu |
+|----------------|--------|---------|
+| `#chat` | Agent Chat | Questions libres, conversation générale |
+| `#media` | Agent Média | Sonarr/Radarr/Plex, requêtes contenu |
+| `#maison` | Agent Maison | Home Assistant, domotique |
+| `#docs` | Agent Documents | Paperless, Immich |
+| `#infra` | Agent Infra | Beszel, Uptime Kuma, Portainer |
+| `#briefing` | Agent Briefing | Résumé matinal quotidien |
+| `#alerts` | Monitoring | Alertes infra (miroir Discord des alerts ntfy) |
+| `#veille` | Agent Veille | Résumé hebdo actualités IA |
 
 **Config Docker :**
 ```yaml
@@ -402,33 +416,40 @@ ntfy:
 - [x] Ajouter Langfuse dans Homepage section IA
 - [x] Ajouter langfuse-db dans pg-backup
 
-### Étape 4 — Agents conversationnels via ntfy
+### Étape 4 — Agents conversationnels via Discord
 
-> **Objectif final :** pouvoir discuter avec des agents IA depuis le téléphone via ntfy. Envoyer un message en langage naturel sur un topic, un agent le traite, interroge les services Docker existants, et répond sur le même topic.
+> **Objectif final :** discuter avec des agents IA depuis Discord (mobile/desktop). Envoyer un message en langage naturel dans un channel, un agent le traite, interroge les services Docker existants, et répond dans le même channel. Discord remplace ntfy comme interface bidirectionnelle — ntfy reste pour les alertes push légères.
 
-#### 4.1 Architecture conversationnelle
+#### 4.1 Pourquoi Discord plutôt que ntfy
+
+| Critère | Discord ✅ | ntfy ❌ |
+|---------|-----------|---------|
+| Webhooks natifs n8n | Oui (trigger natif) | Non (besoin forwarder SSE) |
+| Historique conversation | Oui (dans le channel) | Non |
+| Threading / channels | Oui | Non |
+| Réponses formatées | Embeds, code blocks, boutons | Texte brut |
+| UI mobile | App native excellente | App notifications only |
+| Multi-channel par domaine | `#media`, `#maison`, etc. | Topics séparés sans UI |
+| Infrastructure | 0 container supplémentaire | Forwarder SSE requis |
+
+#### 4.2 Architecture conversationnelle
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│  TÉLÉPHONE — ntfy app                                           │
-│  ► Envoyer un message sur topic `chat`                          │
-│  ► Recevoir la réponse de l'agent sur le même topic             │
-└──────────────────────────┬──────────┬──────────────────────────┘
-                   publish │          │ push réponse
-┌──────────────────────────▼──────────▼──────────────────────────┐
-│  ntfy (self-hosted)                                             │
-│  Topic `chat` — bidirectionnel (user ↔ agent)                   │
-│  Topics spécialisés : `media`, `home`, `docs`, `infra`          │
+│  TÉLÉPHONE / DESKTOP — Discord app                              │
+│  ► Message dans #media, #maison, #docs, #infra, #chat           │
+│  ► Réponse de l'agent dans le même channel (avec historique)    │
 └──────────────────────────┬──────────────────────────────────────┘
-                           │ webhook POST sur message reçu
+                           │ Discord Trigger (n8n natif)
 ┌──────────────────────────▼──────────────────────────────────────┐
-│  n8n — Webhook Trigger                                          │
+│  n8n — Discord Trigger                                          │
 │  ┌─────────────────────────────────────────────────────────┐    │
-│  │  1. Réception message utilisateur                        │    │
-│  │  2. Classification intention (Haiku) → routing           │    │
-│  │  3. Exécution agent spécialisé (Sonnet + tools)          │    │
-│  │  4. Appel API services Docker concernés                  │    │
-│  │  5. Réponse formatée → POST ntfy                         │    │
+│  │  1. Réception message (channel source = contexte)        │    │
+│  │  2. Ignorer les messages du bot (éviter boucles)         │    │
+│  │  3. Classification intention (Haiku) si #chat général    │    │
+│  │  4. Routing vers agent spécialisé selon channel/intent   │    │
+│  │  5. Exécution agent (Sonnet + appels API Docker)         │    │
+│  │  6. Réponse formatée → Discord Send Message              │    │
 │  └─────────────────────────────────────────────────────────┘    │
 │                           │                                      │
 │              ┌────────────┼────────────┐                         │
@@ -437,7 +458,20 @@ ntfy:
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-#### 4.2 Inventaire des APIs Docker accessibles par les agents
+#### 4.3 Channels Discord et agents associés
+
+| Channel | Agent | Services interrogés | Exemples de commandes |
+|---------|-------|---------------------|----------------------|
+| `#chat` | Agent Général + Classifier | LiteLLM (Sonnet) → routing | Questions libres, aide rédaction, commandes mixtes |
+| `#media` | Agent Média | Sonarr, Radarr, Plex, Tautulli, Seerr, qBittorrent | "Ajoute Breaking Bad", "Qui regarde Plex ?" |
+| `#maison` | Agent Maison | Home Assistant | "Allume le salon", "Température ?", "Ferme le volet" |
+| `#docs` | Agent Documents | Paperless-NGX, Immich | "Trouve ma facture Free de janvier" |
+| `#infra` | Agent Infra | Beszel, Uptime Kuma, Portainer, Pi-hole | "État serveur ?", "Combien de DNS bloqués ?" |
+| `#briefing` | Agent Briefing | Auto-post cron 7h | Résumé matinal quotidien |
+| `#alerts` | Monitoring | Beszel, Uptime Kuma | Alertes infra automatiques |
+| `#veille` | Agent Veille | Auto-post hebdo | Résumé actualités IA |
+
+#### 4.4 Inventaire des APIs Docker accessibles par les agents
 
 Tous les services sont joignables depuis n8n via le réseau Docker `lan` (DNS interne).
 
@@ -490,89 +524,91 @@ Tous les services sont joignables depuis n8n via le réseau Docker `lan` (DNS in
 | LiteLLM | `http://litellm:4000/v1/` | OpenAI-compatible | Chat completions, coûts, modèles |
 | Langfuse | `http://langfuse-web:3000/api/` | REST | Traces, coûts, scores |
 
-#### 4.3 Workflow n8n — Agent Conversationnel (nouveau)
+#### 4.5 Flux n8n — Agent Chat Discord
 
-**Nom :** `Agent Chat ntfy`
-**Trigger :** Webhook déclenché par ntfy sur réception de message topic `chat`
-
-**Flux :**
+**Nom :** `Agent Chat Discord`
+**Trigger :** n8n Discord Trigger (natif, écoute les messages des channels configurés)
 
 ```
-ntfy message reçu (webhook)
+Message Discord reçu
     │
     ▼
-Extraire texte + metadata (topic source, user)
+Ignorer si auteur = bot (éviter boucle)
     │
     ▼
-Classifier l'intention avec Haiku
-    │  → media : Sonarr/Radarr/Plex/Tautulli
-    │  → home  : Home Assistant
-    │  → docs  : Paperless-NGX/Immich
-    │  → infra : Beszel/Uptime Kuma/Portainer
-    │  → notes : Memos
-    │  → general : question libre → Sonnet
+Identifier le channel source
+    │  → #media  : Agent Média directement
+    │  → #maison : Agent Maison directement
+    │  → #docs   : Agent Documents directement
+    │  → #infra  : Agent Infra directement
+    │  → #chat   : Classifier Haiku → routing
     │
     ▼
 Exécuter l'agent spécialisé (Sonnet + tool-calling)
     │  → Appels HTTP aux APIs Docker internes
-    │  → Agrégation des résultats
+    │  → Contexte : 10 derniers messages du channel (Discord history API)
     │
     ▼
-Formater la réponse (concise, mobile-friendly)
+Formater la réponse (Discord Markdown, mobile-friendly)
     │
     ▼
-POST réponse sur ntfy topic `chat`
+Discord Send Message → channel source (ou thread si longue réponse)
 ```
 
-**Configuration ntfy requise :**
-- Activer les webhooks sortants sur le topic `chat` → `https://n8n.battistella.ovh/webhook/ntfy-chat`
-- Créer un token d'accès read/write pour le topic `chat` côté n8n
-- Optionnel : topics spécialisés (`media`, `home`, `docs`, `infra`) pour des conversations thématiques
+#### 4.6 Gestion du contexte conversationnel
 
-#### 4.4 Agents spécialisés à créer
+Discord fournit nativement l'historique de channel — l'agent peut récupérer les N derniers messages via l'API Discord pour construire le contexte multi-tours :
 
-| Agent | Topic ntfy | Services interrogés | Exemples de commandes |
-|-------|-----------|---------------------|----------------------|
-| **Agent Média** | `chat` / `media` | Sonarr, Radarr, Plex, Tautulli, Seerr, qBittorrent | "Ajoute Breaking Bad", "Quels films sortent cette semaine ?", "Qui regarde Plex ?" |
-| **Agent Maison** | `chat` / `home` | Home Assistant, Mosquitto | "Allume la lumière du salon", "Température extérieure ?", "Ferme le volet" |
-| **Agent Documents** | `chat` / `docs` | Paperless-NGX, Immich | "Trouve ma facture Free de janvier", "Combien de photos cette semaine ?" |
-| **Agent Infra** | `chat` / `infra` | Beszel, Uptime Kuma, Portainer, Pi-hole | "État du serveur ?", "Redémarre Plex", "Combien de requêtes DNS bloquées ?" |
-| **Agent Notes** | `chat` / `notes` | Memos | "Note : appeler plombier demain", "Quelles notes cette semaine ?" |
-| **Agent Général** | `chat` | LiteLLM (Sonnet) | Questions libres, résumés, aide rédaction |
+```
+GET /channels/{channel_id}/messages?limit=10
+→ injecter dans le prompt comme historique de conversation
+```
 
-#### 4.5 Gestion du contexte conversationnel
+Pas besoin de base de données supplémentaire. L'historique Discord EST la mémoire.
 
-Pour garder une mémoire de conversation (multi-tours) :
-- **Option A — n8n + code node :** stocker les N derniers messages par user dans une variable n8n ou Redis (léger, rapide)
-- **Option B — PostgreSQL :** table `chat_history(id, user, topic, role, content, timestamp)` dans la base n8n, fenêtre glissante de 10 messages
-- **Option C — Memos comme mémoire :** chaque échange est sauvé comme memo tagué `#chat`, l'agent peut relire le contexte récent
+#### 4.7 Migrations des workflows existants vers Discord
 
-**Recommandation :** Option B (PostgreSQL) — la base n8n-db existe déjà, pas de service supplémentaire.
+Les workflows n8n déjà déployés envoient actuellement vers ntfy. Il faudra ajouter en parallèle un envoi Discord :
 
-#### 4.6 Sécurité
+| Workflow | Actuel (ntfy) | Ajout Discord |
+|---------|---------------|---------------|
+| Briefing Matinal | topic `briefing` | channel `#briefing` |
+| Veille Techno | topic `agents` | channel `#veille` |
+| Monitoring Infra | topic `infra` | channel `#alerts` |
+| Triage Email | topic `agents` | channel `#chat` (résumé) |
+| Domotique | topic `domotique` | channel `#maison` |
 
-- ntfy auth `deny-all` déjà en place → seuls les users avec token peuvent publier
-- n8n webhook protégé par un secret header (`X-Webhook-Secret`)
-- Les API keys des services (Sonarr, Radarr, HA token, etc.) stockées dans n8n Credentials
-- Rate limiting côté n8n : max 10 messages/minute par user pour éviter les abus de tokens
-- Actions destructives (restart container, supprimer document) → demander confirmation avant exécution
+#### 4.8 Sécurité
 
-#### 4.7 Tâches de déploiement
+- Discord bot token stocké dans n8n Credentials (jamais en clair)
+- Bot limité au serveur Discord personnel uniquement
+- API keys services (Sonarr, Radarr, HA token, etc.) dans n8n Credentials
+- Actions destructives (restart container, supprimer document) → demander confirmation avant exécution (`@bot confirm`)
+- Rate limiting Discord natif : 5 req/s par bot
 
-- [ ] Créer le topic `chat` dans ntfy avec accès read/write pour l'user mobile
-- [ ] Configurer ntfy pour envoyer un webhook à n8n sur chaque message reçu sur `chat`
-- [ ] Créer le workflow n8n "Agent Chat ntfy" avec le webhook trigger
-- [ ] Implémenter le classifier d'intention (Haiku) avec routing vers sous-workflows
+#### 4.9 Prérequis Discord (à faire manuellement)
+
+- [ ] Créer un serveur Discord dédié homelab (ou utiliser un existant)
+- [ ] Créer un bot Discord : [discord.com/developers/applications](https://discord.com/developers/applications)
+  - Activer les intents : `MESSAGE_CONTENT`, `GUILD_MESSAGES`
+  - Copier le Bot Token → n8n Credential
+- [ ] Inviter le bot sur le serveur avec les permissions : `Send Messages`, `Read Message History`, `View Channels`
+- [ ] Créer les channels : `#chat`, `#media`, `#maison`, `#docs`, `#infra`, `#briefing`, `#alerts`, `#veille`
+
+#### 4.10 Tâches de déploiement n8n
+
+- [ ] Créer la Credential "Discord Bot" dans n8n (Bot Token)
+- [ ] Créer le workflow `Agent Chat Discord` avec Discord Trigger
+- [ ] Implémenter le classifier d'intention Haiku (pour channel #chat)
 - [ ] Créer les credentials n8n pour chaque service (API keys Sonarr, Radarr, HA token, etc.)
-- [ ] Implémenter l'agent Média (Sonarr + Radarr + Plex + Tautulli)
-- [ ] Implémenter l'agent Maison (Home Assistant REST API)
-- [ ] Implémenter l'agent Documents (Paperless-NGX + Immich)
-- [ ] Implémenter l'agent Infra (Beszel + Uptime Kuma + Portainer)
-- [ ] Implémenter l'agent Notes (Memos)
-- [ ] Ajouter la table `chat_history` dans n8n-db pour le contexte multi-tours
-- [ ] Tester le flux complet : message ntfy → agent → réponse ntfy
-- [ ] Ajouter le monitor "Agent Chat" dans Uptime Kuma
-- [ ] Documenter les commandes disponibles par agent
+- [ ] Implémenter l'Agent Média (Sonarr + Radarr + Plex + Tautulli)
+- [ ] Implémenter l'Agent Maison (Home Assistant REST API)
+- [ ] Implémenter l'Agent Documents (Paperless-NGX + Immich)
+- [ ] Implémenter l'Agent Infra (Beszel + Uptime Kuma + Portainer + Pi-hole)
+- [ ] Implémenter l'Agent Notes (Memos)
+- [ ] Mettre à jour les workflows existants pour envoyer aussi vers Discord
+- [ ] Tester le flux complet : message Discord → agent → réponse Discord
+- [ ] Ajouter le monitor "Agent Chat Discord" dans Uptime Kuma
 
 ### Étape 5 — RAG et agents avancés (optionnel)
 
@@ -611,8 +647,8 @@ Pour garder une mémoire de conversation (multi-tours) :
 | Monitoring système | Beszel | **Déjà en place**, CPU/RAM/disque + alertes |
 | Auto-update | Watchtower | **Déjà en place**, cron quotidien |
 | Backup PostgreSQL | pg-backup | **Déjà en place**, à étendre aux nouvelles bases |
-| Notifications push | ntfy | Auto-hébergé, 30 Mo RAM, app mobile, Apache 2.0 |
-| Interface conversationnelle | ntfy (bidirectionnel) | Pas besoin d'app custom, ntfy = chat mobile natif |
+| Notifications push urgentes | ntfy | Auto-hébergé, 30 Mo RAM, alertes légères, Apache 2.0 |
+| Interface conversationnelle | Discord (bot + channels) | Trigger natif n8n, historique natif, 0 infra supplémentaire |
 | Accès services Docker | n8n + APIs REST | 20+ services exposent une API, n8n les orchestre |
 | LLM cloud | Anthropic (Haiku/Sonnet) | Meilleur tool-calling, 1M contexte, coût OK |
 | **Reporté** | Ollama | Pas de GPU, CPU lent — à évaluer plus tard |
@@ -620,4 +656,4 @@ Pour garder une mémoire de conversation (multi-tours) :
 
 ---
 
-*Rapport v5 — Mis à jour le 30 mars 2026. Étapes 1-3 déployées. Étape 4 planifiée : agents conversationnels via ntfy avec accès aux 20+ services Docker existants.*
+*Rapport v6 — Mis à jour le 30 mars 2026. Étapes 1-3 et 6 déployées. Étape 4 replanifiée : agents conversationnels via Discord bot (trigger natif n8n, 0 infra supplémentaire) avec accès aux 20+ services Docker existants. ntfy conservé pour les alertes push urgentes uniquement.*
