@@ -25,6 +25,12 @@ services:
       - WORKSPACE=/workspace
       - CLAUDE_MODEL=${CLAUDE_MODEL:-claude-sonnet-4-6}
       - MAX_TURNS=${MAX_TURNS:-50}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.dev-agents.entrypoints=websecure"
+      - "traefik.http.routers.dev-agents.rule=Host(`devteam.${DOMAIN}`)"
+      - "traefik.http.services.dev-agents.loadBalancer.server.port=8585"
+      - "com.centurylinklabs.watchtower.enable=true"
     networks:
       - lan
 
