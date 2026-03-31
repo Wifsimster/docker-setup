@@ -47,8 +47,18 @@ async def on_message(message: discord.Message):
         await forward_to_dev_agents(message)
         return
 
-    # Route #general -> n8n media agent (read-only multimedia)
+    # Route #general -> n8n media agent (read-only multimedia, @mention required)
     if channel_id == CHANNEL_GENERAL and N8N_GENERAL_WEBHOOK_URL:
+        is_thread = isinstance(message.channel, discord.Thread)
+        mentioned = client.user.mentioned_in(message) and not message.mention_everyone
+        # In threads: always respond (conversation continuity). In channel: require @mention.
+        if not is_thread and not mentioned:
+            return
+        # Strip the bot mention from the message content
+        content_clean = message.content.replace(f"<@{client.user.id}>", "").strip()
+        if not content_clean:
+            return
+        message.content = content_clean
         await handle_n8n_channel(message, N8N_GENERAL_WEBHOOK_URL)
         return
 
