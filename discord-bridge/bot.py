@@ -9,8 +9,10 @@ log = logging.getLogger("discord-bridge")
 
 CHANNEL_CHAT = int(os.environ["CHANNEL_CHAT"])
 CHANNEL_DEV = int(os.environ.get("CHANNEL_DEV", "0"))
+CHANNEL_GENERAL = int(os.environ.get("CHANNEL_GENERAL", "0"))
 
 N8N_WEBHOOK_URL = os.environ["N8N_WEBHOOK_URL"]
+N8N_GENERAL_WEBHOOK_URL = os.environ.get("N8N_GENERAL_WEBHOOK_URL", "")
 N8N_RESET_WEBHOOK_URL = os.environ.get("N8N_RESET_WEBHOOK_URL", "")
 DEV_AGENTS_URL = os.environ.get("DEV_AGENTS_URL", "")
 BOT_TOKEN = os.environ["DISCORD_BOT_TOKEN"]
@@ -23,7 +25,7 @@ client = discord.Client(intents=intents)
 @client.event
 async def on_ready():
     log.info(f"Bot connecte : {client.user} (id={client.user.id})")
-    log.info(f"Channels : chat={CHANNEL_CHAT}, dev={CHANNEL_DEV}")
+    log.info(f"Channels : chat={CHANNEL_CHAT}, dev={CHANNEL_DEV}, general={CHANNEL_GENERAL}")
 
 
 def get_parent_channel_id(channel):
@@ -43,6 +45,11 @@ async def on_message(message: discord.Message):
     # Route #dev -> dev-agents (fire-and-forget, long-running)
     if channel_id == CHANNEL_DEV and DEV_AGENTS_URL:
         await forward_to_dev_agents(message)
+        return
+
+    # Route #general -> n8n media agent (read-only multimedia)
+    if channel_id == CHANNEL_GENERAL and N8N_GENERAL_WEBHOOK_URL:
+        await handle_n8n_channel(message, N8N_GENERAL_WEBHOOK_URL)
         return
 
     # Route #chat (and its threads) -> n8n webhook (request-reply)
@@ -148,6 +155,84 @@ async def forward_to_n8n(message: discord.Message, thread):
     except asyncio.TimeoutError:
         log.warning("n8n webhook timeout (>120s)")
         await reply_channel.send("Timeout - la requete a pris trop de temps.")
+    except Exception as e:
+        log.error(f"Erreur webhook n8n: {e}")
+
+
+async def handle_n8n_channel(message: discord.Message, webhook_url: str):
+    """Generic handler for n8n-backed channels with auto-threading and memory."""
+    is_thread = isinstance(message.channel, discord.Thread)
+
+    log.info(f"Message recu de {message.author.name} dans #{message.channel.name}: {message.content[:80]}")
+
+    if not is_thread:
+        thread = await create_conversation_thread(message)
+        if thread:
+            await _forward_and_reply(message, thread, webhook_url)
+        else:
+            await _forward_and_reply(message, None, webhook_url)
+    else:
+        await _forward_and_reply(message, message.channel, webhook_url)
+
+
+async def _forward_and_reply(message: discord.Message, reply_target, webhook_url: str):
+    """Forward to n8n webhook and post reply to the target channel/thread."""
+    is_thread = isinstance(message.channel, discord.Thread)
+
+    if reply_target and not is_thread:
+        session_id = str(reply_target.id)
+    elif is_thread:
+        session_id = str(message.channel.id)
+    else:
+        session_id = str(message.channel.id)
+
+    payload = {
+        "sessionId": session_id,
+        "channelId": str(message.channel.id),
+        "parentChannelId": str(message.channel.parent_id) if is_thread else str(message.channel.id),
+        "channelName": message.channel.name,
+        "isThread": is_thread or (reply_target is not None),
+        "content": message.content,
+        "author": {
+            "id": str(message.author.id),
+            "username": message.author.name,
+            "bot": message.author.bot,
+        },
+        "messageId": str(message.id),
+        "guildId": str(message.guild.id) if message.guild else None,
+    }
+
+    dest = reply_target if reply_target and not is_thread else message.channel
+
+    try:
+        async with dest.typing():
+            async with aiohttp.ClientSession() as session:
+                async with session.post(webhook_url, json=payload, timeout=aiohttp.ClientTimeout(total=120)) as resp:
+                    if resp.status not in (200, 201, 204):
+                        log.warning(f"n8n webhook repondu {resp.status}")
+                        return
+
+                    body = await resp.text()
+                    if not body or body.strip() == "ok":
+                        return
+
+                    try:
+                        data = await resp.json()
+                        reply = data.get("reply", "").strip()
+                    except Exception:
+                        reply = body.strip()
+
+                    if not reply:
+                        return
+
+                    if len(reply) > 1950:
+                        reply = reply[:1947] + "..."
+
+                    await dest.send(reply)
+                    log.info(f"Reponse envoyee dans #{dest.name} ({len(reply)} chars)")
+    except asyncio.TimeoutError:
+        log.warning("n8n webhook timeout (>120s)")
+        await dest.send("Timeout - la requete a pris trop de temps.")
     except Exception as e:
         log.error(f"Erreur webhook n8n: {e}")
 
