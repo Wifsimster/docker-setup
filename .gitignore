@@ -22,6 +22,10 @@
 !discord-bridge/bot.py
 !discord-bridge/Dockerfile
 !discord-bridge/requirements.txt
+!dev-agents/agent.py
+!dev-agents/Dockerfile
+!dev-agents/requirements.txt
+!dev-agents/dashboard.html
 
 # Explicitly exclude homepage config containing secrets
 homepage/config/services.yaml
