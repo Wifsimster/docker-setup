@@ -175,11 +175,15 @@ async def handle_reset(message: discord.Message):
 
 
 async def forward_to_dev_agents(message: discord.Message):
+    is_thread = isinstance(message.channel, discord.Thread)
     payload = {
         "channelId": str(message.channel.id),
         "content": message.content,
         "author": message.author.name,
         "messageId": str(message.id),
+        "isThread": is_thread,
+        "threadId": str(message.channel.id) if is_thread else None,
+        "parentChannelId": str(message.channel.parent_id) if is_thread else str(message.channel.id),
     }
     try:
         async with aiohttp.ClientSession() as session:

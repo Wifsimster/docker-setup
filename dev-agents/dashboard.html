@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jarvis Dev Team</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0d1117; color: #c9d1d9; font-family: 'SF Mono', 'Cascadia Code', 'Consolas', monospace; font-size: 14px; padding: 20px; }
+  h1 { color: #58a6ff; font-size: 18px; margin-bottom: 16px; }
+  .status-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; padding: 12px 16px; background: #161b22; border: 1px solid #30363d; border-radius: 8px; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .dot.idle { background: #484f58; }
+  .dot.running { background: #3fb950; animation: pulse 1.5s infinite; }
+  .dot.done { background: #3fb950; }
+  .dot.error { background: #f85149; }
+  .dot.timeout { background: #d29922; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 800px) { .grid { grid-template-columns: 1fr; } }
+  .card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 16px; }
+  .card h2 { color: #58a6ff; font-size: 14px; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; }
+  .agents { display: flex; flex-wrap: wrap; gap: 8px; }
+  .agent { padding: 8px 14px; border-radius: 6px; border: 1px solid #30363d; background: #0d1117; }
+  .agent.running { border-color: #3fb950; background: #0d1117; }
+  .agent.done { border-color: #484f58; opacity: 0.7; }
+  .agent .name { font-weight: bold; color: #f0f6fc; }
+  .agent .role { color: #8b949e; font-size: 12px; }
+  .timeline { max-height: 500px; overflow-y: auto; }
+  .event { padding: 6px 0; border-bottom: 1px solid #21262d; display: flex; gap: 10px; }
+  .event:last-child { border-bottom: none; }
+  .event .time { color: #484f58; min-width: 65px; }
+  .event .icon { min-width: 20px; text-align: center; }
+  .event .detail { color: #c9d1d9; word-break: break-word; }
+  .event .detail code { background: #1f2937; padding: 2px 6px; border-radius: 3px; font-size: 13px; }
+  .task-info { margin-bottom: 8px; }
+  .task-info .label { color: #8b949e; }
+  .task-info .value { color: #f0f6fc; }
+  .result { margin-top: 16px; padding: 12px; background: #0d1117; border: 1px solid #238636; border-radius: 6px; white-space: pre-wrap; max-height: 300px; overflow-y: auto; }
+  .empty { color: #484f58; font-style: italic; padding: 20px 0; text-align: center; }
+  .ws-status { font-size: 12px; color: #484f58; }
+  .ws-status.connected { color: #3fb950; }
+</style>
+</head>
+<body>
+
+<h1>🤖 Jarvis Dev Team — Dashboard</h1>
+
+<div class="status-bar">
+  <div class="dot" id="statusDot"></div>
+  <span id="statusText">Connexion...</span>
+  <span style="flex:1"></span>
+  <span class="ws-status" id="wsStatus">ws: connecting</span>
+</div>
+
+<div class="grid">
+  <div class="card">
+    <h2>Tache en cours</h2>
+    <div id="taskInfo"><div class="empty">Aucune tache en cours</div></div>
+  </div>
+
+  <div class="card">
+    <h2>Agents</h2>
+    <div class="agents" id="agentList"><div class="empty">En attente</div></div>
+  </div>
+</div>
+
+<div class="card" style="margin-top: 16px;">
+  <h2>Timeline</h2>
+  <div class="timeline" id="timeline"><div class="empty">En attente d'evenements...</div></div>
+</div>
+
+<div class="card" style="margin-top: 16px; display: none;" id="resultCard">
+  <h2>Resultat</h2>
+  <div class="result" id="resultText"></div>
+</div>
+
+<script>
+const AGENTS_META = {
+  'Alice': { role: 'Frontend', icon: '👩‍💻' },
+  'Bob': { role: 'Backend', icon: '👨‍💻' },
+  'Charlie': { role: 'DevOps', icon: '🔧' },
+};
+
+const TOOL_ICONS = {
+  'Read': '📖', 'Write': '✏️', 'Edit': '📝', 'Bash': '💻',
+  'Glob': '🔍', 'Grep': '🔍', 'Agent': '🔀',
+};
+
+let ws;
+let reconnectTimer;
+
+function connect() {
+  const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  ws = new WebSocket(`${proto}//${location.host}/ws`);
+
+  ws.onopen = () => {
+    document.getElementById('wsStatus').textContent = 'ws: connected';
+    document.getElementById('wsStatus').className = 'ws-status connected';
+  };
+
+  ws.onclose = () => {
+    document.getElementById('wsStatus').textContent = 'ws: disconnected';
+    document.getElementById('wsStatus').className = 'ws-status';
+    reconnectTimer = setTimeout(connect, 3000);
+  };
+
+  ws.onmessage = (e) => {
+    const data = JSON.parse(e.data);
+    handleEvent(data);
+  };
+}
+
+function handleEvent(data) {
+  switch (data.type) {
+    case 'idle':
+      setStatus('idle', 'En attente');
+      break;
+    case 'task_start':
+    case 'task_state':
+      setStatus('running', 'Tache en cours');
+      updateTask(data.task);
+      break;
+    case 'event':
+      updateTask(data.task);
+      addTimelineEvent(data.event);
+      break;
+    case 'task_complete':
+      setStatus('done', 'Terminee');
+      updateTask(data.task);
+      showResult(data.task.result);
+      break;
+    case 'task_error':
+      setStatus(data.task?.status || 'error', 'Erreur');
+      if (data.task) updateTask(data.task);
+      break;
+  }
+}
+
+function setStatus(state, text) {
+  const dot = document.getElementById('statusDot');
+  dot.className = 'dot ' + state;
+  document.getElementById('statusText').textContent = text;
+}
+
+function updateTask(task) {
+  if (!task) return;
+
+  // Task info
+  const info = document.getElementById('taskInfo');
+  info.innerHTML = `
+    <div class="task-info"><span class="label">Auteur:</span> <span class="value">${esc(task.author)}</span></div>
+    <div class="task-info"><span class="label">Demande:</span> <span class="value">${esc(task.content)}</span></div>
+    <div class="task-info"><span class="label">Debut:</span> <span class="value">${task.started_at?.split('T')[1]?.split('.')[0] || ''}</span></div>
+    ${task.cost_usd ? `<div class="task-info"><span class="label">Cout:</span> <span class="value">$${task.cost_usd.toFixed(4)} · ${task.num_turns} tours</span></div>` : ''}
+  `;
+
+  // Agents
+  const agentDiv = document.getElementById('agentList');
+  const agents = task.agents || {};
+  if (Object.keys(agents).length === 0) {
+    agentDiv.innerHTML = `<div class="agent"><div class="name">🤖 CEO Jarvis</div><div class="role">${task.status === 'running' ? 'En cours...' : task.status}</div></div>`;
+  } else {
+    agentDiv.innerHTML = Object.entries(agents).map(([name, status]) => {
+      const meta = AGENTS_META[name] || { role: 'Agent', icon: '🤖' };
+      return `<div class="agent ${status}"><div class="name">${meta.icon} ${esc(name)}</div><div class="role">${meta.role} · ${status}</div></div>`;
+    }).join('') + `<div class="agent ${task.status}"><div class="name">🤖 CEO Jarvis</div><div class="role">Orchestration · ${task.status}</div></div>`;
+  }
+}
+
+function addTimelineEvent(ev) {
+  const tl = document.getElementById('timeline');
+  if (tl.querySelector('.empty')) tl.innerHTML = '';
+
+  const icon = ev.type === 'agent_spawn' ? '🔀'
+    : ev.type === 'result' ? '✅'
+    : ev.type === 'text' ? '💬'
+    : TOOL_ICONS[ev.tool] || '🔧';
+
+  let detail = '';
+  if (ev.type === 'agent_spawn') detail = `Delegation → <strong>${esc(ev.description)}</strong>`;
+  else if (ev.type === 'tool') {
+    if (ev.file) detail = `${ev.tool} <code>${esc(ev.file)}</code>`;
+    else if (ev.command) detail = `<code>${esc(ev.command)}</code>`;
+    else detail = ev.tool;
+  }
+  else if (ev.type === 'text') detail = esc(ev.text);
+  else if (ev.type === 'result') detail = '<strong>Tache terminee</strong>';
+
+  const div = document.createElement('div');
+  div.className = 'event';
+  div.innerHTML = `<span class="time">${ev.time || ''}</span><span class="icon">${icon}</span><span class="detail">${detail}</span>`;
+  tl.appendChild(div);
+  tl.scrollTop = tl.scrollHeight;
+}
+
+function showResult(text) {
+  if (!text) return;
+  document.getElementById('resultCard').style.display = 'block';
+  document.getElementById('resultText').textContent = text;
+}
+
+function esc(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+
+connect();
+</script>
+</body>
+</html>
