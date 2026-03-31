@@ -19,6 +19,9 @@
 !pg-backup/backup.sh
 !pg-backup/crontab
 !reports/*.md
+!discord-bridge/bot.py
+!discord-bridge/Dockerfile
+!discord-bridge/requirements.txt
 
 # Explicitly exclude homepage config containing secrets
 homepage/config/services.yaml

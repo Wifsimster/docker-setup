@@ -22,6 +22,7 @@ services:
       - CHANNEL_CHAT=${CHANNEL_CHAT}
       - CHANNEL_DEV=${CHANNEL_DEV}
       - DEV_AGENTS_URL=${DEV_AGENTS_URL}
+      - N8N_RESET_WEBHOOK_URL=${N8N_RESET_WEBHOOK_URL:-}
     networks:
       - lan
 
