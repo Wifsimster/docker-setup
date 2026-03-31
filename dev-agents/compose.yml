@@ -19,6 +19,7 @@ services:
     volumes:
       - /mnt/media/data/workspace:/workspace
       - /home/wifsimster/.claude:/home/node/.claude
+      - ./agent.py:/app/agent.py:ro
     environment:
       - DISCORD_BOT_TOKEN=${DISCORD_BOT_TOKEN}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
