@@ -589,16 +589,27 @@
   alias: n8n - Alerte batterie faible
   description: Envoie un événement à n8n quand un capteur a une batterie sous 5%
   triggers:
-  - trigger: numeric_state
-    entity_id:
-    - sensor.all_battery
-    below: 5
-  conditions: []
+  - trigger: time_pattern
+    hours: /6
+  conditions:
+  - condition: template
+    value_template: >-
+      {% set ns = namespace(found=false) %}
+      {% for state in states.sensor %}
+        {% if 'battery' in state.entity_id and state.state not in ['unknown', 'unavailable'] and state.state | float(100) < 5 and 'mobile' not in state.entity_id %}
+          {% set ns.found = true %}
+        {% endif %}
+      {% endfor %}
+      {{ ns.found }}
   actions:
   - action: rest_command.n8n_domotique
     data:
       payload: >-
-        {"event": "battery_low", "entity_id": "{{ trigger.entity_id }}",
-         "battery_level": "{{ trigger.to_state.state }}%",
-         "friendly_name": "{{ trigger.to_state.attributes.friendly_name }}"}
+        {% set ns = namespace(sensors=[]) %}
+        {% for state in states.sensor %}
+          {% if 'battery' in state.entity_id and state.state not in ['unknown', 'unavailable'] and state.state | float(100) < 5 and 'mobile' not in state.entity_id %}
+            {% set ns.sensors = ns.sensors + [{"entity_id": state.entity_id, "battery_level": state.state ~ "%", "friendly_name": state.name}] %}
+          {% endif %}
+        {% endfor %}
+        {"event": "battery_low", "sensors": {{ ns.sensors | tojson }}}
   mode: single
