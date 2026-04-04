@@ -13,21 +13,6 @@ office_fan_light:
   description: Office Fan light on
   icon: mdi:ceiling-fan-light
   mode: single
-office_fan_power:
-  alias: Office Fan power
-  sequence:
-  - target:
-      entity_id: remote.universal_remote
-    data:
-      num_repeats: 1
-      delay_secs: 0.4
-      hold_secs: 0
-      device: fan
-      command: turn on
-    action: remote.send_command
-  description: Office Fan power (toggle)
-  icon: mdi:fan
-  mode: single
 office_fan_on:
   alias: Office Fan on
   sequence:

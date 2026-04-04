@@ -156,12 +156,14 @@
   max_exceeded: warning
 - id: '1742635828110'
   alias: Chauffage salle d'eau - Allumage automatique à 06:00
-  description: Allume automatiquement le chauffage de la salle d'eau tous les jours
-    à 06:00 pour préparer la salle de bain
+  description: Allume automatiquement le chauffage de la salle d'eau à 06:00
+    d'octobre à avril pour préparer la salle de bain
   triggers:
   - trigger: time
     at: 06:00:00
-  conditions: []
+  conditions:
+  - condition: template
+    value_template: "{{ now().month in [10, 11, 12, 1, 2, 3, 4] }}"
   actions:
   - action: switch.turn_on
     metadata: {}
@@ -172,12 +174,14 @@
   max_exceeded: warning
 - id: '1742635905860'
   alias: Chauffage salle d'eau - Extinction automatique à 07:15
-  description: Éteint automatiquement le chauffage de la salle d'eau tous les jours
-    à 07:15 après utilisation matinale
+  description: Éteint automatiquement le chauffage de la salle d'eau à 07:15
+    après utilisation matinale (octobre à avril uniquement)
   triggers:
   - trigger: time
     at: 07:15:00
-  conditions: []
+  conditions:
+  - condition: template
+    value_template: "{{ now().month in [10, 11, 12, 1, 2, 3, 4] }}"
   actions:
   - action: switch.turn_off
     metadata: {}
