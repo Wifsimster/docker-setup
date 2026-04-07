@@ -1,0 +1,56 @@
+name: paperclip
+
+services:
+  paperclip:
+    container_name: paperclip
+    image: ghcr.io/paperclipai/paperclip:latest
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    environment:
+      - TZ=Europe/Paris
+      - HOST=0.0.0.0
+      - PORT=3100
+      - SERVE_UI=true
+      - PAPERCLIP_HOME=/paperclip
+      - PAPERCLIP_INSTANCE_ID=default
+      - PAPERCLIP_DEPLOYMENT_MODE=authenticated
+      - PAPERCLIP_DEPLOYMENT_EXPOSURE=private
+      - PAPERCLIP_PUBLIC_URL=https://paperclip.${DOMAIN}
+      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+    volumes:
+      - paperclip_data:/paperclip
+      - /mnt/media/data/workspace:/workspace
+      - /home/wifsimster/.claude:/paperclip/.claude
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.paperclip.entrypoints=websecure"
+      - "traefik.http.routers.paperclip.rule=Host(`paperclip.${DOMAIN}`)"
+      - "traefik.http.services.paperclip.loadBalancer.server.port=3100"
+      - "com.centurylinklabs.watchtower.enable=true"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:3100/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - lan
+
+volumes:
+  paperclip_data:
+
+networks:
+  lan:
+    external: true

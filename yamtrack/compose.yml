@@ -1,0 +1,142 @@
+name: yamtrack
+
+services:
+  yamtrack:
+    image: ghcr.io/fuzzygrim/yamtrack:latest
+    container_name: yamtrack
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:8000/"]
+      interval: 30s
+      timeout: 10s
+      start_period: 30s
+      retries: 3
+    env_file:
+      - .env
+    environment:
+      - TZ=Europe/Paris
+      - PUID=1000
+      - PGID=1000
+
+      # Application
+      - SECRET=${SECRET}
+      - URLS=https://yamtrack.${DOMAIN}
+
+      # Database
+      - DB_HOST=yamtrack-postgres
+      - DB_NAME=${DB_NAME:-yamtrack}
+      - DB_USER=${DB_USER:-yamtrack}
+      - DB_PASSWORD=${DB_PASSWORD:-yamtrack}
+      - DB_PORT=5432
+
+      # Redis
+      - REDIS_URL=redis://yamtrack-redis:6379
+
+      # API Keys (optional)
+      - TMDB_API=${TMDB_API:-}
+      - MAL_API=${MAL_API:-}
+      - IGDB_ID=${IGDB_ID:-}
+      - IGDB_SECRET=${IGDB_SECRET:-}
+      - STEAM_API_KEY=${STEAM_API_KEY:-}
+      - BGG_API_TOKEN=${BGG_API_TOKEN:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    labels:
+      - "traefik.enable=true"
+
+      # Entrypoint
+      - "traefik.http.routers.yamtrack.entrypoints=websecure"
+
+      # Router
+      - "traefik.http.routers.yamtrack.rule=Host(`yamtrack.${DOMAIN}`)"
+
+      # Service
+      - "traefik.http.services.yamtrack.loadBalancer.server.port=8000"
+
+      # Watchtower automatic update
+      - com.centurylinklabs.watchtower.enable=true
+
+    networks:
+      lan:
+      backend:
+
+  redis:
+    image: redis:8-alpine
+    container_name: yamtrack-redis
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    volumes:
+      - redis-data:/data
+    networks:
+      backend:
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: yamtrack-postgres
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    environment:
+      - POSTGRES_USER=${DB_USER:-yamtrack}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-yamtrack}
+      - POSTGRES_DB=${DB_NAME:-yamtrack}
+      - PGDATA=/var/lib/postgresql/data/pgdata
+      - TZ=Europe/Paris
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-yamtrack}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      lan:
+      backend:
+
+volumes:
+  redis-data:
+  postgres-data:
+
+networks:
+  lan:
+    external: true
+  backend:
+    internal: true
