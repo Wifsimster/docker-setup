@@ -5,3 +5,17 @@
 providers:
   openweathermap: openweathermapapikey
   weatherapi: weatherapiapikey
+
+layout:
+  Multimedia:
+    tab: Personnel
+  Personnel:
+    tab: Personnel
+  Utilitaires:
+    tab: Personnel
+  Infrastructure:
+    tab: Professionnel
+  Projets:
+    tab: Professionnel
+  IA:
+    tab: Personnel
