@@ -42,7 +42,7 @@ docker-setup/
 ├── memos/compose.yml          # Note-taking
 ├── wakapi/compose.yml         # Coding time tracking
 ├── stirling/compose.yml       # PDF tools
-├── personal-blog/compose.yml  # Blog (wifsimster/wifsimster-blog)
+├── personal-blog/compose.yml  # Blog (wifsimster/wifsimster-blog) + GoatCounter analytics
 ├── resume/compose.yml         # Online resume (wifsimster/resume)
 ├── birthday-invitation/compose.yml
 ├── copro-pilot/compose.yml    # Co-ownership app (+ Postgres)

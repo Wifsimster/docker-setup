@@ -142,6 +142,7 @@ graph LR
 | Service | Rôle | URL |
 |---|---|---|
 | ✍️ **Blog** | Blog personnel | `blog.example.com` |
+| 📊 **GoatCounter** | Analytics blog (cookieless, RGPD) | `stats.example.com` |
 | 📋 **CV en ligne** | Curriculum vitae interactif | `cv.example.com` |
 | 🏢 **Copro-Pilot** | Gestion de copropriété | `copro-pilot.example.com` |
 | 🎲 **The Box** | Collection de jeux | `the-box.example.com` |

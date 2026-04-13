@@ -37,6 +37,42 @@ services:
     networks:
       lan:
 
+  goatcounter:
+    image: arp242/goatcounter:latest
+    container_name: goatcounter
+    restart: unless-stopped
+    volumes:
+      - ./goatcounter-data:/home/goatcounter/.local/share/goatcounter
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      disable: true
+    environment:
+      - TZ=${TZ}
+    labels:
+      - "traefik.enable=true"
+
+      # Entrypoint
+      - "traefik.http.routers.goatcounter.entrypoints=websecure"
+
+      # Router
+      - "traefik.http.routers.goatcounter.rule=Host(`stats.${DOMAIN}`)"
+
+      # Service
+      - "traefik.http.services.goatcounter.loadBalancer.server.port=8080"
+
+    networks:
+      lan:
+
 networks:
   lan:
     external: true
