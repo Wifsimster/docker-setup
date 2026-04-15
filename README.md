@@ -170,8 +170,11 @@ graph LR
 | <img src="https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/vaultwarden.svg" width="16"/> **Vaultwarden** | Mots de passe (Bitwarden) | `vaultwarden.example.com` |
 | <img src="https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/infisical.svg" width="16"/> **Infisical** | Secrets applicatifs | `infisical.example.com` |
 | <img src="https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/pi-hole.svg" width="16"/> **Pi-hole** | Blocage pub DNS | `pihole.example.com` |
+| 🔐 **Tinyauth** | ForwardAuth Traefik — formulaire de login HTML (compatible Bitwarden mobile) en amont des services sans auth native | `tinyauth.example.com` |
 
 > 🔒 Les secrets (`.env`) ne sont jamais commités. Homepage utilise `{{HOMEPAGE_VAR_*}}` pour la substitution d'environnement.
+>
+> 🔑 **Tinyauth** protège actuellement Homepage via un middleware `forwardAuth` de Traefik. Une migration vers **Authelia SSO** est prévue pour unifier l'authentification sur l'ensemble des services internes — voir [#30](https://github.com/Wifsimster/docker-setup/issues/30).
 
 ---
 
@@ -281,6 +284,7 @@ graph LR
 | 📁 Stockage | NAS Unraid via NFS (montage unique `/mnt/media`) |
 | 📊 Supervision | Beszel, Uptime Kuma, Dozzle, Portainer, Homepage, Langfuse |
 | 🔒 Sécurité | `no-new-privileges`, réseaux internes isolés |
+| 🔐 Authentification | Tinyauth v5 (forwardAuth) devant Homepage — migration Authelia SSO planifiée |
 | 🌐 Domaine | `example.com` (sous-domaine par service) |
 | 🤖 Agents IA | n8n (orchestration) + LiteLLM (proxy) + discord-bridge (bot Jarvis) |
 | ☁️ LLM cloud | Anthropic Claude Sonnet 4.6 / Haiku 4.5 via LiteLLM |
@@ -314,6 +318,7 @@ graph LR
 
 ### 🟡 Moyenne priorité
 
+- **SSO Authelia** — Authentification unifiée devant tous les services internes (remplace Tinyauth, WebAuthn/TOTP, ACLs par service) · [#30](https://github.com/Wifsimster/docker-setup/issues/30)
 - **Secrets centralisés** — Migration `.env` → Infisical (rotation auto)
 - **Monitoring TLS** — Alerte avant expiration des certificats
 - **Sauvegardes Redis** — Ajouter Redis (Immich, Paperless) au plan de backup
@@ -334,6 +339,7 @@ graph LR
 - ~~Optimisation disque~~ — Récupération de 11.8 Go, cleanup automatique hebdomadaire (`/opt/docker/disk-cleanup.sh`)
 - ~~Stack IA complète~~ — LiteLLM + Open WebUI + n8n (7 workflows) + Langfuse + Ollama + bot Jarvis
 - ~~Bot Discord Jarvis~~ — Agent unifié Sonnet 4.6 avec 20 outils, canal unique `#chat`, tool-calling réel vers tous les services Docker
+- ~~Protection Homepage via Tinyauth~~ — Remplacement du basic auth Traefik par un formulaire HTML (compatible autofill Bitwarden mobile, TOTP), étape intermédiaire avant Authelia SSO ([#30](https://github.com/Wifsimster/docker-setup/issues/30))
 
 ---
 

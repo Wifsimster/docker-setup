@@ -77,6 +77,51 @@ Traefik applique des **headers de sécurité** sur le dashboard :
 | **X-XSS-Protection** | Protection contre les attaques XSS |
 | **X-Content-Type-Options** | Empêche le sniffing de type MIME |
 
+## ForwardAuth — Authentification
+
+Certaines applications n'ont pas d'authentification intégrée (ex. Homepage). Elles sont protégées par un middleware **forwardAuth** qui délègue la vérification de session à [Tinyauth](../tinyauth/compose.yml).
+
+```mermaid
+sequenceDiagram
+    participant U as 📱 Navigateur
+    participant T as 🔀 Traefik
+    participant TA as 🔐 Tinyauth
+    participant S as 🏠 Service (Homepage)
+    U->>T: GET homepage.battistella.ovh
+    T->>TA: forwardAuth http://tinyauth:3000/api/auth/traefik
+    TA-->>T: 307 → tinyauth.battistella.ovh/login
+    T-->>U: 307 (redirection)
+    U->>TA: Formulaire login (HTML + TOTP)
+    TA-->>U: Cookie de session `.battistella.ovh`
+    U->>T: GET homepage.battistella.ovh (avec cookie)
+    T->>TA: forwardAuth (cookie)
+    TA-->>T: 200 OK
+    T->>S: Requête proxy
+    S-->>U: Réponse
+```
+
+Le cookie est scopé sur `.battistella.ovh`, ce qui permet de réutiliser la même session pour d'autres services protégés par le même middleware. Tinyauth détecte les navigateurs via l'en-tête `User-Agent` et renvoie un 307 vers `/login` ; les clients non-navigateur reçoivent un 401 avec l'en-tête `x-tinyauth-location`.
+
+**Services actuellement protégés :**
+
+| Service | Middleware |
+|---|---|
+| Homepage | `tinyauth@docker` |
+
+**Déclaration du middleware** (labels du conteneur `tinyauth`) :
+
+```yaml
+- "traefik.http.middlewares.tinyauth.forwardauth.address=http://tinyauth:3000/api/auth/traefik"
+```
+
+**Utilisation sur un service** :
+
+```yaml
+- "traefik.http.routers.<service>.middlewares=tinyauth@docker"
+```
+
+> 🎯 Tinyauth est une **solution intermédiaire**. Une migration vers **Authelia SSO** est prévue pour centraliser l'authentification sur l'ensemble des services internes avec WebAuthn, ACLs par service et session unique — voir [#30](https://github.com/Wifsimster/docker-setup/issues/30).
+
 ## Timeouts étendus
 
 Les timeouts de lecture et écriture sont configurés à **600 secondes**. Cela permet l'upload de fichiers volumineux, notamment les vidéos vers Immich.
