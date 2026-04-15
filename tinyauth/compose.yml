@@ -1,0 +1,60 @@
+services:
+  tinyauth:
+    image: ghcr.io/steveiliop56/tinyauth:v5
+    container_name: tinyauth
+    security_opt:
+      - no-new-privileges:true
+    env_file:
+      - .env
+    environment:
+      - TINYAUTH_APPURL=https://tinyauth.${DOMAIN}
+      - TINYAUTH_AUTH_USERSFILE=/users.txt
+      - TINYAUTH_AUTH_SECURECOOKIE=true
+      - TINYAUTH_AUTH_SESSIONEXPIRY=604800
+      - TINYAUTH_AUTH_LOGINTIMEOUT=300
+      - TINYAUTH_AUTH_LOGINMAXRETRIES=5
+      - TINYAUTH_AUTH_TRUSTEDPROXIES=10.0.0.0/8,172.16.0.0/12,192.168.0.0/16
+      - TINYAUTH_UI_TITLE=Homelab
+      - TINYAUTH_LOG_LEVEL=info
+    volumes:
+      - ./users.txt:/users.txt:ro
+    healthcheck:
+      test: ["CMD", "tinyauth", "healthcheck"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+
+      # Entrypoint
+      - "traefik.http.routers.tinyauth.entrypoints=websecure"
+
+      # Router
+      - "traefik.http.routers.tinyauth.rule=Host(`tinyauth.${DOMAIN}`)"
+
+      # Service
+      - "traefik.http.services.tinyauth.loadBalancer.server.port=3000"
+
+      # ForwardAuth middleware — referenced by other services as tinyauth@docker
+      - "traefik.http.middlewares.tinyauth.forwardauth.address=http://tinyauth:3000/api/auth/traefik"
+
+      # Watchtower automatic update
+      - com.centurylinklabs.watchtower.enable=true
+
+    networks:
+      lan:
+
+networks:
+  lan:
+    external: true

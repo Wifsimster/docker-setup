@@ -39,9 +39,8 @@ services:
       # Router
       - "traefik.http.routers.homepage.rule=Host(`homepage.${DOMAIN}`)"
 
-      # Middlewares
-      - "traefik.http.routers.homepage.middlewares=homepage-auth@docker"
-      - "traefik.http.middlewares.homepage-auth.basicauth.users=admin:$$apr1$$843sjQ76$$galBS.vPCoajl3Ov95yfq/"
+      # Middlewares — authenticated via Tinyauth forwardAuth (see /opt/docker/tinyauth)
+      - "traefik.http.routers.homepage.middlewares=tinyauth@docker"
 
       # Service
       - "traefik.http.services.homepage.loadBalancer.server.port=3000"
