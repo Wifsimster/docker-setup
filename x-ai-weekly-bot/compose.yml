@@ -35,7 +35,6 @@ services:
       - "traefik.http.routers.x-ai-weekly-bot.entrypoints=websecure"
       - "traefik.http.routers.x-ai-weekly-bot.rule=Host(`x-ai-weekly-bot.${DOMAIN}`)"
       - "traefik.http.services.x-ai-weekly-bot.loadBalancer.server.port=3000"
-      - "com.centurylinklabs.watchtower.enable=true"
     cap_drop:
       - ALL
     networks:

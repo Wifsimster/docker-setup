@@ -59,9 +59,6 @@ services:
       # Service
       - "traefik.http.services.toko.loadBalancer.server.port=8080"
 
-      # Watchtower
-      - "com.centurylinklabs.watchtower.enable=true"
-
     cap_drop:
       - ALL
     networks:

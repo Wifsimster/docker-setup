@@ -1,0 +1,92 @@
+services:
+  koe-db:
+    image: postgres:16-alpine
+    container_name: koe-db
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - koe-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    restart: unless-stopped
+    networks:
+      koe-internal:
+
+  koe:
+    image: ghcr.io/wifsimster/koe-api:${KOE_API_TAG}
+    container_name: koe
+    security_opt:
+      - no-new-privileges:true
+    depends_on:
+      koe-db:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@koe-db:5432/${POSTGRES_DB}
+      - PORT=8787
+      - HOST=0.0.0.0
+      - MIGRATE_ON_START=true
+      - ENABLE_DASHBOARD=true
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8787/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+
+      # ---- Admin dashboard router (higher priority) — protected by Tinyauth
+      - "traefik.http.routers.koe-admin.entrypoints=websecure"
+      - "traefik.http.routers.koe-admin.rule=Host(`koe.${DOMAIN}`) && PathPrefix(`/admin`)"
+      - "traefik.http.routers.koe-admin.priority=100"
+      - "traefik.http.routers.koe-admin.middlewares=tinyauth@docker"
+      - "traefik.http.routers.koe-admin.service=koe"
+
+      # ---- Public widget API router — no auth (widgets on other domains call this)
+      - "traefik.http.routers.koe.entrypoints=websecure"
+      - "traefik.http.routers.koe.rule=Host(`koe.${DOMAIN}`)"
+      - "traefik.http.routers.koe.priority=10"
+      - "traefik.http.routers.koe.service=koe"
+
+      # ---- Shared service
+      - "traefik.http.services.koe.loadBalancer.server.port=8787"
+
+    networks:
+      lan:
+      koe-internal:
+
+volumes:
+  koe-db-data:
+
+networks:
+  lan:
+    external: true
+  koe-internal:
+    driver: bridge

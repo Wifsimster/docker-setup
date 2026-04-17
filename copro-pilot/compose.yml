@@ -42,9 +42,6 @@ services:
 
       # Service
       - "traefik.http.services.copro-pilot.loadBalancer.server.port=3001"
-      
-      # Watchtower automatic update
-      - com.centurylinklabs.watchtower.enable=true
     volumes:
       - uploads:/app/apps/backend/uploads
 

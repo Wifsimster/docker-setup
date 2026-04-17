@@ -31,7 +31,6 @@ services:
       - "traefik.http.routers.dev-agents.entrypoints=websecure"
       - "traefik.http.routers.dev-agents.rule=Host(`devteam.${DOMAIN}`)"
       - "traefik.http.services.dev-agents.loadBalancer.server.port=8585"
-      - "com.centurylinklabs.watchtower.enable=true"
     networks:
       - lan
 
