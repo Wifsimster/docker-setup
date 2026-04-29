@@ -7,6 +7,7 @@
 !**/compose.yml
 !**/hwaccel.*.yml
 !CLAUDE.md
+!docs/*.md
 !home-assistant/config/automations.yaml
 !home-assistant/config/scripts.yaml
 !home-assistant/config/scenes.yaml
