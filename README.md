@@ -352,5 +352,6 @@ graph LR
 | 💾 [Stockage NFS](docs/stockage-nfs.md) | Montages Unraid, limitations |
 | ➕ [Ajout d'un service](docs/ajout-service.md) | Guide pas à pas |
 | 🐘 [Bases de données](docs/bases-de-donnees.md) | PostgreSQL, Redis, healthchecks |
+| 💳 [Stripe](docs/stripe.md) | Abonnements live, webhooks, gestion des clés |
 | 🚨 [Reprise après sinistre](docs/reprise-sinistre.md) | Runbook de restauration |
 | 🤖 [CLAUDE.md](CLAUDE.md) | Guide pour assistants IA |
