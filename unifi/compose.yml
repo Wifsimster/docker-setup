@@ -50,6 +50,7 @@ services:
       - "traefik.http.services.unifi.loadBalancer.server.port=8443"
       - "traefik.http.services.unifi.loadBalancer.server.scheme=https"
       - "traefik.http.services.unifi.loadBalancer.serversTransport=unifi@file"
+      - "traefik.http.routers.unifi.middlewares=tinyauth@docker"
 
       # Watchtower automatic update
       - "com.centurylinklabs.watchtower.enable=true"

@@ -42,6 +42,7 @@ services:
 
       # Service
       - "traefik.http.services.lidarr.loadBalancer.server.port=8686"
+      - "traefik.http.routers.lidarr.middlewares=tinyauth@docker"
 
       # Watchtower automatic update
       - "com.centurylinklabs.watchtower.enable=true"
@@ -180,6 +181,7 @@ services:
 
       # Service
       - "traefik.http.services.prowlarr.loadBalancer.server.port=9696"
+      - "traefik.http.routers.prowlarr.middlewares=tinyauth@docker"
 
       # Watchtower automatic update
       - "com.centurylinklabs.watchtower.enable=true"
@@ -247,6 +249,9 @@ services:
       # Service
       - "traefik.http.services.qbittorrent.loadBalancer.server.port=8080"
 
+      # Auth middleware (tinyauth) — added 2026-05-03 after qBit RCE incident
+      - "traefik.http.routers.qbittorrent.middlewares=tinyauth@docker"
+
       # Watchtower automatic update
       - "com.centurylinklabs.watchtower.enable=true"
     healthcheck:
@@ -301,6 +306,7 @@ services:
 
       # Service
       - "traefik.http.services.radarr.loadBalancer.server.port=7878"
+      - "traefik.http.routers.radarr.middlewares=tinyauth@docker"
 
       # Watchtower automatic update
       - "com.centurylinklabs.watchtower.enable=true"
@@ -349,6 +355,7 @@ services:
 
       # Service
       - "traefik.http.services.sonarr.loadBalancer.server.port=8989"
+      - "traefik.http.routers.sonarr.middlewares=tinyauth@docker"
 
       # Watchtower automatic update
       - "com.centurylinklabs.watchtower.enable=true"
@@ -396,6 +403,9 @@ services:
 
       # Service
       - "traefik.http.services.tautulli.loadBalancer.server.port=8181"
+
+      # Auth middleware (tinyauth) — added 2026-05-03 after audit (http_password was empty)
+      - "traefik.http.routers.tautulli.middlewares=tinyauth@docker"
 
       # Watchtower automatic update
       - "com.centurylinklabs.watchtower.enable=true"

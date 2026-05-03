@@ -186,6 +186,7 @@ services:
 
       # Service
       - "traefik.http.services.paperless.loadBalancer.server.port=8000"
+      - "traefik.http.routers.paperless.middlewares=tinyauth@docker"
       
       # Watchtower automatic update
       - "com.centurylinklabs.watchtower.enable=true"

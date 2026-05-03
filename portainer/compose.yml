@@ -33,6 +33,7 @@ services:
 
       # Service
       - "traefik.http.services.portainer.loadBalancer.server.port=9000"
+      - "traefik.http.routers.portainer.middlewares=tinyauth@docker"
 
     networks:
       lan:

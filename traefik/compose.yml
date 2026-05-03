@@ -124,7 +124,7 @@ services:
             - "traefik.http.middlewares.secHeaders.headers.stsIncludeSubdomains=true"
             - "traefik.http.middlewares.secHeaders.headers.stsPreload=true"
             - "traefik.http.middlewares.secHeaders.headers.stsSeconds=31536000"
-            - "traefik.http.routers.api.middlewares=secHeaders@docker"
+            - "traefik.http.routers.api.middlewares=secHeaders@docker,tinyauth@docker"
 
         networks:
             lan:

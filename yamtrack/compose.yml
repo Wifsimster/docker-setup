@@ -66,6 +66,7 @@ services:
 
       # Service
       - "traefik.http.services.yamtrack.loadBalancer.server.port=8000"
+      - "traefik.http.routers.yamtrack.middlewares=tinyauth@docker"
 
       # Watchtower automatic update
       - com.centurylinklabs.watchtower.enable=true

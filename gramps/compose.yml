@@ -75,6 +75,7 @@ services:
 
       # Service
       - "traefik.http.services.gramps.loadBalancer.server.port=5000"
+      - "traefik.http.routers.gramps.middlewares=tinyauth@docker"
 
       # Watchtower automatic update
       - "com.centurylinklabs.watchtower.enable=true"

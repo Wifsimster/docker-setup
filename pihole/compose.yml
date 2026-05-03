@@ -48,6 +48,7 @@ services:
 
       # Service
       - "traefik.http.services.pihole.loadBalancer.server.port=80"
+      - "traefik.http.routers.pihole.middlewares=tinyauth@docker"
 
       # Watchtower automatic update
       - com.centurylinklabs.watchtower.enable=true

@@ -35,6 +35,7 @@ services:
 
       # Service
       - "traefik.http.services.beszel.loadBalancer.server.port=8090"
+      - "traefik.http.routers.beszel.middlewares=tinyauth@docker"
 
       # Watchtower automatic update
       - "com.centurylinklabs.watchtower.enable=true"

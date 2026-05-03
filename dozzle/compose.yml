@@ -35,6 +35,9 @@ services:
 
       # Service
       - "traefik.http.services.dozzle.loadBalancer.server.port=8080"
+
+      # Auth middleware (tinyauth) — added 2026-05-03 after audit
+      - "traefik.http.routers.dozzle.middlewares=tinyauth@docker"
       
       # Watchtower automatic update
       - com.centurylinklabs.watchtower.enable=true
