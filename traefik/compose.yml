@@ -9,7 +9,9 @@ services:
             - no-new-privileges:true
         command:
             # Enables the web UI and tells Traefik to listen to docker
-            # - "--api.insecure=true"
+            # api.insecure exposes API on :8080 inside the container only
+            # (not published to host); homepage widget uses this internally.
+            - "--api.insecure=true"
             - "--api.dashboard=true"
 
             # Log
