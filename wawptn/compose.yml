@@ -27,8 +27,15 @@ services:
       - STEAM_API_KEY=${STEAM_API_KEY}
       - API_URL=https://wawptn.${DOMAIN}
       - CORS_ORIGIN=https://wawptn.${DOMAIN}
+      - APP_SECRET=${APP_SECRET}
       - DISCORD_BOT_API_SECRET=${DISCORD_BOT_API_SECRET}
+      - DISCORD_BOT_TOKEN=${DISCORD_BOT_TOKEN}
       - ADMIN_STEAM_ID=${ADMIN_STEAM_ID}
+      # Reach the bot's internal HTTP API across the compose network so that
+      # vote start/close on the web surfaces in the linked Discord channel.
+      # Without this the backend's isBotClientEnabled() short-circuits to
+      # false and no bot-backed message is ever posted.
+      - DISCORD_BOT_HTTP_URL=http://wawptn-discord:3001
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
       interval: 30s
@@ -87,6 +94,12 @@ services:
       - DISCORD_APPLICATION_ID=${DISCORD_APPLICATION_ID}
       - DISCORD_BOT_API_SECRET=${DISCORD_BOT_API_SECRET}
       - BACKEND_URL=http://wawptn:8080
+      # Bind the internal HTTP API on all interfaces so the backend container
+      # can reach it over the compose network. The default 127.0.0.1 only
+      # accepts connections from inside this container, which makes the
+      # backend -> bot link unreachable and silently drops vote messages.
+      - DISCORD_BOT_HTTP_HOST=0.0.0.0
+      - DISCORD_BOT_HTTP_PORT=3001
     command: ["node", "packages/discord/dist/index.js"]
     healthcheck:
       disable: true

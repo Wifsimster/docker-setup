@@ -26,8 +26,6 @@ services:
       - .env
     environment:
       # System
-      - PUID=1000
-      - PGID=1000
       - TZ=Europe/Paris
       - NODE_ENV=production
       - PORT=80
@@ -49,6 +47,12 @@ services:
       
       # RAWG API (Optional - for game imports)
       - RAWG_API_KEY=${RAWG_API_KEY:-}
+
+      # Stripe
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
+      - STRIPE_PRICE_MONTHLY=${STRIPE_PRICE_MONTHLY}
+      - STRIPE_PRICE_YEARLY=${STRIPE_PRICE_YEARLY}
     volumes:
       - uploads:/app/uploads
     depends_on:
@@ -67,9 +71,6 @@ services:
 
       # Service
       - "traefik.http.services.the-box.loadBalancer.server.port=80"
-
-      # Watchtower automatic update
-      - com.centurylinklabs.watchtower.enable=true
 
     networks:
       lan:

@@ -27,6 +27,7 @@
 !dev-agents/Dockerfile
 !dev-agents/requirements.txt
 !dev-agents/dashboard.html
+!paperless-ngx/protonmail-bridge/Dockerfile
 
 # Explicitly exclude homepage config containing secrets
 homepage/config/services.yaml

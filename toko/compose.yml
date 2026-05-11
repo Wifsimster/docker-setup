@@ -30,9 +30,12 @@ services:
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
       - RESEND_API_KEY=${RESEND_API_KEY}
+      - EMAIL_FROM=${EMAIL_FROM:-noreply@battistella.ovh}
+      - APP_URL=${APP_URL:-https://toko.${DOMAIN}}
       - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
       - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
-      - STRIPE_PRICE_ID=${STRIPE_PRICE_ID}
+      - STRIPE_PRICE_MONTHLY=${STRIPE_PRICE_MONTHLY}
+      - STRIPE_PRICE_YEARLY=${STRIPE_PRICE_YEARLY}
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/api/health"]
       interval: 30s

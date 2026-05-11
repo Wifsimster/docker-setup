@@ -73,16 +73,16 @@ desktop_light_augmenter_la_luminosite:
   icon: mdi:led-strip
 activation_porte_atelier:
   alias: Activation porte atelier
+  description: Ouvre / ferme la porte de l'atelier
+  icon: mdi:window-shutter
   sequence:
   - action: remote.send_command
     metadata: {}
     data:
-      num_repeats: 1
+      num_repeats: 3
       delay_secs: 0.4
       hold_secs: 0
       device: remote
       command: gate enable
     target:
       entity_id: remote.universal_remote
-  description: Ouvre / ferme la porte de l'atelier
-  icon: mdi:window-shutter

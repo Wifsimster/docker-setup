@@ -58,19 +58,19 @@
                   "type": "entities",
                   "entities": [
                     {
-                      "entity": "switch.alimentation_portail",
+                      "entity": "switch.sonoff_1001fe757d_1",
                       "name": "Alimentation",
                       "icon": "mdi:power-plug",
                       "secondary_info": "last-updated"
                     },
                     {
-                      "entity": "switch.ouverture_portail",
+                      "entity": "switch.sonoff_100259f3b2_1",
                       "icon": "mdi:gate-open",
                       "secondary_info": "last-updated",
                       "name": "Ouverture"
                     },
                     {
-                      "entity": "switch.fermeture_portail",
+                      "entity": "switch.sonoff_100259b4c3_1",
                       "icon": "mdi:gate",
                       "secondary_info": "last-updated",
                       "name": "Fermeture"

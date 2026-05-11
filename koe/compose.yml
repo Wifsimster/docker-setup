@@ -30,7 +30,7 @@ services:
       koe-internal:
 
   koe:
-    image: ghcr.io/wifsimster/koe-api:${KOE_API_TAG}
+    image: ghcr.io/wifsimster/koe-server:${KOE_IMAGE_TAG}
     container_name: koe
     security_opt:
       - no-new-privileges:true
@@ -43,6 +43,12 @@ services:
       - HOST=0.0.0.0
       - MIGRATE_ON_START=true
       - ENABLE_DASHBOARD=true
+      - ADMIN_AUTH_MODE=password
+      - ADMIN_EMAIL=${ADMIN_EMAIL}
+      - ADMIN_PASSWORD_HASH=${ADMIN_PASSWORD_HASH}
+      - ADMIN_SESSION_SECRET=${ADMIN_SESSION_SECRET}
+      - RESEND_API_KEY=${RESEND_API_KEY}
+      - EMAIL_FROM=${EMAIL_FROM}
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8787/health"]
       interval: 30s
@@ -62,17 +68,9 @@ services:
     labels:
       - "traefik.enable=true"
 
-      # ---- Admin dashboard router (higher priority) — protected by Tinyauth
-      - "traefik.http.routers.koe-admin.entrypoints=websecure"
-      - "traefik.http.routers.koe-admin.rule=Host(`koe.${DOMAIN}`) && PathPrefix(`/admin`)"
-      - "traefik.http.routers.koe-admin.priority=100"
-      - "traefik.http.routers.koe-admin.middlewares=tinyauth@docker"
-      - "traefik.http.routers.koe-admin.service=koe"
-
-      # ---- Public widget API router — no auth (widgets on other domains call this)
+      # Single router — auth is handled inside koe (ADMIN_AUTH_MODE=password).
       - "traefik.http.routers.koe.entrypoints=websecure"
       - "traefik.http.routers.koe.rule=Host(`koe.${DOMAIN}`)"
-      - "traefik.http.routers.koe.priority=10"
       - "traefik.http.routers.koe.service=koe"
 
       # ---- Shared service

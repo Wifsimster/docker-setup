@@ -28,6 +28,9 @@ services:
       - POSTGRES_URI=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@copro-pilot-postgres:5432/${POSTGRES_DB}
       - BASE_URL=${BASE_URL}
       - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
+      - KOE_PROJECT_KEY=${KOE_PROJECT_KEY}
+      - KOE_API_URL=${KOE_API_URL}
+      - KOE_IDENTITY_SECRET=${KOE_IDENTITY_SECRET}
     depends_on:
       postgres:
         condition: service_healthy

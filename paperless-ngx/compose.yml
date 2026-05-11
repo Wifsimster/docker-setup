@@ -105,13 +105,14 @@ services:
 
   protonmail-bridge:
     container_name: protonmail-bridge
-    image: shenxn/protonmail-bridge:latest
+    build: ./protonmail-bridge
+    image: protonmail-bridge-libfido2:latest
     security_opt:
       - no-new-privileges:true
     deploy:
       resources:
         limits:
-          memory: 256M
+          memory: 2G
     logging:
       driver: json-file
       options:
@@ -124,6 +125,7 @@ services:
     volumes:
       - proton_bridge_data:/root
     networks:
+      - lan
       - backend
 
   webserver:
@@ -144,10 +146,10 @@ services:
       protonmail-bridge:
         condition: service_started
     volumes:
-      - /mnt/media/documents:/usr/src/paperless/data
-      - paperless_media:/usr/src/paperless/media
+      - paperless_data:/usr/src/paperless/data
+      - /mnt/media/documents:/usr/src/paperless/media
       - paperless_export:/usr/src/paperless/export
-      - paperless_consume:/usr/src/paperless/consume
+      - /mnt/media/paperless-inbox:/usr/src/paperless/consume
     environment:
       - USERMAP_UID=1000
       - USERMAP_GID=1000
@@ -165,6 +167,8 @@ services:
       - PAPERLESS_TIKA_ENDPOINT=http://paperless-tika:9998
       - PAPERLESS_TASK_WORKERS=2
       - PAPERLESS_WEBSERVER_WORKERS=2
+      - PAPERLESS_CONSUMER_RECURSIVE=true
+      - PAPERLESS_CONSUMER_SUBDIRS_AS_TAGS=true
     deploy:
       resources:
         limits:
@@ -187,10 +191,52 @@ services:
       # Service
       - "traefik.http.services.paperless.loadBalancer.server.port=8000"
       - "traefik.http.routers.paperless.middlewares=tinyauth@docker"
-      
+
+      # API router — bypass tinyauth for mobile/API clients (token auth handled by Paperless)
+      - "traefik.http.routers.paperless-api.entrypoints=websecure"
+      - "traefik.http.routers.paperless-api.rule=Host(`paperless.${DOMAIN}`) && (PathPrefix(`/api/`) || PathPrefix(`/accounts/`))"
+      - "traefik.http.routers.paperless-api.service=paperless"
+      - "traefik.http.routers.paperless-api.priority=100"
+      - "traefik.http.routers.paperless-api.tls=true"
+
       # Watchtower automatic update
       - "com.centurylinklabs.watchtower.enable=true"
 
+    networks:
+      - lan
+      - backend
+
+  paperless-ai:
+    container_name: paperless-ai
+    image: clusterzx/paperless-ai:latest
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    volumes:
+      - paperless_ai_data:/app/data
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - PAPERLESS_AI_PORT=3000
+    depends_on:
+      webserver:
+        condition: service_healthy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.paperless-ai.entrypoints=websecure"
+      - "traefik.http.routers.paperless-ai.rule=Host(`paperless-ai.${DOMAIN}`)"
+      - "traefik.http.services.paperless-ai.loadBalancer.server.port=3000"
+      - "traefik.http.routers.paperless-ai.middlewares=tinyauth@docker"
+      - "com.centurylinklabs.watchtower.enable=true"
     networks:
       - lan
       - backend
@@ -202,11 +248,9 @@ volumes:
     driver: local
   paperless_data:
     driver: local
-  paperless_media:
-    driver: local
   paperless_export:
     driver: local
-  paperless_consume:
+  paperless_ai_data:
     driver: local
   proton_bridge_data:
     driver: local

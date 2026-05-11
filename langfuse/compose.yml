@@ -151,7 +151,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 1G
+          memory: 2G
     logging:
       driver: json-file
       options:
@@ -164,6 +164,7 @@ services:
     volumes:
       - clickhouse_data:/var/lib/clickhouse
       - clickhouse_logs:/var/log/clickhouse-server
+      - ./clickhouse-config/disable-system-logs.xml:/etc/clickhouse-server/config.d/disable-system-logs.xml:ro
     healthcheck:
       test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8123/ping || exit 1"]
       interval: 5s
@@ -193,6 +194,7 @@ services:
     environment:
       MINIO_ROOT_USER: minio
       MINIO_ROOT_PASSWORD: ${MINIO_PASSWORD}
+      MINIO_SCANNER_SPEED: slowest
     volumes:
       - minio_data:/data
     healthcheck:
