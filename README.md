@@ -1,6 +1,6 @@
 # 🏠 Home Server Platform
 
-> Plateforme auto-hébergée · ~65 containers Docker · Debian · HTTPS automatique via `*.battistella.ovh`
+> Plateforme auto-hébergée · ~70 containers Docker · Debian · HTTPS automatique via `*.battistella.ovh`
 
 Streaming multimédia, domotique, gestion documentaire, galerie photo, outils de productivité et agents IA — accessible partout, 100% sous votre contrôle.
 
@@ -39,12 +39,10 @@ graph TB
     NAS -.->|NFS| Photos
 
     Discord([💬 Discord #chat]) -->|discord-bridge| n8n
-    n8n --> LiteLLM[LiteLLM]
+    n8n -->|Sonnet / Haiku| Anthropic((☁️ Anthropic API))
     n8n -->|tool calls| Media
     n8n -->|tool calls| Home
     n8n -->|tool calls| Ops
-    LiteLLM -->|Sonnet / Haiku| Anthropic((☁️ Anthropic API))
-    LiteLLM --> Ollama[Ollama local]
 ```
 
 ---
@@ -73,6 +71,8 @@ graph LR
 | <img src="https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/prowlarr.svg" width="16"/> **Prowlarr** | Gestion des indexeurs | `indexer.example.com` |
 | <img src="https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/qbittorrent.svg" width="16"/> **qBittorrent** | Téléchargement (VPN intégré) | `qbittorrent.example.com` |
 | <img src="https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/tautulli.svg" width="16"/> **Tautulli** | Statistiques Plex | `tautulli.example.com` |
+| 🎵 **Downtify** | Téléchargement musique → playlists Plex auto | _interne_ |
+| 📺 **Yamtrack** | Suivi séries / films / animes | `yamtrack.example.com` |
 
 ---
 
@@ -134,6 +134,7 @@ graph LR
 |---|---|---|
 | <img src="https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/immich.svg" width="16"/> **Immich** | Galerie photo avec IA | `immich.example.com` |
 | <img src="https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/paperless-ngx.svg" width="16"/> **Paperless-ngx** | GED avec OCR | `paperless.example.com` |
+| 🤖 **Paperless-AI** | Classification IA pour Paperless-ngx | `paperless-ai.example.com` |
 
 ---
 
@@ -150,6 +151,9 @@ graph LR
 | 🏘️ **WAWPTN** | Gestion de copropriété (v2) + bot Discord | `wawptn.example.com` |
 | 🐦 **X AI Weekly Bot** | Bot automatisé de veille IA sur X | `x-ai-weekly-bot.example.com` |
 | 🎂 **Birthday Invitation** | Invitation anniversaire | `leo-birthday.example.com` |
+| 🌐 **Battistella.pro** | Site portfolio | `battistella.pro` |
+| 🎵 **Koe** | App musique karaoké | `koe.example.com` |
+| 🖨️ **Printcast** | Impression à distance | `printcast.example.com` |
 
 ---
 
@@ -168,9 +172,9 @@ graph LR
 | Service | Rôle | URL |
 |---|---|---|
 | <img src="https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/vaultwarden.svg" width="16"/> **Vaultwarden** | Mots de passe (Bitwarden) | `vaultwarden.example.com` |
-| <img src="https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/infisical.svg" width="16"/> **Infisical** | Secrets applicatifs | `infisical.example.com` |
-| <img src="https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/pi-hole.svg" width="16"/> **Pi-hole** | Blocage pub DNS | `pihole.example.com` |
 | 🔐 **Tinyauth** | ForwardAuth Traefik — formulaire de login HTML (compatible Bitwarden mobile) en amont des services sans auth native | `tinyauth.example.com` |
+| <img src="https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/pi-hole.svg" width="16"/> **Pi-hole** | Blocage pub DNS | `pihole.example.com` |
+| 📧 **ProtonMail Bridge** | Pont SMTP/IMAP pour ProtonMail | _interne_ |
 
 > 🔒 Les secrets (`.env`) ne sont jamais commités. Homepage utilise `{{HOMEPAGE_VAR_*}}` pour la substitution d'environnement.
 >
@@ -184,24 +188,16 @@ graph LR
 graph LR
     User([👤 Discord #chat]) -->|message| Bridge[discord-bridge\nPython discord.py]
     Bridge -->|POST webhook| n8n[n8n\nAgent Chat Discord]
-    n8n -->|chat/completions| LiteLLM[LiteLLM :4000]
-    LiteLLM --> Sonnet([Claude Sonnet 4.6])
-    LiteLLM --> Haiku([Claude Haiku 4.5])
-    LiteLLM --> Ollama[Ollama\nqwen2.5:7b]
+    n8n -->|Sonnet / Haiku| Anthropic([☁️ Anthropic API])
     n8n -->|tool calls HTTP| Services[(Services Docker\nSonarr · Radarr · Tautulli\nHome Assistant · Paperless\nBeszel · Uptime Kuma)]
     n8n -->|reply JSON| Bridge
     Bridge -->|message.reply| User
-    n8n -.->|traces| Langfuse[Langfuse\nObservabilité]
 ```
 
 | Service | Rôle | URL |
 |---|---|---|
 | 🤖 **discord-bridge (Jarvis)** | Bot Discord — écoute `#chat`, forward vers n8n, renvoie la réponse | _interne_ |
-| 🔗 **n8n** | Orchestration — 7 workflows (agent chat + 6 automatisations) | `n8n.example.com` |
-| ⚡ **LiteLLM** | Proxy LLM unifié — Sonnet, Haiku, qwen2.5:7b, cost tracking | `litellm.example.com` |
-| 💬 **Open WebUI** | Interface chat web — PWA mobile, tous modèles | `ai.example.com` |
-| 🦙 **Ollama** | LLM local CPU — qwen2.5:7b (4.5 Go RAM, 0 coût API) | _interne_ |
-| 📈 **Langfuse** | Observabilité LLM — traces, coûts, latences | `langfuse.example.com` |
+| 🔗 **n8n** | Orchestration — agent chat + automatisations (Anthropic API directe) | `n8n.example.com` |
 
 ### 20 outils disponibles via `#chat`
 
@@ -241,6 +237,9 @@ graph LR
 | 🔄 **Watchtower** | MAJ auto quotidiennes + alertes Discord | _arrière-plan_ |
 | 💾 **pg-backup** | Backup PostgreSQL (8 bases, rétention 7j) | _arrière-plan_ |
 | <img src="https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/unifi.svg" width="16"/> **Unifi** | Contrôleur réseau | `unifi.example.com` |
+| 📊 **GoatCounter** | Analytics web léger (sans cookie) | `goatcounter.example.com` |
+| 🗺️ **TileServer GL** | Serveur de tuiles cartographiques | `tiles.example.com` |
+| 🐟 **SeaweedFS** | Stockage objet S3-compatible | _interne_ |
 
 ---
 
@@ -256,11 +255,11 @@ graph LR
     OVH -.->|DNS Challenge| LE
 ```
 
-> Les déploiements se font via 6 runners GitHub Actions self-hosted (`/opt/actions-runner/`). Watchtower met à jour les images quotidiennement.
+> Les déploiements se font via 9 runners GitHub Actions self-hosted (`/opt/actions-runner/`). Watchtower met à jour les images tierces quotidiennement.
 
 ### GitHub Actions Runners
 
-6 runners self-hosted, un par repo, avec binaires partagés via hardlinks pour économiser ~3.5 Go :
+9 runners self-hosted, un par repo, avec binaires partagés via hardlinks pour économiser ~3.5 Go :
 
 | Runner | Repo | Service |
 |--------|------|---------|
@@ -270,6 +269,9 @@ graph LR
 | `resume` | Wifsimster/resume | resume |
 | `wawptn` | Wifsimster/wawptn | wawptn |
 | `x-ai-weekly-bot` | Wifsimster/x-ai-weekly-bot | bot |
+| `koe` | Wifsimster/koe | koe |
+| `printcast` | Wifsimster/printcast | printcast |
+| `the-box` | Wifsimster/the-box | the-box |
 
 ---
 
@@ -282,13 +284,12 @@ graph LR
 | 🐘 Bases de données | PostgreSQL 16, Redis / Valkey (~15 instances PostgreSQL) |
 | 💾 Sauvegarde | pg-backup — dump quotidien 3h, 8 bases, rétention 7j |
 | 📁 Stockage | NAS Unraid via NFS (montage unique `/mnt/media`) |
-| 📊 Supervision | Beszel, Uptime Kuma, Dozzle, Portainer, Homepage, Langfuse |
+| 📊 Supervision | Beszel, Uptime Kuma, Dozzle, Portainer, Homepage |
 | 🔒 Sécurité | `no-new-privileges`, réseaux internes isolés |
 | 🔐 Authentification | Tinyauth v5 (forwardAuth) devant Homepage — migration Authelia SSO planifiée |
 | 🌐 Domaine | `example.com` (sous-domaine par service) |
-| 🤖 Agents IA | n8n (orchestration) + LiteLLM (proxy) + discord-bridge (bot Jarvis) |
-| ☁️ LLM cloud | Anthropic Claude Sonnet 4.6 / Haiku 4.5 via LiteLLM |
-| 🦙 LLM local | Ollama — qwen2.5:7b (CPU, 4.5 Go RAM) |
+| 🤖 Agents IA | n8n (orchestration) + discord-bridge (bot Jarvis) |
+| ☁️ LLM | Anthropic Claude Sonnet 4.6 / Haiku 4.5 (appel direct depuis n8n) |
 
 ---
 
@@ -300,12 +301,13 @@ graph LR
 | 📸 Immich | `immich_postgres` |
 | 🎲 The Box | `the-box-postgres` |
 | 🏢 Copro-Pilot | `copro-pilot-postgres` |
-| 🔐 Infisical | `infisical-db` |
-| ⚡ LiteLLM | `litellm-db` |
+| 🛒 Toko | `toko-postgres` |
+| 🏘️ WAWPTN | `wawptn-postgres` |
 | 🔗 n8n | `n8n-db` |
-| 📈 Langfuse | `langfuse-db` |
+| 🎵 Koe | `koe-db` |
+| 📺 Yamtrack | `yamtrack-postgres` |
 
-> ⏰ Dump quotidien à 3h · Format `pg_dump -Fc` · 8 bases · Rétention 7 jours · Restauration via `pg_restore`
+> ⏰ Dump quotidien à 3h · Format `pg_dump -Fc` · Rétention 7 jours · Restauration via `pg_restore`
 
 ---
 
@@ -319,9 +321,9 @@ graph LR
 ### 🟡 Moyenne priorité
 
 - **SSO Authelia** — Authentification unifiée devant tous les services internes (remplace Tinyauth, WebAuthn/TOTP, ACLs par service) · [#30](https://github.com/Wifsimster/docker-setup/issues/30)
-- **Secrets centralisés** — Migration `.env` → Infisical (rotation auto)
 - **Monitoring TLS** — Alerte avant expiration des certificats
 - **Sauvegardes Redis** — Ajouter Redis (Immich, Paperless) au plan de backup
+- **Resync pg-backup** — Le script référence encore 3 bases supprimées et oublie 4 nouvelles (Toko, WAWPTN, Koe, Yamtrack)
 
 ### 🟢 Basse priorité
 
@@ -337,8 +339,8 @@ graph LR
 - ~~Stockage NAS unifié~~ — Montage NFS unique `/mnt/media` (hardlinks + déplacements instantanés)
 - ~~Mutualisation runners~~ — 6 runners avec binaires partagés via hardlinks (~3.5 Go économisés, voir [#13](https://github.com/Wifsimster/docker-setup/issues/13))
 - ~~Optimisation disque~~ — Récupération de 11.8 Go, cleanup automatique hebdomadaire (`/opt/docker/disk-cleanup.sh`)
-- ~~Stack IA complète~~ — LiteLLM + Open WebUI + n8n (7 workflows) + Langfuse + Ollama + bot Jarvis
-- ~~Bot Discord Jarvis~~ — Agent unifié Sonnet 4.6 avec 20 outils, canal unique `#chat`, tool-calling réel vers tous les services Docker
+- ~~Bot Discord Jarvis~~ — Agent unifié Sonnet 4.6 avec 20 outils, canal unique `#chat`, tool-calling réel vers tous les services Docker (n8n appelle l'API Anthropic directement)
+- ~~Simplification stack IA~~ — Suppression de LiteLLM / Open WebUI / Ollama / Langfuse au profit d'un appel direct depuis n8n
 - ~~Protection Homepage via Tinyauth~~ — Remplacement du basic auth Traefik par un formulaire HTML (compatible autofill Bitwarden mobile, TOTP), étape intermédiaire avant Authelia SSO ([#30](https://github.com/Wifsimster/docker-setup/issues/30))
 
 ---
