@@ -71,7 +71,8 @@ graph LR
 | <img src="https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/prowlarr.svg" width="16"/> **Prowlarr** | Gestion des indexeurs | `indexer.example.com` |
 | <img src="https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/qbittorrent.svg" width="16"/> **qBittorrent** | Téléchargement (VPN intégré) | `qbittorrent.example.com` |
 | <img src="https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/tautulli.svg" width="16"/> **Tautulli** | Statistiques Plex | `tautulli.example.com` |
-| 🎵 **Downtify** | Téléchargement musique → playlists Plex auto | _interne_ |
+| 🎵 **Downtify** | Téléchargement Spotify → playlists Plex auto | _interne_ |
+| ▶️ **MeTube** | Téléchargement YouTube (vidéo/chaîne/playlist) → MP3 taggué (bibliothèque Plex) | _interne_ |
 | 📺 **Yamtrack** | Suivi séries / films / animes | `yamtrack.example.com` |
 
 ---
