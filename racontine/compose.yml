@@ -1,0 +1,77 @@
+# Déploiement homelab : images tirées de GHCR (aucun build ici).
+# Mise à jour automatique via le self-hosted runner (.github/workflows/deploy.yml).
+name: racontine
+
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: racontine-db
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-racontine}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD requis}
+      POSTGRES_DB: ${POSTGRES_DB:-racontine}
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-racontine}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  server:
+    image: ghcr.io/wifsimster/racontine-server:latest
+    container_name: racontine-server
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgres://${POSTGRES_USER:-racontine}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-racontine}
+    volumes:
+      - ./uploads:/app/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  web:
+    image: ghcr.io/wifsimster/racontine-web:latest
+    container_name: racontine-web
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    depends_on:
+      - server
+    networks:
+      - default
+      - lan
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.racontine.entrypoints=websecure"
+      - "traefik.http.routers.racontine.rule=Host(`racontine.${DOMAIN}`)"
+      - "traefik.docker.network=lan"
+      - "traefik.http.routers.racontine.tls=true"
+      - "traefik.http.routers.racontine.tls.certresolver=letsencrypt"
+      - "traefik.http.services.racontine.loadBalancer.server.port=80"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  lan:
+    external: true
