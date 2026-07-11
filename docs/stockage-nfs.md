@@ -22,8 +22,10 @@ graph LR
 Un seul partage NFS est monté sur l'hôte :
 
 ```
-192.168.0.240:/mnt/user/media /mnt/media nfs defaults,_netdev 0 0
+192.168.0.240:/mnt/user/media /mnt/media nfs defaults,_netdev,nofail,x-systemd.mount-timeout=30s 0 0
 ```
+
+> `nofail` : un NAS injoignable ne bloque pas le boot. `x-systemd.mount-timeout=30s` : abandon après 30 s si le NAS ne répond pas. Voir [Ordre de démarrage au boot](#ordre-de-démarrage-au-boot) pour la dépendance Docker → montage.
 
 ### Sous-répertoires
 
@@ -86,6 +88,50 @@ Sur Unraid, un partage unique `media` contient tous les sous-répertoires :
 ```
 
 Le partage est exporté via NFS dans les paramètres Unraid (Settings > NFS).
+
+## Ordre de démarrage au boot
+
+Au démarrage de l'hôte, **Docker doit attendre que `/mnt/media` soit monté** avant de restaurer les conteneurs. Sinon, tout conteneur qui bind-monte un sous-répertoire de `/mnt/media` échoue à l'étape de création du montage et **reste arrêté** — la restart policy ne le relance pas (elle ne s'applique qu'aux conteneurs déjà démarrés qui se terminent, pas à ceux qui échouent au montage → `RestartCount=0`).
+
+### Symptôme
+
+Après un reboot (typiquement une mise à jour kernel via `unattended-upgrades` qui redémarre l'hôte), une partie des conteneurs reste `Exited`. Dans les logs de `dockerd` :
+
+```
+failed to start container … error while creating mount source path
+'/mnt/media/downloads': … no such device
+'/mnt/media/musics':    … mkdir /mnt/media: file exists
+```
+
+Conteneurs concernés (tous ceux qui bind-montent `/mnt/media`) : **plex, sonarr, radarr, lidarr, metube, downtify, qbittorrent, immich_server** (`/photos`), **paperless-webserver** (`/paperless-inbox`), **n8n** (`/musics`).
+
+### Cause
+
+`docker.service` n'attend que `network-online.target`, **pas** le montage NFS. L'option `x-systemd.automount` (essayée en 2026-06) **aggrave** le problème : elle diffère le montage jusqu'au premier *accès*, et le démarrage de Docker ne compte pas comme cet accès.
+
+### Correctif
+
+**1. Montage NFS eager** (pas d'automount) dans `/etc/fstab` — voir la ligne en haut de ce document. Le montage est réalisé au boot, `nofail` garantit qu'un NAS mort ne bloque jamais le démarrage.
+
+**2. Drop-in systemd** `/etc/systemd/system/docker.service.d/wait-for-media.conf` :
+
+```ini
+[Unit]
+Wants=mnt-media.mount
+After=mnt-media.mount
+```
+
+`Wants` (dépendance *souple*, pas `Requires`) : si le NAS est injoignable au boot, Docker démarre quand même — seuls les conteneurs médias attendent, au lieu de bloquer toute la stack.
+
+Après modification : `sudo systemctl daemon-reload`. Vérifier avec `systemctl show docker.service -p After -p Wants | grep media`.
+
+### Récupération manuelle (si le problème survient malgré tout)
+
+Le NFS est monté (autofs le déclenche à l'accès), il suffit de relancer les conteneurs arrêtés :
+
+```bash
+docker start $(docker ps -aq --filter status=exited)
+```
 
 ## Données locales
 
