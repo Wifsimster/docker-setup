@@ -1,0 +1,58 @@
+name: metube
+
+services:
+  metube:
+    image: ghcr.io/alexta69/metube:latest
+    container_name: metube
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      - TZ=Europe/Paris
+      # Default both video and audio downloads into the music library (same as Downtify)
+      - DOWNLOAD_DIR=/downloads
+      - AUDIO_DOWNLOAD_DIR=/downloads
+      # Group by channel so the music library stays tidy (channel ≈ "artist")
+      - OUTPUT_TEMPLATE=%(uploader)s/%(title)s.%(ext)s
+      # Embed metadata + thumbnail into the mp3 so Plex picks up title/artist/cover
+      - 'YTDL_OPTIONS={"writethumbnail":true,"postprocessors":[{"key":"FFmpegMetadata"},{"key":"EmbedThumbnail"}]}'
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    volumes:
+      # Tracks land directly in the music library (Lidarr/Plex-compatible layout)
+      - /mnt/media/musics:/downloads
+      - metube_data:/downloads/.metube
+    labels:
+      - "traefik.enable=true"
+
+      # Entrypoint
+      - "traefik.http.routers.metube.entrypoints=websecure"
+
+      # Router
+      - "traefik.http.routers.metube.rule=Host(`metube.${DOMAIN}`)"
+
+      # Service
+      - "traefik.http.services.metube.loadBalancer.server.port=8081"
+
+      # Protect with tinyauth — MeTube has no built-in auth
+      - "traefik.http.routers.metube.middlewares=tinyauth@docker"
+
+      # Watchtower automatic update
+      - "com.centurylinklabs.watchtower.enable=true"
+
+    networks:
+      lan:
+
+volumes:
+  metube_data:
+
+networks:
+  lan:
+    external: true

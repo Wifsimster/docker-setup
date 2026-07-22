@@ -2,7 +2,7 @@ name: birthday-invitation
 
 services:
   birthday-invitation:
-    image: wifsimster/birthday-invitation:latest
+    image: ghcr.io/wifsimster/birthday-invitation:latest
     container_name: birthday-invitation
     restart: unless-stopped
     security_opt:
@@ -25,7 +25,22 @@ services:
       - EVENT_TOWN=${EVENT_TOWN}
       - EVENT_LOCATION=${EVENT_LOCATION}
       - DRESS_CODE=${DRESS_CODE}
+      # Optional "respond by" date (YYYY-MM-DD); closes RSVPs once passed.
+      - EVENT_RSVP_DEADLINE=${EVENT_RSVP_DEADLINE:-}
       - DB_PATH=/app/data/rsvp.db
+      # Admin login (Better Auth email/password). The account is seeded from
+      # these on first start; BETTER_AUTH_SECRET signs the session cookies and
+      # BETTER_AUTH_URL is the external origin used for cookie/origin scoping.
+      - ADMIN_EMAIL=${ADMIN_EMAIL}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - ADMIN_NAME=${ADMIN_NAME:-Admin}
+      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
+      - BETTER_AUTH_URL=${BETTER_AUTH_URL:-https://leo-birthday.${DOMAIN}}
+      # Restrict cross-origin API access (comma-separated). Empty = same-origin only.
+      - CORS_ORIGIN=${CORS_ORIGIN:-}
+      # Proxy hops in front of the backend (Traefik -> Node) so that per-IP
+      # rate limiting sees the real client address.
+      - TRUST_PROXY=${TRUST_PROXY:-1}
     volumes:
       - birthday_db:/app/data
     labels:
@@ -40,15 +55,38 @@ services:
       # Service
       - "traefik.http.services.birthday-invitation.loadBalancer.server.port=3000"
 
-      # Watchtower automatic update
-      - "com.centurylinklabs.watchtower.enable=true"
+    networks:
+      lan:
 
+  # Sidecar that takes periodic consistent snapshots of the SQLite database to a
+  # separate volume — the DB is the only copy of every RSVP. Restore by copying a
+  # rsvp-*.db snapshot back over /app/data/rsvp.db (stop the app first).
+  backup:
+    image: alpine:3
+    container_name: birthday-invitation-backup
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      - DB_PATH=/app/data/rsvp.db
+      - BACKUP_DIR=/backup
+      - BACKUP_KEEP=${BACKUP_KEEP:-14}
+      - BACKUP_INTERVAL=${BACKUP_INTERVAL:-86400}
+    entrypoint: ["/bin/sh", "-c", "apk add --no-cache sqlite >/dev/null && exec /backup.sh"]
+    volumes:
+      # Read-write so SQLite can create the WAL shared-memory file when opening
+      # the database to snapshot it; the backup script only ever reads.
+      - birthday_db:/app/data
+      - birthday_backups:/backup
+      - ./infra/backup.sh:/backup.sh:ro
     networks:
       lan:
 
 
 volumes:
   birthday_db:
+    driver: local
+  birthday_backups:
     driver: local
 
 networks:

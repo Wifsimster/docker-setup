@@ -1,0 +1,42 @@
+name: tileserver
+
+services:
+  tileserver:
+    image: maptiler/tileserver-gl:latest
+    container_name: tileserver
+    restart: unless-stopped
+    command: ["--config", "/data/config.json", "--public_url", "https://tiles.${DOMAIN}/"]
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    volumes:
+      - ./data:/data
+    labels:
+      - "traefik.enable=true"
+
+      # Entrypoint
+      - "traefik.http.routers.tileserver.entrypoints=websecure"
+
+      # Router
+      - "traefik.http.routers.tileserver.rule=Host(`tiles.${DOMAIN}`)"
+
+      # Service
+      - "traefik.http.services.tileserver.loadBalancer.server.port=8080"
+
+      # Watchtower automatic update
+      - "com.centurylinklabs.watchtower.enable=true"
+
+    networks:
+      lan:
+
+networks:
+  lan:
+    external: true

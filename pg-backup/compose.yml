@@ -31,7 +31,43 @@ services:
 
     networks:
       lan:
+      paperless_backend:
+      immich_backend:
+      the-box_backend:
+      copro-pilot_backend:
+      n8n_backend:
+      toko_backend:
+      wawptn_backend:
+      koe_internal:
+      yamtrack_backend:
 
 networks:
   lan:
     external: true
+  paperless_backend:
+    external: true
+    name: paperless-ngx_backend
+  immich_backend:
+    external: true
+    name: immich_backend
+  the-box_backend:
+    external: true
+    name: the-box_backend
+  copro-pilot_backend:
+    external: true
+    name: copro-pilot_backend
+  n8n_backend:
+    external: true
+    name: n8n_backend
+  toko_backend:
+    external: true
+    name: toko_backend
+  wawptn_backend:
+    external: true
+    name: wawptn_backend
+  koe_internal:
+    external: true
+    name: koe_koe-internal
+  yamtrack_backend:
+    external: true
+    name: yamtrack_backend

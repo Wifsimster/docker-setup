@@ -6,47 +6,1419 @@
     "config": {
       "views": [
         {
-          "title": "Home",
-          "badges": [
+          "title": "Accueil",
+          "path": "accueil",
+          "icon": "mdi:home",
+          "cards": [
             {
-              "type": "entity",
-              "entity": "sensor.sonoff_snzb_02d_temperature"
+              "type": "weather-forecast",
+              "entity": "weather.forecast_maison",
+              "name": "Météo",
+              "forecast_type": "daily",
+              "show_current": true
             },
             {
-              "type": "entity",
-              "entity": "sensor.sonoff_snzb_02d_humidite"
+              "type": "grid",
+              "columns": 2,
+              "square": false,
+              "cards": [
+                {
+                  "type": "tile",
+                  "entity": "person.christelle",
+                  "name": "Christelle",
+                  "icon": "mdi:account"
+                },
+                {
+                  "type": "tile",
+                  "entity": "person.wifsimster",
+                  "name": "Romain",
+                  "icon": "mdi:account"
+                }
+              ]
             },
             {
-              "type": "entity",
-              "entity": "sensor.sonoff_snzb_02d_humidite_2"
+              "type": "markdown",
+              "content": "## Coup d'œil maison"
             },
             {
-              "type": "entity",
-              "entity": "sensor.sonoff_snzb_02d_humidite_3"
+              "type": "glance",
+              "title": "Températures des pièces",
+              "columns": 3,
+              "show_state": true,
+              "entities": [
+                {
+                  "entity": "sensor.thermometre_temperature_5",
+                  "name": "Salon"
+                },
+                {
+                  "entity": "sensor.thermometre_temperature_3",
+                  "name": "Ch. parentale"
+                },
+                {
+                  "entity": "sensor.thermometre_temperature_2",
+                  "name": "Cuisine"
+                },
+                {
+                  "entity": "sensor.sonoff_snzb_02d_temperature_3",
+                  "name": "Ch. Léo"
+                },
+                {
+                  "entity": "sensor.sonoff_snzb_02d_temperature",
+                  "name": "SdB"
+                },
+                {
+                  "entity": "sensor.thermometre_chambre_anna_temperature_5",
+                  "name": "Ch. Anna"
+                }
+              ]
             },
             {
-              "type": "entity",
-              "entity": "sensor.sonoff_snzb_02d_temperature"
+              "type": "gauge",
+              "entity": "sensor.shellypro3em63_e08cfe957d80_puissance",
+              "name": "Consommation maison",
+              "unit": "W",
+              "min": 0,
+              "max": 9000,
+              "needle": true,
+              "severity": {
+                "green": 0,
+                "yellow": 4000,
+                "red": 7000
+              }
             },
             {
-              "type": "entity",
-              "entity": "sensor.sonoff_snzb_02d_temperature_2"
+              "type": "markdown",
+              "content": "## Chauffage"
             },
             {
-              "type": "entity",
-              "entity": "sensor.sonoff_snzb_02d_temperature_3"
+              "type": "grid",
+              "columns": 3,
+              "square": false,
+              "cards": [
+                {
+                  "type": "thermostat",
+                  "entity": "climate.thermostat_salon_thermostat_5",
+                  "name": "Salon"
+                },
+                {
+                  "type": "thermostat",
+                  "entity": "climate.thermostat_chambre_parentale_thermostat",
+                  "name": "Ch. parentale"
+                },
+                {
+                  "type": "thermostat",
+                  "entity": "climate.sonoff_trvzb_thermostat_4",
+                  "name": "Cuisine"
+                }
+              ]
             },
             {
-              "type": "entity",
-              "entity": "sensor.sonoff_snzb_02d_batterie"
+              "type": "markdown",
+              "content": "## Alertes"
             },
             {
-              "type": "entity",
-              "entity": "sensor.sonoff_snzb_02d_batterie_2"
+              "type": "glance",
+              "title": "Batteries faibles",
+              "columns": 4,
+              "show_state": true,
+              "entities": [
+                {
+                  "entity": "sensor.sonoff_snzb_02d_batterie_4",
+                  "name": "Thermo WC"
+                },
+                {
+                  "entity": "sensor.2306epn60g_battery_level",
+                  "name": "Tél."
+                },
+                {
+                  "entity": "sensor.sonoff_trvzb_batterie",
+                  "name": "TRV WC"
+                },
+                {
+                  "entity": "sensor.25069ptebg_battery_level",
+                  "name": "Tél. Anna"
+                }
+              ]
             },
             {
-              "type": "entity",
-              "entity": "sensor.sonoff_snzb_02d_batterie_3"
+              "type": "glance",
+              "title": "Fenêtres (détection ouverture)",
+              "columns": 3,
+              "show_state": true,
+              "entities": [
+                {
+                  "entity": "switch.thermostat_fenetre_ouverte_5",
+                  "name": "Salon"
+                },
+                {
+                  "entity": "switch.thermostat_chambre_parentale_fenetre_ouverte",
+                  "name": "Ch. parent."
+                },
+                {
+                  "entity": "switch.thermostat_fenetre_ouverte_4",
+                  "name": "Cuisine"
+                },
+                {
+                  "entity": "switch.thermostat_fenetre_ouverte_2",
+                  "name": "Ch. Léo"
+                },
+                {
+                  "entity": "switch.thermostat_fenetre_ouverte_3",
+                  "name": "SdB"
+                },
+                {
+                  "entity": "switch.thermostat_fenetre_ouverte",
+                  "name": "WC"
+                }
+              ]
+            },
+            {
+              "type": "markdown",
+              "content": "## Portail & Sonnette"
+            },
+            {
+              "type": "picture-glance",
+              "title": "Sonnette",
+              "camera_image": "camera.sonnerie_mediaprofile_channel1_mainstream",
+              "camera_view": "auto",
+              "entities": [
+                {
+                  "entity": "binary_sensor.sonnerie_motion_alarm",
+                  "name": "Mouvement"
+                }
+              ]
+            },
+            {
+              "type": "grid",
+              "columns": 3,
+              "square": false,
+              "cards": [
+                {
+                  "type": "tile",
+                  "entity": "switch.sonoff_100259f3b2_1",
+                  "name": "Ouvrir portail",
+                  "icon": "mdi:gate-open"
+                },
+                {
+                  "type": "tile",
+                  "entity": "switch.sonoff_100259b4c3_1",
+                  "name": "Fermer portail",
+                  "icon": "mdi:gate"
+                },
+                {
+                  "type": "tile",
+                  "entity": "switch.sonoff_1001fe757d_1",
+                  "name": "Alim. portail",
+                  "icon": "mdi:power-plug"
+                }
+              ]
+            },
+            {
+              "type": "grid",
+              "columns": 2,
+              "square": false,
+              "cards": [
+                {
+                  "type": "tile",
+                  "entity": "light.eclairage_exterieur",
+                  "name": "Éclairage extérieur",
+                  "icon": "mdi:outdoor-lamp"
+                },
+                {
+                  "type": "tile",
+                  "entity": "alarm_control_panel.bureau_unvr_alarm_manager",
+                  "name": "Alarme vidéo",
+                  "icon": "mdi:shield-home"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Climat",
+          "path": "climat",
+          "icon": "mdi:thermostat",
+          "cards": [
+            {
+              "type": "markdown",
+              "content": "## Chauffage de la maison\nTous les thermostats et la température / humidité de chaque pièce. Réglez la consigne directement sur chaque thermostat."
+            },
+            {
+              "type": "horizontal-stack",
+              "cards": [
+                {
+                  "type": "weather-forecast",
+                  "entity": "weather.forecast_maison",
+                  "name": "Extérieur",
+                  "show_current": true,
+                  "show_forecast": true,
+                  "forecast_type": "daily"
+                },
+                {
+                  "type": "glance",
+                  "title": "Extérieur",
+                  "show_name": true,
+                  "columns": 3,
+                  "entities": [
+                    {
+                      "entity": "sensor.ewelink_snzb_02p_temperature_2",
+                      "name": "Température",
+                      "icon": "mdi:thermometer"
+                    },
+                    {
+                      "entity": "sensor.ewelink_snzb_02p_humidite_2",
+                      "name": "Humidité",
+                      "icon": "mdi:water-percent"
+                    },
+                    {
+                      "entity": "sensor.ewelink_snzb_02p_batterie_2",
+                      "name": "Batterie",
+                      "icon": "mdi:battery"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "grid",
+              "columns": 2,
+              "square": false,
+              "cards": [
+                {
+                  "type": "vertical-stack",
+                  "cards": [
+                    {
+                      "type": "thermostat",
+                      "entity": "climate.thermostat_thermostat",
+                      "name": "Chambre Anna"
+                    },
+                    {
+                      "type": "glance",
+                      "columns": 2,
+                      "show_name": true,
+                      "entities": [
+                        {
+                          "entity": "sensor.thermometre_chambre_anna_temperature_5",
+                          "name": "Température",
+                          "icon": "mdi:thermometer"
+                        },
+                        {
+                          "entity": "sensor.thermometre_chambre_anna_humidite_5",
+                          "name": "Humidité",
+                          "icon": "mdi:water-percent"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "tile",
+                      "entity": "sensor.thermostat_batterie",
+                      "name": "Batterie thermostat",
+                      "icon": "mdi:battery"
+                    }
+                  ]
+                },
+                {
+                  "type": "vertical-stack",
+                  "cards": [
+                    {
+                      "type": "thermostat",
+                      "entity": "climate.sonoff_trvzb_thermostat_2",
+                      "name": "Chambre Léo"
+                    },
+                    {
+                      "type": "glance",
+                      "columns": 2,
+                      "show_name": true,
+                      "entities": [
+                        {
+                          "entity": "sensor.sonoff_snzb_02d_temperature_3",
+                          "name": "Température",
+                          "icon": "mdi:thermometer"
+                        },
+                        {
+                          "entity": "sensor.sonoff_snzb_02d_humidite_3",
+                          "name": "Humidité",
+                          "icon": "mdi:water-percent"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "tile",
+                      "entity": "sensor.sonoff_trvzb_batterie_2",
+                      "name": "Batterie thermostat",
+                      "icon": "mdi:battery"
+                    }
+                  ]
+                },
+                {
+                  "type": "vertical-stack",
+                  "cards": [
+                    {
+                      "type": "thermostat",
+                      "entity": "climate.thermostat_chambre_parentale_thermostat",
+                      "name": "Chambre parentale"
+                    },
+                    {
+                      "type": "glance",
+                      "columns": 2,
+                      "show_name": true,
+                      "entities": [
+                        {
+                          "entity": "sensor.thermometre_temperature_3",
+                          "name": "Température",
+                          "icon": "mdi:thermometer"
+                        },
+                        {
+                          "entity": "sensor.thermometre_humidite_3",
+                          "name": "Humidité",
+                          "icon": "mdi:water-percent"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "tile",
+                      "entity": "sensor.thermostat_chambre_parentale_batterie",
+                      "name": "Batterie thermostat",
+                      "icon": "mdi:battery"
+                    }
+                  ]
+                },
+                {
+                  "type": "vertical-stack",
+                  "cards": [
+                    {
+                      "type": "thermostat",
+                      "entity": "climate.sonoff_trvzb_thermostat_4",
+                      "name": "Cuisine"
+                    },
+                    {
+                      "type": "glance",
+                      "columns": 2,
+                      "show_name": true,
+                      "entities": [
+                        {
+                          "entity": "sensor.thermometre_temperature_2",
+                          "name": "Température",
+                          "icon": "mdi:thermometer"
+                        },
+                        {
+                          "entity": "sensor.thermometre_humidite_2",
+                          "name": "Humidité",
+                          "icon": "mdi:water-percent"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "tile",
+                      "entity": "sensor.sonoff_trvzb_batterie_4",
+                      "name": "Batterie thermostat",
+                      "icon": "mdi:battery"
+                    }
+                  ]
+                },
+                {
+                  "type": "vertical-stack",
+                  "cards": [
+                    {
+                      "type": "thermostat",
+                      "entity": "climate.sonoff_trvzb_thermostat_3",
+                      "name": "Salle de bain"
+                    },
+                    {
+                      "type": "glance",
+                      "columns": 2,
+                      "show_name": true,
+                      "entities": [
+                        {
+                          "entity": "sensor.sonoff_snzb_02d_temperature",
+                          "name": "Température",
+                          "icon": "mdi:thermometer"
+                        },
+                        {
+                          "entity": "sensor.sonoff_snzb_02d_humidite",
+                          "name": "Humidité",
+                          "icon": "mdi:water-percent"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "tile",
+                      "entity": "sensor.sonoff_trvzb_batterie_3",
+                      "name": "Batterie thermostat",
+                      "icon": "mdi:battery"
+                    }
+                  ]
+                },
+                {
+                  "type": "vertical-stack",
+                  "cards": [
+                    {
+                      "type": "thermostat",
+                      "entity": "climate.thermostat_salon_thermostat_5",
+                      "name": "Salon"
+                    },
+                    {
+                      "type": "glance",
+                      "columns": 2,
+                      "show_name": true,
+                      "entities": [
+                        {
+                          "entity": "sensor.thermometre_temperature_5",
+                          "name": "Température",
+                          "icon": "mdi:thermometer"
+                        },
+                        {
+                          "entity": "sensor.thermometre_humidite_5",
+                          "name": "Humidité",
+                          "icon": "mdi:water-percent"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "tile",
+                      "entity": "sensor.thermostat_salon_batterie_5",
+                      "name": "Batterie thermostat",
+                      "icon": "mdi:battery"
+                    }
+                  ]
+                },
+                {
+                  "type": "vertical-stack",
+                  "cards": [
+                    {
+                      "type": "thermostat",
+                      "entity": "climate.sonoff_trvzb_thermostat",
+                      "name": "WC"
+                    },
+                    {
+                      "type": "glance",
+                      "columns": 2,
+                      "show_name": true,
+                      "entities": [
+                        {
+                          "entity": "sensor.sonoff_snzb_02d_temperature_4",
+                          "name": "Température",
+                          "icon": "mdi:thermometer"
+                        },
+                        {
+                          "entity": "sensor.sonoff_snzb_02d_humidite_4",
+                          "name": "Humidité",
+                          "icon": "mdi:water-percent"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "tile",
+                      "entity": "sensor.sonoff_trvzb_batterie",
+                      "name": "Batterie thermostat",
+                      "icon": "mdi:battery"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "history-graph",
+              "title": "Températures des pièces (24h)",
+              "hours_to_show": 24,
+              "entities": [
+                {
+                  "entity": "sensor.ewelink_snzb_02p_temperature_2",
+                  "name": "Extérieur"
+                },
+                {
+                  "entity": "sensor.thermometre_chambre_anna_temperature_5",
+                  "name": "Chambre Anna"
+                },
+                {
+                  "entity": "sensor.sonoff_snzb_02d_temperature_3",
+                  "name": "Chambre Léo"
+                },
+                {
+                  "entity": "sensor.thermometre_temperature_3",
+                  "name": "Chambre parentale"
+                },
+                {
+                  "entity": "sensor.thermometre_temperature_2",
+                  "name": "Cuisine"
+                },
+                {
+                  "entity": "sensor.sonoff_snzb_02d_temperature",
+                  "name": "Salle de bain"
+                },
+                {
+                  "entity": "sensor.thermometre_temperature_5",
+                  "name": "Salon"
+                },
+                {
+                  "entity": "sensor.sonoff_snzb_02d_temperature_4",
+                  "name": "WC"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Énergie",
+          "path": "energie",
+          "icon": "mdi:flash",
+          "cards": [
+            {
+              "type": "markdown",
+              "content": "## ⚡ Compteur général (Shelly Pro 3EM)\nConsommation triphasée du tableau principal."
+            },
+            {
+              "type": "gauge",
+              "entity": "sensor.shellypro3em63_e08cfe957d80_puissance",
+              "name": "Puissance totale",
+              "unit": "W",
+              "min": 0,
+              "max": 9000,
+              "needle": true,
+              "severity": {
+                "green": 0,
+                "yellow": 3000,
+                "red": 6000
+              }
+            },
+            {
+              "type": "grid",
+              "columns": 3,
+              "square": false,
+              "cards": [
+                {
+                  "type": "tile",
+                  "entity": "sensor.shellypro3em63_e08cfe957d80_phase_a_puissance",
+                  "name": "Phase A",
+                  "icon": "mdi:alpha-a-circle"
+                },
+                {
+                  "type": "tile",
+                  "entity": "sensor.shellypro3em63_e08cfe957d80_phase_b_puissance",
+                  "name": "Phase B",
+                  "icon": "mdi:alpha-b-circle"
+                },
+                {
+                  "type": "tile",
+                  "entity": "sensor.shellypro3em63_e08cfe957d80_phase_c_puissance",
+                  "name": "Phase C",
+                  "icon": "mdi:alpha-c-circle"
+                }
+              ]
+            },
+            {
+              "type": "grid",
+              "columns": 3,
+              "square": false,
+              "cards": [
+                {
+                  "type": "tile",
+                  "entity": "sensor.shellypro3em63_e08cfe957d80_energie",
+                  "name": "Énergie totale",
+                  "icon": "mdi:counter"
+                },
+                {
+                  "type": "tile",
+                  "entity": "sensor.shellypro3em63_e08cfe957d80_courant",
+                  "name": "Courant total",
+                  "icon": "mdi:current-ac"
+                },
+                {
+                  "type": "tile",
+                  "entity": "sensor.shellypro3em63_e08cfe957d80_temperature",
+                  "name": "Temp. compteur",
+                  "icon": "mdi:thermometer"
+                }
+              ]
+            },
+            {
+              "type": "history-graph",
+              "title": "Puissance totale (24 h)",
+              "hours_to_show": 24,
+              "entities": [
+                {
+                  "entity": "sensor.shellypro3em63_e08cfe957d80_puissance",
+                  "name": "Puissance totale"
+                }
+              ]
+            },
+            {
+              "type": "markdown",
+              "content": "## 🖥️ Baie informatique (Bureau)\nConsommation en direct par circuit du rack."
+            },
+            {
+              "type": "grid",
+              "columns": 3,
+              "square": false,
+              "cards": [
+                {
+                  "type": "tile",
+                  "entity": "sensor.tasmota_energy_power",
+                  "name": "Baie informatique",
+                  "icon": "mdi:server-network"
+                },
+                {
+                  "type": "tile",
+                  "entity": "sensor.smart_plug_mini_puissance",
+                  "name": "Docker Server",
+                  "icon": "mdi:docker"
+                },
+                {
+                  "type": "tile",
+                  "entity": "sensor.switch_poe_puissance",
+                  "name": "Switch PoE",
+                  "icon": "mdi:switch"
+                },
+                {
+                  "type": "tile",
+                  "entity": "sensor.nas_puissance",
+                  "name": "UNVR",
+                  "icon": "mdi:nas"
+                },
+                {
+                  "type": "tile",
+                  "entity": "sensor.freebox_puissance",
+                  "name": "Freebox",
+                  "icon": "mdi:router-wireless"
+                },
+                {
+                  "type": "tile",
+                  "entity": "sensor.firewall_puissance",
+                  "name": "Firewall",
+                  "icon": "mdi:wall-fire"
+                }
+              ]
+            },
+            {
+              "type": "entities",
+              "title": "Énergie cumulée par circuit",
+              "show_header_toggle": false,
+              "entities": [
+                {
+                  "entity": "sensor.tasmota_energy_total",
+                  "name": "Baie informatique",
+                  "icon": "mdi:server-network"
+                },
+                {
+                  "entity": "sensor.smart_plug_mini_energie",
+                  "name": "Docker Server",
+                  "icon": "mdi:docker"
+                },
+                {
+                  "entity": "sensor.switch_poe_energie",
+                  "name": "Switch PoE",
+                  "icon": "mdi:switch"
+                },
+                {
+                  "entity": "sensor.nas_energie",
+                  "name": "UNVR",
+                  "icon": "mdi:nas"
+                },
+                {
+                  "entity": "sensor.freebox_energie",
+                  "name": "Freebox",
+                  "icon": "mdi:router-wireless"
+                },
+                {
+                  "entity": "sensor.firewall_energie",
+                  "name": "Firewall",
+                  "icon": "mdi:wall-fire"
+                }
+              ]
+            },
+            {
+              "type": "markdown",
+              "content": "## 🖥️ Bureau — Écrans & périphériques\nPrise Meross dédiée aux écrans et appareils du bureau."
+            },
+            {
+              "type": "grid",
+              "columns": 2,
+              "square": false,
+              "cards": [
+                {
+                  "type": "tile",
+                  "entity": "sensor.prise_ecrans_puissance",
+                  "name": "Puissance",
+                  "icon": "mdi:flash"
+                },
+                {
+                  "type": "tile",
+                  "entity": "sensor.prise_ecrans_energie",
+                  "name": "Énergie cumulée",
+                  "icon": "mdi:counter"
+                }
+              ]
+            },
+            {
+              "type": "statistics-graph",
+              "title": "Tendance énergie compteur (7 j)",
+              "period": "day",
+              "days_to_show": 7,
+              "stat_types": [
+                "state"
+              ],
+              "entities": [
+                {
+                  "entity": "sensor.shellypro3em63_e08cfe957d80_energie",
+                  "name": "Énergie compteur"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Sécurité",
+          "path": "securite",
+          "icon": "mdi:cctv",
+          "cards": [
+            {
+              "type": "markdown",
+              "content": "## 🛡️ Sécurité & Surveillance\nVue d'ensemble des caméras, de l'alarme et du portail."
+            },
+            {
+              "type": "alarm-panel",
+              "name": "Alarme UNVR",
+              "entity": "alarm_control_panel.bureau_unvr_alarm_manager",
+              "states": [
+                "arm_home",
+                "arm_away"
+              ]
+            },
+            {
+              "type": "grid",
+              "columns": 2,
+              "square": false,
+              "cards": [
+                {
+                  "type": "picture-glance",
+                  "title": "Caméra Allée",
+                  "camera_view": "auto",
+                  "camera_image": "camera.camera_allee_medium_resolution_channel",
+                  "entity": "camera.camera_allee_medium_resolution_channel",
+                  "entities": [
+                    {
+                      "entity": "binary_sensor.camera_garage_motion",
+                      "name": "Mouvement"
+                    },
+                    {
+                      "entity": "binary_sensor.camera_garage_person_detected",
+                      "name": "Personne"
+                    },
+                    {
+                      "entity": "binary_sensor.camera_garage_vehicle_detected",
+                      "name": "Véhicule"
+                    }
+                  ]
+                },
+                {
+                  "type": "picture-glance",
+                  "title": "Caméra Portail",
+                  "camera_view": "auto",
+                  "camera_image": "camera.camera_portail_medium_resolution_channel",
+                  "entity": "camera.camera_portail_medium_resolution_channel",
+                  "entities": [
+                    {
+                      "entity": "binary_sensor.camera_portail_person_detected",
+                      "name": "Personne"
+                    },
+                    {
+                      "entity": "binary_sensor.camera_portail_vehicle_detected",
+                      "name": "Véhicule"
+                    },
+                    {
+                      "entity": "binary_sensor.camera_portail_animal_detected",
+                      "name": "Animal"
+                    }
+                  ]
+                },
+                {
+                  "type": "picture-glance",
+                  "title": "Caméra Atelier",
+                  "camera_view": "auto",
+                  "camera_image": "camera.g5_bullet_high_resolution_channel",
+                  "entity": "camera.g5_bullet_high_resolution_channel",
+                  "entities": [
+                    {
+                      "entity": "binary_sensor.g5_bullet_personne_detectee",
+                      "name": "Personne"
+                    },
+                    {
+                      "entity": "binary_sensor.g5_bullet_vehicle_detected",
+                      "name": "Véhicule"
+                    },
+                    {
+                      "entity": "binary_sensor.g5_bullet_animal_detected",
+                      "name": "Animal"
+                    }
+                  ]
+                },
+                {
+                  "type": "picture-glance",
+                  "title": "Caméra Salon",
+                  "camera_view": "auto",
+                  "camera_image": "camera.camera_salon_medium_resolution_channel",
+                  "entity": "camera.camera_salon_medium_resolution_channel",
+                  "entities": [
+                    {
+                      "entity": "binary_sensor.camera_salon_motion",
+                      "name": "Mouvement"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "picture-glance",
+              "title": "Sonnette",
+              "camera_view": "auto",
+              "camera_image": "camera.sonnerie_mediaprofile_channel1_mainstream",
+              "entity": "camera.sonnerie_mediaprofile_channel1_mainstream",
+              "entities": [
+                {
+                  "entity": "binary_sensor.sonnerie_motion_alarm",
+                  "name": "Mouvement"
+                },
+                {
+                  "entity": "binary_sensor.sonnerie_cell_motion_detection",
+                  "name": "Détection cellule"
+                }
+              ]
+            },
+            {
+              "type": "markdown",
+              "content": "### 🚪 Portail"
+            },
+            {
+              "type": "grid",
+              "columns": 3,
+              "square": false,
+              "cards": [
+                {
+                  "type": "tile",
+                  "entity": "switch.sonoff_100259f3b2_1",
+                  "name": "Ouverture",
+                  "icon": "mdi:gate-open"
+                },
+                {
+                  "type": "tile",
+                  "entity": "switch.sonoff_100259b4c3_1",
+                  "name": "Fermeture",
+                  "icon": "mdi:gate"
+                },
+                {
+                  "type": "tile",
+                  "entity": "switch.sonoff_1001fe757d_1",
+                  "name": "Alimentation",
+                  "icon": "mdi:power-plug"
+                }
+              ]
+            },
+            {
+              "type": "markdown",
+              "content": "### 👁️ Détections en cours"
+            },
+            {
+              "type": "glance",
+              "columns": 3,
+              "show_state": true,
+              "entities": [
+                {
+                  "entity": "binary_sensor.camera_garage_motion",
+                  "name": "Allée Mvt"
+                },
+                {
+                  "entity": "binary_sensor.camera_garage_person_detected",
+                  "name": "Allée Pers."
+                },
+                {
+                  "entity": "binary_sensor.camera_garage_vehicle_detected",
+                  "name": "Allée Véh."
+                },
+                {
+                  "entity": "binary_sensor.camera_portail_person_detected",
+                  "name": "Portail Pers."
+                },
+                {
+                  "entity": "binary_sensor.camera_portail_vehicle_detected",
+                  "name": "Portail Véh."
+                },
+                {
+                  "entity": "binary_sensor.camera_portail_animal_detected",
+                  "name": "Portail Anim."
+                },
+                {
+                  "entity": "binary_sensor.g5_bullet_personne_detectee",
+                  "name": "Atelier Pers."
+                },
+                {
+                  "entity": "binary_sensor.g5_bullet_vehicle_detected",
+                  "name": "Atelier Véh."
+                },
+                {
+                  "entity": "binary_sensor.camera_salon_motion",
+                  "name": "Salon Mvt"
+                },
+                {
+                  "entity": "binary_sensor.sonnerie_motion_alarm",
+                  "name": "Sonnette Mvt"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Éclairage & ouvrants",
+          "path": "eclairage-ouvrants",
+          "icon": "mdi:lightbulb-group",
+          "cards": [
+            {
+              "type": "markdown",
+              "content": "## Éclairage & ouvrants\nContrôle des lumières par pièce, prises lumineuses et volet roulant du salon.\n\n_Les ampoules Yeelight peuvent apparaître indisponibles lorsqu'elles sont en veille ; elles répondront au réveil._"
+            },
+            {
+              "type": "grid",
+              "title": "Extérieur",
+              "columns": 2,
+              "square": false,
+              "cards": [
+                {
+                  "type": "tile",
+                  "entity": "light.eclairage_exterieur",
+                  "name": "Éclairage extérieur",
+                  "icon": "mdi:wall-sconce-flat-outline",
+                  "features": [
+                    {
+                      "type": "light-brightness"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "grid",
+              "title": "Salon & séjour",
+              "columns": 2,
+              "square": false,
+              "cards": [
+                {
+                  "type": "tile",
+                  "entity": "light.yeelight_color_0x52bf405",
+                  "name": "Lumière salon",
+                  "icon": "mdi:floor-lamp",
+                  "features": [
+                    {
+                      "type": "light-brightness"
+                    }
+                  ]
+                },
+                {
+                  "type": "tile",
+                  "entity": "light.yeelight_color_0x4d2a413",
+                  "name": "Salle à manger",
+                  "icon": "mdi:ceiling-light",
+                  "features": [
+                    {
+                      "type": "light-brightness"
+                    }
+                  ]
+                },
+                {
+                  "type": "tile",
+                  "entity": "switch.lumiere_tv",
+                  "name": "Lumière TV",
+                  "icon": "mdi:television-ambient-light"
+                },
+                {
+                  "type": "tile",
+                  "entity": "light.salon_lumiere_ambiance_salle_a_manger",
+                  "name": "Lumière ambiance salle à manger",
+                  "icon": "mdi:lamp"
+                }
+              ]
+            },
+            {
+              "type": "grid",
+              "title": "Cuisine",
+              "columns": 2,
+              "square": false,
+              "cards": [
+                {
+                  "type": "tile",
+                  "entity": "light.yeelight_colora_0xeda5313",
+                  "name": "Lumière cuisine",
+                  "icon": "mdi:ceiling-light",
+                  "features": [
+                    {
+                      "type": "light-brightness"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "grid",
+              "title": "Chambres",
+              "columns": 2,
+              "square": false,
+              "cards": [
+                {
+                  "type": "tile",
+                  "entity": "light.yeelight_color_0x52c3a36",
+                  "name": "Lumière Léo",
+                  "icon": "mdi:bed",
+                  "features": [
+                    {
+                      "type": "light-brightness"
+                    }
+                  ]
+                },
+                {
+                  "type": "tile",
+                  "entity": "light.yeelight_colora_0xeda9237",
+                  "name": "Chambre parentale",
+                  "icon": "mdi:bed-king",
+                  "features": [
+                    {
+                      "type": "light-brightness"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "grid",
+              "title": "Couloir",
+              "columns": 2,
+              "square": false,
+              "cards": [
+                {
+                  "type": "tile",
+                  "entity": "light.yeelight_mono_0x335ff81",
+                  "name": "Couloir 1",
+                  "icon": "mdi:lightbulb",
+                  "features": [
+                    {
+                      "type": "light-brightness"
+                    }
+                  ]
+                },
+                {
+                  "type": "tile",
+                  "entity": "light.yeelight_mono_0x33601d3",
+                  "name": "Couloir 2",
+                  "icon": "mdi:lightbulb",
+                  "features": [
+                    {
+                      "type": "light-brightness"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "grid",
+              "title": "Non assignée",
+              "columns": 2,
+              "square": false,
+              "cards": [
+                {
+                  "type": "tile",
+                  "entity": "light.yeelight_color_0x3312a03",
+                  "name": "Ampoule Yeelight",
+                  "icon": "mdi:lightbulb-outline",
+                  "features": [
+                    {
+                      "type": "light-brightness"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "markdown",
+              "content": "### Volet roulant salon"
+            },
+            {
+              "type": "horizontal-stack",
+              "cards": [
+                {
+                  "type": "button",
+                  "entity": "switch.tasmota",
+                  "name": "Monter",
+                  "icon": "mdi:arrow-up-bold-box",
+                  "show_state": false,
+                  "tap_action": {
+                    "action": "toggle"
+                  }
+                },
+                {
+                  "type": "button",
+                  "entity": "switch.tasmota_tasmota2",
+                  "name": "Descendre",
+                  "icon": "mdi:arrow-down-bold-box",
+                  "show_state": false,
+                  "tap_action": {
+                    "action": "toggle"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Capteurs & batteries",
+          "path": "capteurs-batteries",
+          "icon": "mdi:thermometer-lines",
+          "cards": [
+            {
+              "type": "markdown",
+              "content": "## Capteurs & batteries\nVue maintenance : toutes les sondes température / humidité et l'état des piles. Les niveaux de batterie sont triés du plus faible au plus élevé — surveillez le haut de la liste."
+            },
+            {
+              "type": "grid",
+              "columns": 3,
+              "square": false,
+              "cards": [
+                {
+                  "type": "tile",
+                  "entity": "sensor.sonoff_snzb_02d_batterie_4",
+                  "name": "WC — Thermomètre",
+                  "icon": "mdi:battery-alert",
+                  "color": "red"
+                },
+                {
+                  "type": "tile",
+                  "entity": "sensor.2306epn60g_battery_level",
+                  "name": "Tablette 2306EPN60G",
+                  "icon": "mdi:battery-alert",
+                  "color": "red"
+                },
+                {
+                  "type": "tile",
+                  "entity": "sensor.sonoff_trvzb_batterie",
+                  "name": "WC — Thermostat",
+                  "icon": "mdi:battery-30",
+                  "color": "orange"
+                }
+              ]
+            },
+            {
+              "type": "glance",
+              "title": "Températures",
+              "columns": 4,
+              "show_state": true,
+              "state_color": false,
+              "entities": [
+                {
+                  "entity": "sensor.thermometre_temperature",
+                  "name": "Bureau"
+                },
+                {
+                  "entity": "sensor.ewelink_snzb_02p_temperature",
+                  "name": "Bureau 2"
+                },
+                {
+                  "entity": "sensor.thermometre_temperature_5",
+                  "name": "Salon"
+                },
+                {
+                  "entity": "sensor.thermometre_temperature_2",
+                  "name": "Cuisine"
+                },
+                {
+                  "entity": "sensor.thermometre_temperature_3",
+                  "name": "Ch. parentale"
+                },
+                {
+                  "entity": "sensor.sonoff_snzb_02d_temperature_3",
+                  "name": "Ch. Léo"
+                },
+                {
+                  "entity": "sensor.thermometre_chambre_anna_temperature_5",
+                  "name": "Ch. Anna"
+                },
+                {
+                  "entity": "sensor.sonoff_snzb_02d_temperature",
+                  "name": "Salle de bain"
+                },
+                {
+                  "entity": "sensor.sonoff_snzb_02d_temperature_2",
+                  "name": "Salle d'eau"
+                },
+                {
+                  "entity": "sensor.sonoff_snzb_02d_temperature_4",
+                  "name": "WC"
+                },
+                {
+                  "entity": "sensor.sonoff_snzb_02d_temperature_5",
+                  "name": "Cellier"
+                },
+                {
+                  "entity": "sensor.ewelink_snzb_02p_temperature_2",
+                  "name": "Extérieur"
+                }
+              ]
+            },
+            {
+              "type": "glance",
+              "title": "Humidité",
+              "columns": 4,
+              "show_state": true,
+              "state_color": false,
+              "entities": [
+                {
+                  "entity": "sensor.thermometre_humidite",
+                  "name": "Bureau"
+                },
+                {
+                  "entity": "sensor.ewelink_snzb_02p_humidite",
+                  "name": "Bureau 2"
+                },
+                {
+                  "entity": "sensor.thermometre_humidite_5",
+                  "name": "Salon"
+                },
+                {
+                  "entity": "sensor.thermometre_humidite_2",
+                  "name": "Cuisine"
+                },
+                {
+                  "entity": "sensor.thermometre_humidite_3",
+                  "name": "Ch. parentale"
+                },
+                {
+                  "entity": "sensor.sonoff_snzb_02d_humidite_3",
+                  "name": "Ch. Léo"
+                },
+                {
+                  "entity": "sensor.thermometre_chambre_anna_humidite_5",
+                  "name": "Ch. Anna"
+                },
+                {
+                  "entity": "sensor.sonoff_snzb_02d_humidite",
+                  "name": "Salle de bain"
+                },
+                {
+                  "entity": "sensor.sonoff_snzb_02d_humidite_2",
+                  "name": "Salle d'eau"
+                },
+                {
+                  "entity": "sensor.sonoff_snzb_02d_humidite_4",
+                  "name": "WC"
+                },
+                {
+                  "entity": "sensor.sonoff_snzb_02d_humidite_5",
+                  "name": "Cellier"
+                },
+                {
+                  "entity": "sensor.ewelink_snzb_02p_humidite_2",
+                  "name": "Extérieur"
+                }
+              ]
+            },
+            {
+              "type": "entities",
+              "title": "Batteries (du plus faible au plus élevé)",
+              "show_header_toggle": false,
+              "state_color": true,
+              "entities": [
+                {
+                  "entity": "sensor.sonoff_snzb_02d_batterie_4",
+                  "name": "WC — Thermomètre"
+                },
+                {
+                  "entity": "sensor.2306epn60g_battery_level",
+                  "name": "Tablette 2306EPN60G"
+                },
+                {
+                  "entity": "sensor.sonoff_trvzb_batterie",
+                  "name": "WC — Thermostat"
+                },
+                {
+                  "entity": "sensor.25069ptebg_battery_level",
+                  "name": "Tablette 25069PTEBG"
+                },
+                {
+                  "entity": "sensor.thermometre_batterie_5",
+                  "name": "Salon — Thermomètre"
+                },
+                {
+                  "entity": "sensor.sonoff_snzb_02d_batterie_5",
+                  "name": "Cellier — Thermomètre"
+                },
+                {
+                  "entity": "sensor.thermometre_chambre_anna_batterie_5",
+                  "name": "Ch. Anna — Thermomètre"
+                },
+                {
+                  "entity": "sensor.sonoff_trvzb_batterie_2",
+                  "name": "Ch. Léo — Thermostat"
+                },
+                {
+                  "entity": "sensor.thermometre_batterie_3",
+                  "name": "Ch. parentale — Thermomètre"
+                },
+                {
+                  "entity": "sensor.thermostat_salon_batterie_5",
+                  "name": "Salon — Thermostat"
+                },
+                {
+                  "entity": "sensor.sonoff_trvzb_batterie_3",
+                  "name": "Salle de bain — Thermostat"
+                },
+                {
+                  "entity": "sensor.ewelink_snzb_02p_batterie_2",
+                  "name": "Extérieur — Thermomètre"
+                },
+                {
+                  "entity": "sensor.mi_8_battery_level",
+                  "name": "Téléphone Mi 8"
+                },
+                {
+                  "entity": "sensor.sonoff_snzb_02d_batterie_2",
+                  "name": "Salle d'eau — Thermomètre"
+                },
+                {
+                  "entity": "sensor.thermostat_chambre_parentale_batterie",
+                  "name": "Ch. parentale — Thermostat"
+                },
+                {
+                  "entity": "sensor.sonoff_trvzb_batterie_4",
+                  "name": "Cuisine — Thermostat"
+                },
+                {
+                  "entity": "sensor.thermometre_batterie",
+                  "name": "Bureau — Thermomètre"
+                },
+                {
+                  "entity": "sensor.ewelink_snzb_02p_batterie",
+                  "name": "Bureau — Thermomètre 2"
+                },
+                {
+                  "entity": "sensor.interrupteur_mobile_batterie",
+                  "name": "Interrupteur mobile"
+                },
+                {
+                  "entity": "sensor.thermometre_batterie_2",
+                  "name": "Cuisine — Thermomètre"
+                },
+                {
+                  "entity": "sensor.sonoff_snzb_02d_batterie_3",
+                  "name": "Ch. Léo — Thermomètre"
+                },
+                {
+                  "entity": "sensor.sonoff_snzb_02d_batterie",
+                  "name": "Salle de bain — Thermomètre"
+                },
+                {
+                  "entity": "sensor.thermostat_batterie",
+                  "name": "Ch. Anna — Thermostat"
+                },
+                {
+                  "entity": "sensor.21081111rg_battery_level",
+                  "name": "Tablette 21081111RG"
+                }
+              ]
             }
           ]
         }

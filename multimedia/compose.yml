@@ -2,7 +2,7 @@ name: multimedia
 
 services:
   lidarr:
-    image: lscr.io/linuxserver/lidarr:latest
+    image: ghcr.io/linuxserver/lidarr:latest
     container_name: lidarr
     restart: unless-stopped
     security_opt:
@@ -97,7 +97,7 @@ services:
       lan:
 
   plex:
-    image: lscr.io/linuxserver/plex:latest
+    image: ghcr.io/linuxserver/plex:latest
     container_name: plex
     restart: unless-stopped
     network_mode: host  # Container joins host's network stack
@@ -143,7 +143,7 @@ services:
     #   lan:
 
   prowlarr:
-    image: lscr.io/linuxserver/prowlarr:latest
+    image: ghcr.io/linuxserver/prowlarr:latest
     container_name: prowlarr
     restart: unless-stopped
     security_opt:
@@ -266,7 +266,7 @@ services:
       lan:
 
   radarr:
-    image: lscr.io/linuxserver/radarr:latest
+    image: ghcr.io/linuxserver/radarr:latest
     container_name: radarr
     restart: unless-stopped
     security_opt:
@@ -315,7 +315,7 @@ services:
       lan:
 
   sonarr:
-    image: lscr.io/linuxserver/sonarr:latest
+    image: ghcr.io/linuxserver/sonarr:latest
     container_name: sonarr
     restart: unless-stopped
     security_opt:
@@ -364,7 +364,7 @@ services:
       lan:
 
   tautulli:
-    image: lscr.io/linuxserver/tautulli:latest
+    image: ghcr.io/linuxserver/tautulli:latest
     container_name: tautulli
     restart: unless-stopped
     security_opt:

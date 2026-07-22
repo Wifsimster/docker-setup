@@ -10,18 +10,15 @@
     trigger: device
   conditions: []
   actions:
-  - type: toggle
-    device_id: 3f9fc2f9ffd2b110fd82a82b27501b94
-    entity_id: cab38dfb55bb4d634885388ea44de4d4
-    domain: light
-  - type: toggle
-    device_id: 121c564f3fe91e9688d152a8d37ff22a
-    entity_id: 867b60e51f8b97c0656ac11a16df5212
-    domain: switch
-  - type: toggle
-    device_id: 847c9c3be14af9117826604f42269fb0
-    entity_id: adea25dc096220e5b70d3a61ec8cecdc
-    domain: switch
+  - action: light.toggle
+    target:
+      entity_id: light.yeelight_color_0x4d2a413
+  - action: light.toggle
+    target:
+      entity_id: light.yeelight_color_0x52bf405
+  - action: switch.toggle
+    target:
+      entity_id: switch.lumiere_tv
   mode: single
   max_exceeded: warning
 - id: '1707492898414'
@@ -36,10 +33,12 @@
     trigger: device
   conditions: []
   actions:
-  - type: toggle
-    device_id: 983a5935f2e38632fb64a575dfe51025
-    entity_id: 7fb3d1f206164c68e9bddc4aade9121a
-    domain: switch
+  - action: input_boolean.turn_off
+    target:
+      entity_id: input_boolean.eclairage_exterieur_auto
+  - action: switch.toggle
+    target:
+      entity_id: switch.eclairage_exterieur
   mode: single
   max_exceeded: warning
 - id: '1707493081065'
@@ -95,6 +94,9 @@
     entity_id: sun.sun
     state: below_horizon
   actions:
+  - action: input_boolean.turn_on
+    target:
+      entity_id: input_boolean.eclairage_exterieur_auto
   - action: switch.turn_on
     data: {}
     target:
@@ -110,13 +112,21 @@
     - action: notify.all_mobiles
       data:
         title: Mouvement détecté
-        message: Éclairage extérieur allumé automatiquement suite à une détection de mouvement
+        message: Éclairage extérieur allumé automatiquement suite à une détection
+          de mouvement
     - delay:
         minutes: 2
-  - action: switch.turn_off
-    data: {}
+  - if:
+    - condition: state
+      entity_id: input_boolean.eclairage_exterieur_auto
+      state: 'on'
+    then:
+    - action: switch.turn_off
+      target:
+        entity_id: switch.eclairage_exterieur
+  - action: input_boolean.turn_off
     target:
-      entity_id: switch.eclairage_exterieur
+      entity_id: input_boolean.eclairage_exterieur_auto
   mode: restart
 - id: '1727634762012'
   alias: 'Volet roulant sud - Sécurité : désactiver descente si montée active'
@@ -156,14 +166,14 @@
   max_exceeded: warning
 - id: '1742635828110'
   alias: Chauffage salle d'eau - Allumage automatique à 06:00
-  description: Allume automatiquement le chauffage de la salle d'eau à 06:00
-    d'octobre à avril pour préparer la salle de bain
+  description: Allume automatiquement le chauffage de la salle d'eau à 06:00 d'octobre
+    à avril pour préparer la salle de bain
   triggers:
   - trigger: time
     at: 06:00:00
   conditions:
   - condition: template
-    value_template: "{{ now().month in [10, 11, 12, 1, 2, 3, 4] }}"
+    value_template: '{{ now().month in [10, 11, 12, 1, 2, 3, 4] }}'
   actions:
   - action: switch.turn_on
     metadata: {}
@@ -174,14 +184,14 @@
   max_exceeded: warning
 - id: '1742635905860'
   alias: Chauffage salle d'eau - Extinction automatique à 07:15
-  description: Éteint automatiquement le chauffage de la salle d'eau à 07:15
-    après utilisation matinale (octobre à avril uniquement)
+  description: Éteint automatiquement le chauffage de la salle d'eau à 07:15 après
+    utilisation matinale (octobre à avril uniquement)
   triggers:
   - trigger: time
     at: 07:15:00
   conditions:
   - condition: template
-    value_template: "{{ now().month in [10, 11, 12, 1, 2, 3, 4] }}"
+    value_template: '{{ now().month in [10, 11, 12, 1, 2, 3, 4] }}'
   actions:
   - action: switch.turn_off
     metadata: {}
@@ -199,15 +209,15 @@
     at: 08:00:00
   conditions: []
   actions:
-  - type: turn_off
-    device_id: 983a5935f2e38632fb64a575dfe51025
-    entity_id: 7fb3d1f206164c68e9bddc4aade9121a
-    domain: switch
+  - action: switch.turn_off
+    target:
+      entity_id: switch.eclairage_exterieur
   mode: single
   max_exceeded: warning
 - id: '1750881769604'
   alias: Ventilation bureau - Activer si température > 28°C
-  description: Active la ventilation du bureau si la température dépasse 28°C (mai à septembre uniquement)
+  description: Active la ventilation du bureau si la température dépasse 28°C (mai
+    à septembre uniquement)
   triggers:
   - type: temperature
     device_id: 4f53fbfe8d0ac2e6b7581b909bc2e125
@@ -217,7 +227,7 @@
     above: 28
   conditions:
   - condition: template
-    value_template: "{{ now().month in [5, 6, 7, 8, 9] }}"
+    value_template: '{{ now().month in [5, 6, 7, 8, 9] }}'
   actions:
   - action: script.office_fan_on
     metadata: {}
@@ -236,7 +246,7 @@
     below: 25
   conditions:
   - condition: template
-    value_template: "{{ now().month in [5, 6, 7, 8, 9] }}"
+    value_template: '{{ now().month in [5, 6, 7, 8, 9] }}'
   actions:
   - action: script.office_fan_off
     metadata: {}
@@ -283,81 +293,67 @@
   description: Éteint automatiquement le moteur de la piscine après 1 heure de fonctionnement
     pour éviter une utilisation prolongée
   triggers:
-  - type: turned_on
-    device_id: 5f55c41bf6123105a780899ec8fa465b
-    entity_id: d19ac68d8815181c4b0fe0adc1560338
-    domain: switch
-    trigger: device
+  - trigger: state
+    entity_id: switch.matter_over_wifi_smart_switch
+    to: 'on'
     for:
       hours: 1
       minutes: 0
       seconds: 0
   conditions: []
   actions:
-  - type: turn_off
-    device_id: 5f55c41bf6123105a780899ec8fa465b
-    entity_id: d19ac68d8815181c4b0fe0adc1560338
-    domain: switch
+  - action: switch.turn_off
+    target:
+      entity_id: switch.matter_over_wifi_smart_switch
   mode: single
   max_exceeded: warning
 - id: '1754681469618'
-  alias: Portail - Fermeture automatique la nuit après 1h
-  description: Ferme automatiquement le portail s'il est ouvert depuis plus de 1h
-    et qu'il fait nuit (détecté par les caméras)
+  alias: Portail - Fermeture automatique la nuit apres 1h
+  description: Ferme le portail s'il est ouvert depuis plus de 1h la nuit. Nuit =
+    sun.sun below_horizon (fiable, independant des cameras). Se declenche a l'ouverture
+    la nuit OU au coucher du soleil si deja ouvert.
   triggers:
-  - type: turned_on
-    device_id: d2971c24b164f6900d4aa64fb14ea647
-    entity_id: 84354f3e83efa3bc6ed9c65e3ac33c9a
-    domain: switch
-    trigger: device
+  - trigger: state
+    entity_id: switch.sonoff_100259f3b2_1
+    to: 'on'
+  - trigger: state
+    entity_id: sun.sun
+    to: below_horizon
   conditions:
-  - condition: or
-    conditions:
-    - type: is_on
-      condition: device
-      device_id: 96f829e62a43fd445ed8924b62209361
-      entity_id: 0fae94f44c05474959aa32732af37a05
-      domain: binary_sensor
-    - type: is_on
-      condition: device
-      device_id: 7873afef03a2a456833f256347741aa8
-      entity_id: 4386032543a9e3d2b1b3e97c999165fd
-      domain: binary_sensor
-  - condition: device
-    type: is_on
-    device_id: d2971c24b164f6900d4aa64fb14ea647
-    entity_id: 84354f3e83efa3bc6ed9c65e3ac33c9a
-    domain: switch
+  - condition: state
+    entity_id: switch.sonoff_100259f3b2_1
+    state: 'on'
+  - condition: state
+    entity_id: sun.sun
+    state: below_horizon
   actions:
   - delay:
       hours: 1
-      minutes: 0
-      seconds: 0
-      milliseconds: 0
-  - condition: device
-    type: is_on
-    device_id: d2971c24b164f6900d4aa64fb14ea647
-    entity_id: 84354f3e83efa3bc6ed9c65e3ac33c9a
-    domain: switch
+  - condition: state
+    entity_id: switch.sonoff_100259f3b2_1
+    state: 'on'
   - action: switch.turn_on
-    metadata: {}
-    data: {}
+    target:
+      entity_id: switch.sonoff_100259b4c3_1
+  - delay:
+      seconds: 30
+  - action: switch.turn_off
     target:
       entity_id: switch.sonoff_100259b4c3_1
   - action: notify.all_mobiles
     data:
-      title: Portail fermé automatiquement
-      message: Le portail a été fermé automatiquement car il était ouvert depuis plus
-        de 1h pendant la nuit
+      title: Portail ferme automatiquement
+      message: Le portail a ete ferme automatiquement car il etait ouvert depuis plus
+        de 1h pendant la nuit.
       data:
         priority: high
         ttl: 0
   mode: restart
-
 - id: '1709300000001'
   alias: Sécurité - Personne détectée la nuit
-  description: Envoie une notification push avec capture caméra lorsqu'une personne
-    est détectée par les caméras extérieures la nuit
+  description: Notification push + image caméra quand une personne est détectée par
+    les caméras extérieures la nuit OU lorsque la maison est en mode Absence (jour
+    comme nuit).
   triggers:
   - trigger: state
     entity_id: binary_sensor.camera_garage_person_detected
@@ -372,23 +368,26 @@
     to: 'on'
     id: g5_bullet
   conditions:
-  - condition: state
-    entity_id: sun.sun
-    state: below_horizon
+  - condition: or
+    conditions:
+    - condition: state
+      entity_id: sun.sun
+      state: below_horizon
+    - condition: state
+      entity_id: input_boolean.maison_absente
+      state: 'on'
   actions:
   - action: notify.all_mobiles
     data:
       title: Personne détectée
-      message: >-
-        Une personne a été détectée par
-        {% if trigger.id == 'allee' %}la caméra Allée
-        {% elif trigger.id == 'portail' %}la caméra Portail
-        {% else %}la caméra G5 Bullet{% endif %}
+      message: Une personne a été détectée par {% if trigger.id == 'allee' %}la caméra
+        Allée {% elif trigger.id == 'portail' %}la caméra Portail {% else %}la caméra
+        G5 Bullet{% endif %}
       data:
-        image: >-
-          {% if trigger.id == 'allee' %}/api/camera_proxy/camera.camera_allee_medium_resolution_channel
-          {% elif trigger.id == 'portail' %}/api/camera_proxy/camera.camera_portail_medium_resolution_channel
-          {% else %}/api/camera_proxy/camera.g5_bullet_high_resolution_channel{% endif %}
+        image: '{% if trigger.id == ''allee'' %}/api/camera_proxy/camera.camera_allee_medium_resolution_channel
+          {% elif trigger.id == ''portail'' %}/api/camera_proxy/camera.camera_portail_medium_resolution_channel
+          {% else %}/api/camera_proxy/camera.g5_bullet_high_resolution_channel{% endif
+          %}'
         priority: high
         ttl: 0
         channel: alarm_stream
@@ -397,32 +396,32 @@
   max_exceeded: warning
 - id: '1709300000002'
   alias: Portail - Avertissement ouvert depuis 30 min la nuit
-  description: Envoie une notification d'avertissement 30 minutes avant la fermeture
-    automatique du portail la nuit
+  description: Notification 30 min avant la fermeture auto. Nuit = sun.sun below_horizon.
+    Se declenche a l'ouverture la nuit OU au coucher du soleil si deja ouvert.
   triggers:
-  - type: turned_on
-    device_id: d2971c24b164f6900d4aa64fb14ea647
-    entity_id: 84354f3e83efa3bc6ed9c65e3ac33c9a
-    domain: switch
-    trigger: device
+  - trigger: state
+    entity_id: switch.sonoff_100259f3b2_1
+    to: 'on'
+  - trigger: state
+    entity_id: sun.sun
+    to: below_horizon
   conditions:
+  - condition: state
+    entity_id: switch.sonoff_100259f3b2_1
+    state: 'on'
   - condition: state
     entity_id: sun.sun
     state: below_horizon
   actions:
   - delay:
-      hours: 0
       minutes: 30
-      seconds: 0
-  - condition: device
-    type: is_on
-    device_id: d2971c24b164f6900d4aa64fb14ea647
-    entity_id: 84354f3e83efa3bc6ed9c65e3ac33c9a
-    domain: switch
+  - condition: state
+    entity_id: switch.sonoff_100259f3b2_1
+    state: 'on'
   - action: notify.all_mobiles
     data:
       title: Portail ouvert
-      message: Le portail est ouvert depuis 30 minutes. Il sera fermé automatiquement
+      message: Le portail est ouvert depuis 30 minutes. Il sera ferme automatiquement
         dans 30 minutes.
       data:
         priority: high
@@ -433,11 +432,9 @@
   description: Envoie une notification quand la pompe de piscine est arrêtée automatiquement
     après 1h
   triggers:
-  - type: turned_on
-    device_id: 5f55c41bf6123105a780899ec8fa465b
-    entity_id: d19ac68d8815181c4b0fe0adc1560338
-    domain: switch
-    trigger: device
+  - trigger: state
+    entity_id: switch.matter_over_wifi_smart_switch
+    to: 'on'
     for:
       hours: 0
       minutes: 59
@@ -453,59 +450,53 @@
   max_exceeded: warning
 - id: '1709300000004'
   alias: Batterie faible - Notification capteurs Zigbee
-  description: Vérifie toutes les 6 heures si un capteur Zigbee a une batterie inférieure
-    à 20% et envoie une notification
+  description: Verifie toutes les 6h si un capteur Zigbee a une batterie entre 5%
+    et 20% (le seuil <5% critique est gere par le workflow n8n).
   triggers:
   - trigger: time_pattern
     hours: /6
   conditions:
   - condition: template
-    value_template: >-
-      {% set ns = namespace(count=0) %}
-      {% for state in states.sensor %}
-        {% if 'battery' in state.entity_id and state.state not in ['unknown', 'unavailable'] and state.state | float(100) < 20 and 'mobile' not in state.entity_id %}
-          {% set ns.count = ns.count + 1 %}
-        {% endif %}
-      {% endfor %}
-      {{ ns.count > 0 }}
+    value_template: "{% set ns = namespace(count=0) %} {% for state in states.sensor
+      %}\n  {% if 'battery' in state.entity_id and state.state not in ['unknown',
+      'unavailable'] and 5 <= state.state | float(100) < 20 and 'mobile' not in state.entity_id
+      %}\n    {% set ns.count = ns.count + 1 %}\n  {% endif %}\n{% endfor %} {{ ns.count
+      > 0 }}"
   actions:
   - action: notify.all_mobiles
     data:
       title: Batterie faible
-      message: >-
-        {% set ns = namespace(sensors=[]) %}
-        {% for state in states.sensor %}
-          {% if 'battery' in state.entity_id and state.state not in ['unknown', 'unavailable'] and state.state | float(100) < 20 and 'mobile' not in state.entity_id %}
-            {% set ns.sensors = ns.sensors + [state.name ~ ' (' ~ state.state ~ '%)'] %}
-          {% endif %}
-        {% endfor %}
-        Capteurs avec batterie faible : {{ ns.sensors | join(', ') }}
+      message: "{% set ns = namespace(sensors=[]) %} {% for state in states.sensor
+        %}\n  {% if 'battery' in state.entity_id and state.state not in ['unknown',
+        'unavailable'] and 5 <= state.state | float(100) < 20 and 'mobile' not in
+        state.entity_id %}\n    {% set ns.sensors = ns.sensors + [state.name ~ ' ('
+        ~ state.state ~ '%)'] %}\n  {% endif %}\n{% endfor %} Capteurs avec batterie
+        faible : {{ ns.sensors | join(', ') }}"
   mode: single
   max_exceeded: warning
 - id: '1709300000005'
   alias: Piscine - Failsafe extinction pompe
   description: Sécurité supplémentaire pour éteindre la pompe si elle est encore allumée
-    à 22h00 ou au démarrage de HA (protège contre un redémarrage pendant le timer 1h)
+    à 22h00 ou au démarrage de HA (protège contre un redémarrage pendant le timer
+    1h)
   triggers:
   - trigger: time
     at: '22:00:00'
   - trigger: homeassistant
     event: start
   conditions:
-  - condition: device
-    type: is_on
-    device_id: 5f55c41bf6123105a780899ec8fa465b
-    entity_id: d19ac68d8815181c4b0fe0adc1560338
-    domain: switch
+  - condition: state
+    entity_id: switch.matter_over_wifi_smart_switch
+    state: 'on'
   actions:
-  - type: turn_off
-    device_id: 5f55c41bf6123105a780899ec8fa465b
-    entity_id: d19ac68d8815181c4b0fe0adc1560338
-    domain: switch
+  - action: switch.turn_off
+    target:
+      entity_id: switch.matter_over_wifi_smart_switch
   - action: notify.all_mobiles
     data:
       title: Piscine - Failsafe
-      message: La pompe de la piscine a été arrêtée par la sécurité (encore active à 22h ou après redémarrage HA)
+      message: La pompe de la piscine a été arrêtée par la sécurité (encore active
+        à 22h ou après redémarrage HA)
   mode: single
   max_exceeded: warning
 - id: '1709300000006'
@@ -514,7 +505,7 @@
     minutes avant 07h00 en semaine pour simuler un lever de soleil
   triggers:
   - trigger: time
-    at: '06:40:00'
+    at: 06:40:00
   conditions:
   - condition: time
     weekday:
@@ -568,28 +559,7 @@
       entity_id: light.yeelight_color_0x52bf405
   mode: single
   max_exceeded: warning
-- id: 'n8n_domotique_door_window'
-  alias: n8n - Alerte porte/fenêtre ouverte
-  description: Envoie un événement à n8n si une porte ou fenêtre reste ouverte plus de 5 minutes
-  triggers:
-  - trigger: state
-    entity_id:
-    - group.all_doors
-    - group.all_windows
-    to: 'on'
-    for:
-      minutes: 5
-  conditions: []
-  actions:
-  - action: rest_command.n8n_domotique
-    data:
-      payload: >-
-        {"event": "door_window_open", "entity_id": "{{ trigger.entity_id }}",
-         "state": "{{ trigger.to_state.state }}",
-         "friendly_name": "{{ trigger.to_state.attributes.friendly_name }}",
-         "duration": "open for 5+ minutes"}
-  mode: single
-- id: 'n8n_domotique_battery_low'
+- id: n8n_domotique_battery_low
   alias: n8n - Alerte batterie faible
   description: Envoie un événement à n8n quand un capteur a une batterie sous 5%
   triggers:
@@ -597,23 +567,569 @@
     hours: /6
   conditions:
   - condition: template
-    value_template: >-
-      {% set ns = namespace(found=false) %}
-      {% for state in states.sensor %}
-        {% if 'battery' in state.entity_id and state.state not in ['unknown', 'unavailable'] and state.state | float(100) < 5 and 'mobile' not in state.entity_id %}
-          {% set ns.found = true %}
-        {% endif %}
-      {% endfor %}
-      {{ ns.found }}
+    value_template: "{% set ns = namespace(found=false) %} {% for state in states.sensor
+      %}\n  {% if 'battery' in state.entity_id and state.state not in ['unknown',
+      'unavailable'] and state.state | float(100) < 5 and 'mobile' not in state.entity_id
+      %}\n    {% set ns.found = true %}\n  {% endif %}\n{% endfor %} {{ ns.found }}"
   actions:
   - action: rest_command.n8n_domotique
     data:
-      payload: >-
-        {% set ns = namespace(sensors=[]) %}
-        {% for state in states.sensor %}
-          {% if 'battery' in state.entity_id and state.state not in ['unknown', 'unavailable'] and state.state | float(100) < 5 and 'mobile' not in state.entity_id %}
-            {% set ns.sensors = ns.sensors + [{"entity_id": state.entity_id, "battery_level": state.state ~ "%", "friendly_name": state.name}] %}
-          {% endif %}
-        {% endfor %}
-        {"event": "battery_low", "sensors": {{ ns.sensors | tojson }}}
+      payload: "{% set ns = namespace(sensors=[]) %} {% for state in states.sensor
+        %}\n  {% if 'battery' in state.entity_id and state.state not in ['unknown',
+        'unavailable'] and state.state | float(100) < 5 and 'mobile' not in state.entity_id
+        %}\n    {% set ns.sensors = ns.sensors + [{\"entity_id\": state.entity_id,
+        \"battery_level\": state.state ~ \"%\", \"friendly_name\": state.name}] %}\n
+        \ {% endif %}\n{% endfor %} {\"event\": \"battery_low\", \"sensors\": {{ ns.sensors
+        | tojson }}}"
+  mode: single
+- id: broadlink_rm4_health_alert
+  alias: Alerte - Broadlink RM4 disponibilité
+  description: Notifie les mobiles quand la télécommande RF/IR Broadlink RM4 passe
+    hors ligne ou revient.
+  triggers:
+  - platform: state
+    entity_id: remote.universal_remote
+    to: unavailable
+    for:
+      minutes: 3
+    id: offline
+  - platform: state
+    entity_id: remote.universal_remote
+    from: unavailable
+    id: online
+  conditions:
+  - condition: template
+    value_template: '{{ trigger.id == ''offline'' or trigger.to_state.state not in
+      [''unavailable'', ''unknown''] }}'
+  actions:
+  - data:
+      title: "{% if trigger.id == 'offline' %}\U0001F534 Broadlink hors ligne{% else
+        %}\U0001F7E2 Broadlink reconnectée{% endif %}"
+      message: '{% if trigger.id == ''offline'' %}La télécommande RF/IR Broadlink
+        RM4 ne répond plus sur le réseau (vérifier alimentation/WiFi).{% else %}La
+        Broadlink RM4 est de nouveau en ligne.{% endif %}'
+    action: notify.all_mobiles
+  mode: single
+- id: chauffe_eau_eau_chaude_1782131896
+  alias: Chauffe-eau — Eau chaude sanitaire
+  description: Pilote le cumulus selon le planning (matin/soir). Interrupteur Absence
+    force la coupure. Resync au démarrage HA.
+  triggers:
+  - platform: state
+    entity_id: schedule.planning_chauffe_eau
+    to: 'on'
+  - platform: state
+    entity_id: schedule.planning_chauffe_eau
+    to: 'off'
+  - platform: state
+    entity_id: input_boolean.chauffe_eau_absence
+  - platform: homeassistant
+    event: start
+  conditions: []
+  actions:
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: input_boolean.chauffe_eau_absence
+        state: 'on'
+      sequence:
+      - target:
+          entity_id: switch.shellyplus1pm_78ee4cc98a34
+        action: switch.turn_off
+    - conditions:
+      - condition: state
+        entity_id: schedule.planning_chauffe_eau
+        state: 'on'
+      sequence:
+      - target:
+          entity_id: switch.shellyplus1pm_78ee4cc98a34
+        action: switch.turn_on
+    default:
+    - target:
+        entity_id: switch.shellyplus1pm_78ee4cc98a34
+      action: switch.turn_off
+  mode: single
+- id: ventilateur_bureau_appliquer_vitesse
+  alias: Ventilateur bureau — appliquer vitesse
+  description: Envoie la commande IR quand la vitesse cible change (manuel ou auto).
+  triggers:
+  - trigger: state
+    entity_id: input_number.vitesse_ventilateur_bureau
+  conditions:
+  - condition: template
+    value_template: '{{ trigger.to_state.state not in [''unknown'',''unavailable'']
+      }}'
+  actions:
+  - action: script.office_fan_set_speed
+    data:
+      vitesse: '{{ trigger.to_state.state | int }}'
+  mode: queued
+- id: ventilateur_bureau_vitesse_selon_temperature
+  alias: Ventilateur bureau — vitesse selon température
+  description: Calcule la vitesse cible (0-6) selon la température du bureau et la
+    pousse dans l'input_number (mai-sept, si auto activé).
+  triggers:
+  - trigger: state
+    entity_id: sensor.thermometre_temperature
+  - trigger: homeassistant
+    event: start
+  - trigger: state
+    entity_id: input_boolean.ventilation_auto_bureau
+    to: 'on'
+  conditions:
+  - condition: state
+    entity_id: input_boolean.ventilation_auto_bureau
+    state: 'on'
+  - condition: template
+    value_template: '{{ now().month in [5,6,7,8,9] }}'
+  - condition: template
+    value_template: '{{ states(''sensor.thermometre_temperature'') not in [''unknown'',''unavailable'',''none'']
+      }}'
+  actions:
+  - if:
+    - condition: template
+      value_template: '{{ cible|int != states(''input_number.vitesse_ventilateur_bureau'')|int
+        }}'
+    then:
+    - action: input_number.set_value
+      target:
+        entity_id: input_number.vitesse_ventilateur_bureau
+      data:
+        value: '{{ cible|int }}'
+  mode: single
+  variables:
+    cible: '{% set t = states(''sensor.thermometre_temperature'')|float(0) %}{% if
+      t<25 %}0{% elif t<26.5 %}1{% elif t<28 %}2{% elif t<29.5 %}3{% elif t<31 %}4{%
+      elif t<32.5 %}5{% else %}6{% endif %}'
+- id: ventilo_couleur_appliquer_ir
+  alias: Ventilo couleur — appliquer (IR)
+  description: Envoie N cycles light off->on pour passer de la couleur précédente
+    à la nouvelle. La lumière finit allumée sur la couleur choisie.
+  triggers:
+  - trigger: state
+    entity_id: input_select.couleur_lumiere_ventilateur
+  conditions:
+  - condition: template
+    value_template: '{{ trigger.from_state.state not in [''unknown'',''unavailable'']
+      and trigger.to_state.state != trigger.from_state.state }}'
+  actions:
+  - repeat:
+      count: '{{ pas }}'
+      sequence:
+      - action: remote.send_command
+        target:
+          entity_id: remote.universal_remote
+        data:
+          device: fan
+          command: light off
+          num_repeats: 1
+          delay_secs: 0.4
+      - delay:
+          milliseconds: 800
+      - action: remote.send_command
+        target:
+          entity_id: remote.universal_remote
+        data:
+          device: fan
+          command: light on
+          num_repeats: 1
+          delay_secs: 0.4
+      - delay:
+          milliseconds: 800
+  mode: single
+  variables:
+    ordre:
+    - Chaud
+    - Neutre
+    - Froid
+    ci: '{{ ordre.index(trigger.from_state.state) if trigger.from_state.state in ordre
+      else 0 }}'
+    ti: '{{ ordre.index(trigger.to_state.state) if trigger.to_state.state in ordre
+      else 0 }}'
+    pas: '{{ (ti - ci) % 3 }}'
+- id: alerte_capteur_temperature_fige
+  alias: Alerte — Capteur de température figé/muet
+  description: Notifie si un thermometre Zigbee ne met plus a jour sa valeur depuis
+    > 12 h (device muet alors qu'il peut rester joignable).
+  triggers:
+  - trigger: time_pattern
+    hours: /6
+  - trigger: homeassistant
+    event: start
+  conditions:
+  - condition: template
+    value_template: '{{ stale | trim != '''' }}'
+  actions:
+  - action: notify.all_mobiles
+    data:
+      title: ⚠️ Capteur(s) de température figé(s)
+      message: 'Ces thermomètres ne remontent plus de valeur :
+
+        {{ stale }}
+
+
+        Probable reporting Zigbee cassé → pile + reconfigure ZHA + réveil bouton.'
+  mode: single
+  variables:
+    stale: '{% set ns = namespace(items=[]) %}{% for e in integration_entities(''zha'')
+      if e.startswith(''sensor.'') and ''temperature'' in e %}{% if states[e] is not
+      none and (now() - states[e].last_updated).total_seconds() > 43200 %}{% set ns.items
+      = ns.items + [(state_attr(e,''friendly_name'') or e) ~ '' ('' ~ ((now() - states[e].last_updated).total_seconds()/3600)|round(0)|int
+      ~ ''h sans MAJ)''] %}{% endif %}{% endfor %}{{ ns.items | join(''
+
+      '') }}'
+- id: vmc_guard_relais
+  alias: VMC - relais rallumé automatiquement (garde-fou)
+  description: La VMC doit tourner 24/7. Si le relais du Shelly passe à OFF, on le
+    rallume et on prévient.
+  triggers:
+  - trigger: state
+    entity_id: switch.vmc
+    to: 'off'
+    for:
+      seconds: 5
+  conditions: []
+  actions:
+  - action: switch.turn_on
+    target:
+      entity_id: switch.vmc
+  - action: notify.all_mobiles
+    data:
+      title: VMC
+      message: ⚠️ Le relais VMC a été coupé — rallumé automatiquement.
+  mode: single
+- id: vmc_arret_alerte
+  alias: VMC arrêtée (panne moteur)
+  description: Aucune consommation VMC pendant 10 min alors qu'elle devrait tourner
+    -> alerte.
+  triggers:
+  - trigger: numeric_state
+    entity_id: sensor.vmc_puissance
+    below: 1
+    for:
+      minutes: 10
+  conditions: []
+  actions:
+  - action: notify.all_mobiles
+    data:
+      title: VMC arrêtée
+      message: ⚠️ La VMC ne consomme plus rien depuis 10 min (puissance ~0 W). Vérifier
+        le moteur / disjoncteur.
+  mode: single
+- id: volet_salon_securite_descente
+  alias: 'Volet roulant salon - Securite : desactiver descente si montee active'
+  description: Empeche montee+descente simultanees (protection moteur) cote salon.
+  triggers:
+  - trigger: state
+    entity_id: switch.tasmota
+    to: 'on'
+  conditions: []
+  actions:
+  - action: switch.turn_off
+    target:
+      entity_id: switch.tasmota_tasmota2
+  mode: single
+- id: volet_salon_securite_montee
+  alias: 'Volet roulant salon - Securite : desactiver montee si descente active'
+  description: Empeche montee+descente simultanees (protection moteur) cote salon.
+  triggers:
+  - trigger: state
+    entity_id: switch.tasmota_tasmota2
+    to: 'on'
+  conditions: []
+  actions:
+  - action: switch.turn_off
+    target:
+      entity_id: switch.tasmota
+  mode: single
+- id: trv_mode_saisonnier
+  alias: Chauffage TRV - Mode saisonnier (ete OFF / hiver chauffe)
+  description: 'Ete (mai-sept) : coupe tous les TRV. Hiver : remet en chauffe au demarrage
+    HA et le 1er du mois. Evite les vannes actives en plein ete.'
+  triggers:
+  - trigger: homeassistant
+    event: start
+    id: boot
+  - trigger: time
+    at: 03:00:00
+    id: daily
+  conditions: []
+  actions:
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ now().month in [5,6,7,8,9] }}'
+      sequence:
+      - action: climate.set_hvac_mode
+        target:
+          entity_id:
+          - climate.sonoff_trvzb_thermostat
+          - climate.sonoff_trvzb_thermostat_2
+          - climate.sonoff_trvzb_thermostat_3
+          - climate.sonoff_trvzb_thermostat_4
+          - climate.thermostat_salon_thermostat_5
+          - climate.thermostat_thermostat
+          - climate.thermostat_chambre_parentale_thermostat
+        data:
+          hvac_mode: 'off'
+    - conditions:
+      - condition: template
+        value_template: '{{ now().month not in [5,6,7,8,9] and (trigger.id == ''boot''
+          or now().day == 1) }}'
+      sequence:
+      - action: climate.set_hvac_mode
+        target:
+          entity_id:
+          - climate.sonoff_trvzb_thermostat
+          - climate.sonoff_trvzb_thermostat_2
+          - climate.sonoff_trvzb_thermostat_3
+          - climate.sonoff_trvzb_thermostat_4
+          - climate.thermostat_salon_thermostat_5
+          - climate.thermostat_thermostat
+          - climate.thermostat_chambre_parentale_thermostat
+        data:
+          hvac_mode: heat
+  mode: single
+- id: presence_absence_armement
+  alias: Présence - Armement mode Absence (tous partis 10 min)
+  description: 'Quand tout le monde est not_home depuis 10 min : coupe le chauffe-eau,
+    active la sécurité caméra 24/7 et notifie. Ne s''arme que si les 2 personnes sont
+    géolocalisées not_home.'
+  triggers:
+  - trigger: state
+    entity_id:
+    - person.wifsimster
+    - person.christelle
+  conditions:
+  - condition: template
+    value_template: '{{ states(''person.wifsimster'') == ''not_home'' and states(''person.christelle'')
+      == ''not_home'' }}'
+  actions:
+  - delay:
+      minutes: 10
+  - condition: template
+    value_template: '{{ states(''person.wifsimster'') == ''not_home'' and states(''person.christelle'')
+      == ''not_home'' }}'
+  - condition: state
+    entity_id: input_boolean.maison_absente
+    state: 'off'
+  - action: input_boolean.turn_on
+    target:
+      entity_id: input_boolean.maison_absente
+  - action: input_boolean.turn_on
+    target:
+      entity_id: input_boolean.chauffe_eau_absence
+  - action: notify.all_mobiles
+    data:
+      title: "\U0001F3E0 Maison en mode Absence"
+      message: Tout le monde est parti. Chauffe-eau coupé, détection personne caméra
+        active 24/7.
+  mode: restart
+- id: presence_absence_desarmement
+  alias: Présence - Désarmement mode Absence (retour)
+  description: 'Dès que quelqu''un rentre : désactive le mode absence, rétablit le
+    chauffe-eau (planning) et notifie.'
+  triggers:
+  - trigger: state
+    entity_id: person.wifsimster
+    to: home
+  - trigger: state
+    entity_id: person.christelle
+    to: home
+  conditions:
+  - condition: state
+    entity_id: input_boolean.maison_absente
+    state: 'on'
+  actions:
+  - action: input_boolean.turn_off
+    target:
+      entity_id: input_boolean.maison_absente
+  - action: input_boolean.turn_off
+    target:
+      entity_id: input_boolean.chauffe_eau_absence
+  - action: notify.all_mobiles
+    data:
+      title: "\U0001F3E0 Bon retour"
+      message: Mode Absence désactivé — chauffe-eau rétabli selon le planning.
+  mode: single
+- id: frigo_congelateur_alerte_conso
+  alias: Alerte panne frigo congélateur
+  description: Notifie si la Prise frigo congélateur ne consomme quasi rien pendant
+    2h (appareil débranché ou en panne).
+  triggers:
+  - trigger: numeric_state
+    entity_id: sensor.prise_frigo_congelateur_puissance
+    below: 1
+    for:
+      hours: 2
+  conditions: []
+  actions:
+  - action: notify.mobile_app_telephone_damien
+    data:
+      title: ⚠️ Frigo/congélateur
+      message: La Prise frigo congélateur consomme moins de 1 W depuis 2h — vérifie
+        que l'appareil est bien alimenté.
+  - action: notify.mobile_app_telephone_christelle
+    data:
+      title: ⚠️ Frigo/congélateur
+      message: La Prise frigo congélateur consomme moins de 1 W depuis 2h — vérifie
+        que l'appareil est bien alimenté.
+  mode: single
+- id: lave_linge_en_marche
+  alias: Lave-linge en marche
+  description: Marque le lave-linge comme en cours quand la puissance dépasse 10 W.
+  triggers:
+  - trigger: numeric_state
+    entity_id: sensor.prise_machine_a_laver_puissance
+    above: 10
+    for:
+      minutes: 1
+  conditions: []
+  actions:
+  - action: input_boolean.turn_on
+    target:
+      entity_id: input_boolean.lave_linge_en_cours
+  mode: single
+- id: lave_linge_termine
+  alias: Lave-linge terminé
+  description: Notifie Damien + Christelle quand le cycle se termine (puissance <2W
+    pendant 6min après avoir tourné).
+  triggers:
+  - trigger: numeric_state
+    entity_id: sensor.prise_machine_a_laver_puissance
+    below: 2
+    for:
+      minutes: 6
+  conditions:
+  - condition: state
+    entity_id: input_boolean.lave_linge_en_cours
+    state: 'on'
+  actions:
+  - action: input_boolean.turn_off
+    target:
+      entity_id: input_boolean.lave_linge_en_cours
+  - action: notify.mobile_app_telephone_damien
+    data:
+      title: "\U0001F9FA Lave-linge"
+      message: Cycle terminé — pense à étendre le linge.
+  - action: notify.mobile_app_telephone_christelle
+    data:
+      title: "\U0001F9FA Lave-linge"
+      message: Cycle terminé — pense à étendre le linge.
+  mode: single
+- id: frigo_anti_coupure_bouton
+  alias: Frigo congélateur - anti-coupure bouton
+  description: Rallume immédiatement la prise frigo/congélateur si le bouton physique
+    la coupe.
+  triggers:
+  - trigger: state
+    entity_id: switch.prise_frigo_congelateur
+    to: 'off'
+  conditions: []
+  actions:
+  - action: switch.turn_on
+    target:
+      entity_id: switch.prise_frigo_congelateur
+  mode: single
+- id: machine_laver_anti_coupure_bouton
+  alias: Machine à laver - anti-coupure bouton
+  description: Rallume immédiatement la prise machine à laver si le bouton physique
+    la coupe.
+  triggers:
+  - trigger: state
+    entity_id: switch.prise_machine_a_laver
+    to: 'off'
+  conditions: []
+  actions:
+  - action: switch.turn_on
+    target:
+      entity_id: switch.prise_machine_a_laver
+  mode: single
+- id: canicule_maison_aeration_ouvrir
+  alias: 'Canicule Maison - Aération nocturne : ouvrir volets à 20%'
+  description: 'Mode canicule : la nuit, si l''extérieur est plus frais que l''intérieur
+    et qu''il fait encore chaud, ouvre TOUS les volets de la maison (Sonoff + Tahoma)
+    à 20% pour laisser entrer l''air frais. Notifie Damien et Christelle.'
+  triggers:
+  - trigger: state
+    entity_id: binary_sensor.canicule_exterieur_plus_chaud
+    to: 'off'
+  - trigger: sun
+    event: sunset
+  - trigger: state
+    entity_id: input_boolean.mode_canicule
+    to: 'on'
+  conditions:
+  - condition: state
+    entity_id: input_boolean.mode_canicule
+    state: 'on'
+  - condition: state
+    entity_id: binary_sensor.canicule_exterieur_plus_chaud
+    state: 'off'
+  - condition: state
+    entity_id: sun.sun
+    state: below_horizon
+  - condition: numeric_state
+    entity_id: sensor.thermometre_temperature_5
+    above: 23
+  actions:
+  - action: cover.set_cover_position
+    target:
+      entity_id:
+      - cover.salon_sonoff_mini_zbrbs_nord_1
+      - cover.salon_sonoff_mini_zbrbs_nord_2
+      - cover.salon_sonoff_mini_zbrbs_sud
+      - cover.volet_roulant_bureau
+      - cover.volet_roulant_leo
+    data:
+      position: 20
+  - action: notify.mobile_app_telephone_damien
+    data:
+      title: Volets maison — Canicule
+      message: "\U0001F319 Aération : tous les volets de la maison ouverts à 20 %
+        pour rafraîchir (extérieur {{ states('sensor.ewelink_snzb_02p_temperature_2')
+        }}°C < intérieur {{ states('sensor.thermometre_temperature_5') }}°C)."
+  - action: notify.mobile_app_telephone_christelle
+    data:
+      title: Volets maison — Canicule
+      message: "\U0001F319 Aération : tous les volets de la maison ouverts à 20 %
+        pour rafraîchir (extérieur {{ states('sensor.ewelink_snzb_02p_temperature_2')
+        }}°C < intérieur {{ states('sensor.thermometre_temperature_5') }}°C)."
+  mode: single
+- id: canicule_maison_aeration_fermer
+  alias: 'Canicule Maison - Aération nocturne : fermer volets si extérieur plus chaud'
+  description: 'Mode canicule : dès que l''extérieur redevient plus chaud que l''intérieur,
+    referme partiellement TOUS les volets de la maison (10%) pour bloquer la chaleur
+    tout en gardant la lumière. Notifie Damien et Christelle.'
+  triggers:
+  - trigger: state
+    entity_id: binary_sensor.canicule_exterieur_plus_chaud
+    to: 'on'
+  conditions:
+  - condition: state
+    entity_id: input_boolean.mode_canicule
+    state: 'on'
+  actions:
+  - action: cover.set_cover_position
+    target:
+      entity_id:
+      - cover.salon_sonoff_mini_zbrbs_nord_1
+      - cover.salon_sonoff_mini_zbrbs_nord_2
+      - cover.salon_sonoff_mini_zbrbs_sud
+      - cover.volet_roulant_bureau
+      - cover.volet_roulant_leo
+    data:
+      position: 10
+  - action: notify.mobile_app_telephone_damien
+    data:
+      title: Volets maison — Canicule
+      message: '☀️ Fermeture partielle : tous les volets de la maison à 10 % (lumière
+        conservée) — extérieur redevenu plus chaud (ext {{ states(''sensor.ewelink_snzb_02p_temperature_2'')
+        }}°C ≥ int {{ states(''sensor.thermometre_temperature_5'') }}°C).'
+  - action: notify.mobile_app_telephone_christelle
+    data:
+      title: Volets maison — Canicule
+      message: '☀️ Fermeture partielle : tous les volets de la maison à 10 % (lumière
+        conservée) — extérieur redevenu plus chaud (ext {{ states(''sensor.ewelink_snzb_02p_temperature_2'')
+        }}°C ≥ int {{ states(''sensor.thermometre_temperature_5'') }}°C).'
   mode: single

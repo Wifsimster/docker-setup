@@ -31,11 +31,11 @@ services:
       - DISCORD_BOT_API_SECRET=${DISCORD_BOT_API_SECRET}
       - DISCORD_BOT_TOKEN=${DISCORD_BOT_TOKEN}
       - ADMIN_STEAM_ID=${ADMIN_STEAM_ID}
-      # Reach the bot's internal HTTP API across the compose network so that
-      # vote start/close on the web surfaces in the linked Discord channel.
-      # Without this the backend's isBotClientEnabled() short-circuits to
-      # false and no bot-backed message is ever posted.
-      - DISCORD_BOT_HTTP_URL=http://wawptn-discord:3001
+      # Discord posting opted out (2026-07-20): DISCORD_BOT_HTTP_URL removed
+      # so isBotClientEnabled() short-circuits to false and the backend never
+      # posts vote start/close messages to the linked channel. Re-enable by
+      # restoring the line below.
+      # - DISCORD_BOT_HTTP_URL=http://wawptn-discord:3001
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
       interval: 30s

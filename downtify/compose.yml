@@ -1,0 +1,51 @@
+name: downtify
+
+services:
+  downtify:
+    image: ghcr.io/henriquesebastiao/downtify:latest
+    container_name: downtify
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      - TZ=Europe/Paris
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    volumes:
+      # Tracks land directly in the music library (Lidarr/Plex-compatible layout)
+      - /mnt/media/musics:/downloads
+      - downtify_data:/data
+    labels:
+      - "traefik.enable=true"
+
+      # Entrypoint
+      - "traefik.http.routers.downtify.entrypoints=websecure"
+
+      # Router
+      - "traefik.http.routers.downtify.rule=Host(`downtify.${DOMAIN}`)"
+
+      # Service
+      - "traefik.http.services.downtify.loadBalancer.server.port=8000"
+
+      # Protect with tinyauth — Downtify has no built-in auth
+      - "traefik.http.routers.downtify.middlewares=tinyauth@docker"
+
+      # Watchtower automatic update
+      - "com.centurylinklabs.watchtower.enable=true"
+
+    networks:
+      lan:
+
+volumes:
+  downtify_data:
+
+networks:
+  lan:
+    external: true

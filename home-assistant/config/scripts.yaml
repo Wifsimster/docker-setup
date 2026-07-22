@@ -29,9 +29,11 @@ office_fan_on:
   icon: mdi:fan
   mode: single
 office_fan_off:
-  alias: Office Fan off
+  alias: Ventilateur OFF
+  icon: mdi:fan-off
   sequence:
-  - target:
+  - action: remote.send_command
+    target:
       entity_id: remote.universal_remote
     data:
       num_repeats: 1
@@ -39,10 +41,6 @@ office_fan_off:
       hold_secs: 0
       device: fan
       command: turn off
-    action: remote.send_command
-  description: Éteint le ventilateur du bureau
-  icon: mdi:fan-off
-  mode: single
 desktop_light_power:
   alias: Desktop light power
   sequence:
@@ -79,10 +77,97 @@ activation_porte_atelier:
   - action: remote.send_command
     metadata: {}
     data:
-      num_repeats: 3
-      delay_secs: 0.4
-      hold_secs: 0
+      num_repeats: 1
+      delay_secs: 0
+      hold_secs: 18
       device: remote
       command: gate enable
     target:
       entity_id: remote.universal_remote
+desktop_light_diminuer_la_luminosite:
+  alias: Desktop light - Diminuer la luminosité
+  icon: mdi:led-strip
+  description: ''
+  sequence:
+  - action: remote.send_command
+    target:
+      entity_id: remote.universal_remote
+    data:
+      num_repeats: 1
+      delay_secs: 0.4
+      hold_secs: 0
+      device: desktop_light
+      command: light_down
+office_fan_set_speed:
+  alias: Office Fan - Régler vitesse
+  icon: mdi:fan
+  mode: queued
+  fields:
+    vitesse:
+      description: Vitesse 0-6 (0 = arrêt)
+      example: 3
+      selector:
+        number:
+          min: 0
+          max: 6
+          step: 1
+  sequence:
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ vitesse | int(0) == 0 }}'
+      sequence:
+      - action: remote.send_command
+        target:
+          entity_id: remote.universal_remote
+        data:
+          device: fan
+          command: turn off
+          num_repeats: 1
+          delay_secs: 0.4
+    default:
+    - action: remote.send_command
+      target:
+        entity_id: remote.universal_remote
+      data:
+        device: fan
+        command: speed_{{ vitesse | int }}
+        num_repeats: 1
+        delay_secs: 0.4
+office_fan_power:
+  alias: Alimentation Ventilateur
+  icon: mdi:fan
+  sequence:
+  - action: remote.send_command
+    target:
+      entity_id: remote.universal_remote
+    data:
+      num_repeats: 1
+      delay_secs: 0.4
+      hold_secs: 0
+      device: fan
+      command: turn on
+ventilo_lumiere_couleur_suivante:
+  alias: Ventilo lumière - Couleur suivante
+  icon: mdi:palette-advanced
+  mode: single
+  sequence:
+  - action: input_select.select_next
+    target:
+      entity_id: input_select.couleur_lumiere_ventilateur
+    data:
+      cycle: true
+fermer_volets_salon:
+  alias: Fermer volets salon (position réglable)
+  icon: mdi:window-shutter
+  sequence:
+  - target:
+      entity_id:
+      - cover.salon_sonoff_mini_zbrbs_nord_1
+      - cover.salon_sonoff_mini_zbrbs_nord_2
+      - cover.salon_sonoff_mini_zbrbs_sud
+    data:
+      position: '{{ (100 - (states(''input_number.fermeture_volets_salon'') | float(100)))
+        | int }}'
+    action: cover.set_cover_position
+  mode: single

@@ -9,13 +9,17 @@ providers:
 layout:
   Multimedia:
     tab: Personnel
-  Personnel:
+  Maison & Famille:
     tab: Personnel
-  Utilitaires:
+  Sécurité & Secrets:
     tab: Personnel
   Infrastructure:
-    tab: Professionnel
-  Projets:
-    tab: Professionnel
-  IA:
     tab: Personnel
+  Documents & IA:
+    tab: Personnel
+  Produits:
+    tab: Professionnel
+  Vitrine:
+    tab: Professionnel
+  Outils & Analytics:
+    tab: Professionnel

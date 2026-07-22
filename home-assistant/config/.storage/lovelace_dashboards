@@ -30,6 +30,15 @@
         "show_in_sidebar": true,
         "mode": "storage",
         "require_admin": false
+      },
+      {
+        "id": "temperatures_home",
+        "url_path": "temperatures-home",
+        "title": "Températures",
+        "icon": "mdi:thermometer-lines",
+        "show_in_sidebar": true,
+        "require_admin": false,
+        "mode": "storage"
       }
     ]
   }

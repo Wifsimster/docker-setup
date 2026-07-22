@@ -13,11 +13,77 @@
           "sections": [
             {
               "type": "grid",
+              "column_span": 1,
               "cards": [
                 {
                   "type": "heading",
-                  "heading": "Extérieur",
+                  "heading": "Portail & accès",
+                  "icon": "mdi:gate",
                   "badges": [
+                    {
+                      "type": "entity",
+                      "entity": "switch.sonoff_1001fe757d_1",
+                      "color": "green"
+                    }
+                  ]
+                },
+                {
+                  "type": "tile",
+                  "entity": "cover.portail",
+                  "name": "Portail",
+                  "features_position": "bottom",
+                  "features": [
+                    {
+                      "type": "cover-open-close"
+                    }
+                  ]
+                },
+                {
+                  "type": "tile",
+                  "entity": "switch.sonoff_1001fe757d_1",
+                  "name": "Alimentation",
+                  "icon": "mdi:power-plug",
+                  "color": "green",
+                  "layout_options": {
+                    "grid_columns": 2,
+                    "grid_rows": 1
+                  }
+                },
+                {
+                  "type": "tile",
+                  "entity": "script.activation_porte_atelier",
+                  "name": "Porte atelier",
+                  "icon": "mdi:garage",
+                  "color": "green",
+                  "tap_action": {
+                    "action": "toggle"
+                  },
+                  "layout_options": {
+                    "grid_columns": 2,
+                    "grid_rows": 1
+                  }
+                }
+              ]
+            },
+            {
+              "type": "grid",
+              "column_span": 1,
+              "cards": [
+                {
+                  "type": "heading",
+                  "heading": "Climat extérieur",
+                  "icon": "mdi:thermometer-lines",
+                  "badges": [
+                    {
+                      "type": "entity",
+                      "entity": "sensor.ewelink_snzb_02p_temperature_2",
+                      "color": "orange"
+                    },
+                    {
+                      "type": "entity",
+                      "entity": "sensor.ewelink_snzb_02p_humidite_2",
+                      "color": "cyan"
+                    },
                     {
                       "type": "entity",
                       "entity": "sensor.ewelink_snzb_02p_batterie_2"
@@ -25,107 +91,328 @@
                   ]
                 },
                 {
-                  "type": "tile",
-                  "entity": "light.eclairage_exterieur",
-                  "icon": "mdi:light-flood-down",
-                  "color": "yellow",
-                  "show_entity_picture": false,
-                  "features_position": "bottom",
-                  "vertical": false
-                },
-                {
-                  "type": "tile",
-                  "entity": "switch.smart_plug_mini_10",
-                  "features_position": "bottom",
-                  "vertical": false,
-                  "icon": "mdi:pool",
-                  "name": "Pompe piscine"
-                },
-                {
-                  "type": "tile",
-                  "entity": "script.activation_porte_atelier",
-                  "name": "Porte atelier",
-                  "color": "yellow",
-                  "show_entity_picture": false,
-                  "features_position": "bottom",
-                  "vertical": false,
-                  "grid_options": {
-                    "columns": 6,
-                    "rows": 1
+                  "type": "gauge",
+                  "entity": "sensor.ewelink_snzb_02p_temperature_2",
+                  "name": "Température",
+                  "unit": "°C",
+                  "min": -10,
+                  "max": 45,
+                  "needle": true,
+                  "severity": {
+                    "green": -10,
+                    "yellow": 28,
+                    "red": 35
+                  },
+                  "layout_options": {
+                    "grid_columns": 2,
+                    "grid_rows": 3
                   }
                 },
                 {
-                  "type": "entities",
-                  "entities": [
-                    {
-                      "entity": "switch.sonoff_1001fe757d_1",
-                      "name": "Alimentation",
-                      "icon": "mdi:power-plug",
-                      "secondary_info": "last-updated"
-                    },
-                    {
-                      "entity": "switch.sonoff_100259f3b2_1",
-                      "icon": "mdi:gate-open",
-                      "secondary_info": "last-updated",
-                      "name": "Ouverture"
-                    },
-                    {
-                      "entity": "switch.sonoff_100259b4c3_1",
-                      "icon": "mdi:gate",
-                      "secondary_info": "last-updated",
-                      "name": "Fermeture"
-                    }
-                  ],
-                  "title": "Portail"
+                  "type": "gauge",
+                  "entity": "sensor.ewelink_snzb_02p_humidite_2",
+                  "name": "Humidité",
+                  "unit": "%",
+                  "min": 0,
+                  "max": 100,
+                  "needle": true,
+                  "layout_options": {
+                    "grid_columns": 2,
+                    "grid_rows": 3
+                  }
                 },
                 {
-                  "graph": "line",
                   "type": "sensor",
                   "entity": "sensor.ewelink_snzb_02p_temperature_2",
-                  "detail": 1,
-                  "name": "Température"
+                  "name": "Température 24 h",
+                  "graph": "line",
+                  "detail": 2,
+                  "hours_to_show": 24,
+                  "layout_options": {
+                    "grid_columns": 2,
+                    "grid_rows": 2
+                  }
                 },
                 {
-                  "graph": "line",
                   "type": "sensor",
                   "entity": "sensor.ewelink_snzb_02p_humidite_2",
-                  "detail": 1,
-                  "name": "Humidité"
-                },
-                {
-                  "type": "tile",
-                  "entity": "camera.sonnerie_mediaprofile_channel1_mainstream",
-                  "name": "Sonnette",
-                  "show_entity_picture": true,
-                  "features_position": "bottom",
-                  "vertical": false
-                },
-                {
-                  "type": "tile",
-                  "entity": "camera.camera_allee_medium_resolution_channel",
-                  "name": "Allée",
-                  "show_entity_picture": true,
-                  "features_position": "bottom",
-                  "vertical": false
-                },
-                {
-                  "type": "tile",
-                  "entity": "camera.camera_portail_medium_resolution_channel",
-                  "name": "Portail",
-                  "show_entity_picture": true,
-                  "features_position": "bottom",
-                  "vertical": false
-                },
-                {
-                  "type": "tile",
-                  "entity": "camera.g5_bullet_high_resolution_channel",
-                  "name": "Jardin",
-                  "show_entity_picture": true,
-                  "features_position": "bottom",
-                  "vertical": false
+                  "name": "Humidité 24 h",
+                  "graph": "line",
+                  "detail": 2,
+                  "hours_to_show": 24,
+                  "layout_options": {
+                    "grid_columns": 2,
+                    "grid_rows": 2
+                  }
                 }
-              ],
-              "column_span": 1
+              ]
+            },
+            {
+              "type": "grid",
+              "column_span": 1,
+              "cards": [
+                {
+                  "type": "heading",
+                  "heading": "Météo",
+                  "icon": "mdi:weather-partly-cloudy"
+                },
+                {
+                  "type": "weather-forecast",
+                  "entity": "weather.forecast_maison",
+                  "forecast_type": "daily",
+                  "name": "Prévisions",
+                  "show_current": true,
+                  "layout_options": {
+                    "grid_columns": 4,
+                    "grid_rows": 4
+                  }
+                },
+                {
+                  "type": "tile",
+                  "entity": "sensor.sun_next_rising",
+                  "name": "Lever",
+                  "icon": "mdi:weather-sunset-up",
+                  "color": "amber",
+                  "layout_options": {
+                    "grid_columns": 2,
+                    "grid_rows": 1
+                  }
+                },
+                {
+                  "type": "tile",
+                  "entity": "sensor.sun_next_setting",
+                  "name": "Coucher",
+                  "icon": "mdi:weather-sunset-down",
+                  "color": "orange",
+                  "layout_options": {
+                    "grid_columns": 2,
+                    "grid_rows": 1
+                  }
+                },
+                {
+                  "type": "tile",
+                  "entity": "sensor.sun_next_dawn",
+                  "name": "Aube",
+                  "icon": "mdi:weather-sunset-up",
+                  "color": "cyan",
+                  "layout_options": {
+                    "grid_columns": 2,
+                    "grid_rows": 1
+                  }
+                },
+                {
+                  "type": "tile",
+                  "entity": "sensor.sun_next_dusk",
+                  "name": "Crépuscule",
+                  "icon": "mdi:weather-night",
+                  "color": "indigo",
+                  "layout_options": {
+                    "grid_columns": 2,
+                    "grid_rows": 1
+                  }
+                }
+              ]
+            },
+            {
+              "type": "grid",
+              "column_span": 1,
+              "cards": [
+                {
+                  "type": "heading",
+                  "heading": "Éclairage",
+                  "icon": "mdi:outdoor-lamp",
+                  "badges": [
+                    {
+                      "type": "entity",
+                      "entity": "light.eclairage_exterieur",
+                      "color": "amber"
+                    }
+                  ]
+                },
+                {
+                  "type": "tile",
+                  "entity": "light.eclairage_exterieur",
+                  "name": "Éclairage extérieur",
+                  "icon": "mdi:outdoor-lamp",
+                  "color": "amber",
+                  "layout_options": {
+                    "grid_columns": 2,
+                    "grid_rows": 1
+                  }
+                },
+                {
+                  "type": "tile",
+                  "entity": "automation.eclairage_exterieur_automatique",
+                  "name": "Auto nuit",
+                  "icon": "mdi:lightbulb-auto-outline",
+                  "color": "yellow",
+                  "layout_options": {
+                    "grid_columns": 2,
+                    "grid_rows": 1
+                  }
+                }
+              ]
+            },
+            {
+              "type": "grid",
+              "column_span": 1,
+              "cards": [
+                {
+                  "type": "heading",
+                  "heading": "Piscine",
+                  "icon": "mdi:pool",
+                  "badges": [
+                    {
+                      "type": "entity",
+                      "entity": "sensor.matter_over_wifi_smart_switch_puissance",
+                      "color": "blue"
+                    }
+                  ]
+                },
+                {
+                  "type": "tile",
+                  "entity": "switch.matter_over_wifi_smart_switch",
+                  "name": "Pompe piscine",
+                  "icon": "mdi:pump",
+                  "color": "blue",
+                  "layout_options": {
+                    "grid_columns": 2,
+                    "grid_rows": 1
+                  }
+                },
+                {
+                  "type": "tile",
+                  "entity": "automation.moteur_piscine_1h",
+                  "name": "Arrêt auto 1 h",
+                  "icon": "mdi:timer-outline",
+                  "color": "blue",
+                  "layout_options": {
+                    "grid_columns": 2,
+                    "grid_rows": 1
+                  }
+                },
+                {
+                  "type": "gauge",
+                  "entity": "sensor.matter_over_wifi_smart_switch_puissance",
+                  "name": "Puissance",
+                  "unit": "W",
+                  "min": 0,
+                  "max": 1500,
+                  "needle": true,
+                  "severity": {
+                    "green": 0,
+                    "yellow": 800,
+                    "red": 1200
+                  },
+                  "layout_options": {
+                    "grid_columns": 2,
+                    "grid_rows": 3
+                  }
+                },
+                {
+                  "type": "tile",
+                  "entity": "sensor.matter_over_wifi_smart_switch_tension",
+                  "name": "Tension",
+                  "icon": "mdi:flash",
+                  "color": "blue",
+                  "layout_options": {
+                    "grid_columns": 2,
+                    "grid_rows": 1
+                  }
+                },
+                {
+                  "type": "tile",
+                  "entity": "sensor.matter_over_wifi_smart_switch_courant_actif",
+                  "name": "Courant",
+                  "icon": "mdi:current-ac",
+                  "color": "blue",
+                  "layout_options": {
+                    "grid_columns": 2,
+                    "grid_rows": 1
+                  }
+                }
+              ]
+            },
+            {
+              "type": "grid",
+              "column_span": 1,
+              "cards": [
+                {
+                  "type": "heading",
+                  "heading": "Caméras",
+                  "icon": "mdi:cctv",
+                  "badges": [
+                    {
+                      "type": "entity",
+                      "entity": "binary_sensor.camera_garage_person_detected",
+                      "color": "red",
+                      "name": "Allée"
+                    },
+                    {
+                      "type": "entity",
+                      "entity": "binary_sensor.camera_portail_person_detected",
+                      "color": "red",
+                      "name": "Portail"
+                    }
+                  ]
+                },
+                {
+                  "type": "picture-glance",
+                  "title": "Allée",
+                  "camera_image": "camera.camera_allee_medium_resolution_channel",
+                  "camera_view": "auto",
+                  "entities": [
+                    "binary_sensor.camera_garage_person_detected",
+                    "binary_sensor.camera_garage_vehicle_detected",
+                    "binary_sensor.camera_allee_animal_detected"
+                  ],
+                  "layout_options": {
+                    "grid_columns": 2,
+                    "grid_rows": 3
+                  }
+                },
+                {
+                  "type": "picture-glance",
+                  "title": "Portail",
+                  "camera_image": "camera.camera_portail_medium_resolution_channel",
+                  "camera_view": "auto",
+                  "entities": [
+                    "binary_sensor.camera_portail_person_detected",
+                    "binary_sensor.camera_portail_vehicle_detected"
+                  ],
+                  "layout_options": {
+                    "grid_columns": 2,
+                    "grid_rows": 3
+                  }
+                },
+                {
+                  "type": "picture-glance",
+                  "title": "Jardin",
+                  "camera_image": "camera.g5_bullet_high_resolution_channel",
+                  "camera_view": "auto",
+                  "entities": [
+                    "binary_sensor.g5_bullet_personne_detectee",
+                    "binary_sensor.g5_bullet_vehicle_detected"
+                  ],
+                  "layout_options": {
+                    "grid_columns": 2,
+                    "grid_rows": 3
+                  }
+                },
+                {
+                  "type": "picture-glance",
+                  "title": "Sonnette",
+                  "camera_image": "camera.sonnerie_mediaprofile_channel1_mainstream",
+                  "camera_view": "auto",
+                  "entities": [
+                    "binary_sensor.sonnerie_motion_alarm"
+                  ],
+                  "layout_options": {
+                    "grid_columns": 2,
+                    "grid_rows": 3
+                  }
+                }
+              ]
             }
           ]
         },
@@ -134,43 +421,39 @@
           "path": "salon",
           "icon": "mdi:sofa",
           "type": "sections",
+          "max_columns": 3,
           "sections": [
             {
               "type": "grid",
+              "column_span": 1,
               "cards": [
                 {
                   "type": "heading",
-                  "heading": "Salon / Salle à manger",
+                  "heading": "Éclairage",
+                  "icon": "mdi:lightbulb-group",
                   "badges": [
                     {
                       "type": "entity",
-                      "entity": "sensor.thermometre_batterie_5"
+                      "entity": "sensor.thermometre_batterie_5",
+                      "name": "Pile capteur"
                     },
                     {
                       "type": "entity",
-                      "entity": "sensor.thermostat_salon_batterie_5"
+                      "entity": "sensor.thermostat_salon_batterie_5",
+                      "name": "Pile thermostat"
                     }
                   ]
                 },
                 {
                   "type": "tile",
-                  "entity": "light.yeelight_color_0x4d2a413",
-                  "name": "Lumière salle à manger",
-                  "features": [
-                    {
-                      "type": "light-color-temp"
-                    }
-                  ],
-                  "layout_options": {
-                    "grid_columns": 4,
-                    "grid_rows": 2
-                  }
-                },
-                {
-                  "type": "tile",
                   "entity": "light.yeelight_color_0x52bf405",
                   "name": "Lumière salon",
+                  "icon": "mdi:ceiling-light",
+                  "color": "amber",
                   "features": [
+                    {
+                      "type": "light-brightness"
+                    },
                     {
                       "type": "light-color-temp"
                     }
@@ -181,56 +464,254 @@
                   }
                 },
                 {
-                  "type": "entities",
-                  "entities": [
-                    {
-                      "entity": "switch.lumiere_tv",
-                      "icon": "mdi:floor-lamp-outline",
-                      "name": "Lumière TV",
-                      "secondary_info": "last-updated"
-                    },
-                    {
-                      "entity": "switch.prise_radiateur_salon",
-                      "icon": "mdi:lamp",
-                      "name": "Lumière meuble",
-                      "secondary_info": "last-updated"
-                    }
-                  ],
-                  "title": "Éclairages"
-                },
-                {
-                  "type": "entities",
-                  "entities": [
-                    {
-                      "entity": "switch.tasmota",
-                      "name": "Volet Sud - Montée",
-                      "icon": "mdi:arrow-up-box",
-                      "secondary_info": "last-updated"
-                    },
-                    {
-                      "entity": "switch.tasmota_tasmota2",
-                      "name": "Volet Sud - Descente",
-                      "icon": "mdi:arrow-down-box",
-                      "secondary_info": "last-updated"
-                    }
-                  ],
-                  "title": "Volets"
-                },
-                {
                   "type": "tile",
-                  "entity": "climate.thermostat_salon_thermostat_5",
-                  "show_entity_picture": false,
-                  "name": "Thermostat",
-                  "color": "primary",
+                  "entity": "light.yeelight_color_0x4d2a413",
+                  "name": "Lumière salle à manger",
+                  "icon": "mdi:ceiling-light",
+                  "color": "amber",
                   "features": [
                     {
-                      "type": "target-temperature"
+                      "type": "light-brightness"
+                    },
+                    {
+                      "type": "light-color-temp"
                     }
                   ],
                   "layout_options": {
                     "grid_columns": 4,
                     "grid_rows": 2
                   }
+                },
+                {
+                  "type": "tile",
+                  "entity": "switch.lumiere_tv",
+                  "name": "Lumière TV",
+                  "icon": "mdi:floor-lamp-outline",
+                  "color": "amber",
+                  "layout_options": {
+                    "grid_columns": 2,
+                    "grid_rows": 1
+                  }
+                },
+                {
+                  "type": "tile",
+                  "entity": "light.salon_lumiere_ambiance_salle_a_manger",
+                  "name": "Lumière meuble",
+                  "icon": "mdi:lamp",
+                  "color": "amber",
+                  "layout_options": {
+                    "grid_columns": 2,
+                    "grid_rows": 1
+                  }
+                },
+                {
+                  "type": "tile",
+                  "entity": "automation.bascule_lumiere_salon",
+                  "name": "Bascule télécommande",
+                  "icon": "mdi:remote",
+                  "color": "amber",
+                  "tap_action": {
+                    "action": "toggle"
+                  },
+                  "layout_options": {
+                    "grid_columns": 4,
+                    "grid_rows": 1
+                  }
+                }
+              ]
+            },
+            {
+              "type": "grid",
+              "column_span": 1,
+              "cards": [
+                {
+                  "type": "heading",
+                  "heading": "Volet roulant Sud",
+                  "icon": "mdi:window-shutter"
+                },
+                {
+                  "type": "tile",
+                  "entity": "switch.tasmota",
+                  "name": "Monter",
+                  "icon": "mdi:arrow-up-box",
+                  "color": "indigo",
+                  "layout_options": {
+                    "grid_columns": 2,
+                    "grid_rows": 2
+                  }
+                },
+                {
+                  "type": "tile",
+                  "entity": "switch.tasmota_tasmota2",
+                  "name": "Descendre",
+                  "icon": "mdi:arrow-down-box",
+                  "color": "blue",
+                  "layout_options": {
+                    "grid_columns": 2,
+                    "grid_rows": 2
+                  }
+                }
+              ]
+            },
+            {
+              "type": "grid",
+              "column_span": 1,
+              "cards": [
+                {
+                  "type": "heading",
+                  "heading": "Fermeture groupée",
+                  "icon": "mdi:window-shutter"
+                },
+                {
+                  "type": "tile",
+                  "entity": "input_number.fermeture_volets_salon",
+                  "name": "Niveau de fermeture",
+                  "icon": "mdi:window-shutter",
+                  "features": [
+                    {
+                      "type": "numeric-input",
+                      "style": "slider"
+                    }
+                  ],
+                  "layout_options": {
+                    "grid_columns": 4,
+                    "grid_rows": 2
+                  }
+                },
+                {
+                  "type": "button",
+                  "name": "Fermer les volets salon",
+                  "icon": "mdi:window-shutter-alert",
+                  "tap_action": {
+                    "action": "perform-action",
+                    "perform_action": "script.fermer_volets_salon"
+                  },
+                  "layout_options": {
+                    "grid_columns": 4,
+                    "grid_rows": 1
+                  }
+                }
+              ]
+            },
+            {
+              "type": "grid",
+              "column_span": 1,
+              "cards": [
+                {
+                  "type": "heading",
+                  "heading": "Volet roulant Nord",
+                  "icon": "mdi:window-shutter"
+                },
+                {
+                  "type": "tile",
+                  "entity": "cover.salon_sonoff_mini_zbrbs_nord_2",
+                  "name": "Nord Gauche",
+                  "icon": "mdi:window-shutter",
+                  "color": "indigo",
+                  "features": [
+                    {
+                      "type": "cover-open-close"
+                    },
+                    {
+                      "type": "cover-position"
+                    }
+                  ],
+                  "layout_options": {
+                    "grid_columns": 4,
+                    "grid_rows": 2
+                  }
+                },
+                {
+                  "type": "tile",
+                  "entity": "cover.salon_sonoff_mini_zbrbs_nord_1",
+                  "name": "Nord Droite",
+                  "icon": "mdi:window-shutter",
+                  "color": "indigo",
+                  "features": [
+                    {
+                      "type": "cover-open-close"
+                    },
+                    {
+                      "type": "cover-position"
+                    }
+                  ],
+                  "layout_options": {
+                    "grid_columns": 4,
+                    "grid_rows": 2
+                  }
+                }
+              ]
+            },
+            {
+              "type": "grid",
+              "column_span": 1,
+              "cards": [
+                {
+                  "type": "heading",
+                  "heading": "Volet roulant Sud",
+                  "icon": "mdi:window-shutter"
+                },
+                {
+                  "type": "tile",
+                  "entity": "cover.salon_sonoff_mini_zbrbs_sud",
+                  "name": "Sud",
+                  "icon": "mdi:window-shutter",
+                  "color": "indigo",
+                  "features": [
+                    {
+                      "type": "cover-open-close"
+                    },
+                    {
+                      "type": "cover-position"
+                    }
+                  ],
+                  "layout_options": {
+                    "grid_columns": 4,
+                    "grid_rows": 2
+                  }
+                }
+              ]
+            },
+            {
+              "type": "grid",
+              "column_span": 1,
+              "cards": [
+                {
+                  "type": "heading",
+                  "heading": "Climat",
+                  "icon": "mdi:thermostat",
+                  "badges": [
+                    {
+                      "type": "entity",
+                      "entity": "sensor.thermostat_salon_action_cvc_5",
+                      "name": "Action CVC",
+                      "color": "orange"
+                    },
+                    {
+                      "type": "entity",
+                      "entity": "sensor.thermometre_batterie_5",
+                      "name": "Pile capteur"
+                    },
+                    {
+                      "type": "entity",
+                      "entity": "sensor.thermostat_salon_batterie_5",
+                      "name": "Pile thermostat"
+                    }
+                  ]
+                },
+                {
+                  "type": "thermostat",
+                  "entity": "climate.thermostat_salon_thermostat_5",
+                  "name": "Thermostat",
+                  "features": [
+                    {
+                      "type": "climate-hvac-modes",
+                      "hvac_modes": [
+                        "heat",
+                        "off"
+                      ]
+                    }
+                  ]
                 },
                 {
                   "type": "sensor",
@@ -238,6 +719,7 @@
                   "entity": "sensor.thermometre_temperature_5",
                   "detail": 1,
                   "name": "Température",
+                  "hours_to_show": 24,
                   "layout_options": {
                     "grid_columns": 2,
                     "grid_rows": 2
@@ -249,19 +731,45 @@
                   "entity": "sensor.thermometre_humidite_5",
                   "detail": 1,
                   "name": "Humidité",
+                  "hours_to_show": 24,
                   "layout_options": {
                     "grid_columns": 2,
                     "grid_rows": 2
                   }
+                }
+              ]
+            },
+            {
+              "type": "grid",
+              "column_span": 1,
+              "cards": [
+                {
+                  "type": "heading",
+                  "heading": "Caméra / Sécurité",
+                  "icon": "mdi:cctv",
+                  "badges": [
+                    {
+                      "type": "entity",
+                      "entity": "binary_sensor.camera_salon_motion",
+                      "name": "Mouvement",
+                      "color": "red"
+                    },
+                    {
+                      "type": "entity",
+                      "entity": "binary_sensor.camera_salon_is_dark",
+                      "name": "Nuit"
+                    }
+                  ]
                 },
                 {
-                  "type": "tile",
+                  "type": "picture-entity",
                   "entity": "camera.camera_salon_medium_resolution_channel",
-                  "show_entity_picture": true,
-                  "name": "Caméra salon"
+                  "name": "Caméra salon",
+                  "camera_view": "live",
+                  "show_state": false,
+                  "show_name": true
                 }
-              ],
-              "column_span": 1
+              ]
             }
           ]
         },
@@ -273,27 +781,86 @@
           "sections": [
             {
               "type": "grid",
+              "column_span": 1,
               "cards": [
                 {
                   "type": "heading",
-                  "heading": "Bureau",
+                  "heading": "Contrôles bureau",
+                  "icon": "mdi:gesture-tap-button",
                   "badges": [
                     {
                       "type": "entity",
-                      "entity": "sensor.thermometre_batterie"
+                      "entity": "sensor.thermometre_temperature",
+                      "color": "orange"
                     },
                     {
                       "type": "entity",
-                      "entity": "sensor.ewelink_snzb_02p_batterie"
+                      "entity": "sensor.thermometre_humidite",
+                      "color": "cyan"
+                    },
+                    {
+                      "type": "entity",
+                      "entity": "sensor.thermometre_batterie"
                     }
                   ]
                 },
                 {
                   "type": "tile",
-                  "entity": "script.office_fan_light",
-                  "name": "Lumière ventilateur",
+                  "entity": "cover.volet_roulant_bureau",
+                  "name": "Volet roulant",
+                  "icon": "mdi:roller-shade",
+                  "features": [
+                    {
+                      "type": "cover-open-close"
+                    },
+                    {
+                      "type": "cover-position"
+                    }
+                  ],
+                  "layout_options": {
+                    "grid_columns": 2,
+                    "grid_rows": 2
+                  }
+                },
+                {
+                  "type": "tile",
+                  "entity": "script.desktop_light_power",
+                  "name": "Lumière bureau",
+                  "icon": "mdi:desk-lamp",
                   "color": "yellow",
-                  "show_entity_picture": false,
+                  "tap_action": {
+                    "action": "perform-action",
+                    "perform_action": "script.desktop_light_power"
+                  },
+                  "layout_options": {
+                    "grid_columns": 2,
+                    "grid_rows": 1
+                  }
+                },
+                {
+                  "type": "horizontal-stack",
+                  "cards": [
+                    {
+                      "type": "button",
+                      "entity": "script.desktop_light_diminuer_la_luminosite",
+                      "name": "- Lum.",
+                      "icon": "mdi:minus",
+                      "show_state": false,
+                      "tap_action": {
+                        "action": "toggle"
+                      }
+                    },
+                    {
+                      "type": "button",
+                      "entity": "script.desktop_light_augmenter_la_luminosite",
+                      "name": "+ Lum.",
+                      "icon": "mdi:plus",
+                      "show_state": false,
+                      "tap_action": {
+                        "action": "toggle"
+                      }
+                    }
+                  ],
                   "layout_options": {
                     "grid_columns": 2,
                     "grid_rows": 1
@@ -301,10 +868,40 @@
                 },
                 {
                   "type": "tile",
-                  "entity": "script.desktop_light_power",
-                  "name": "Lumière bureau",
+                  "entity": "script.office_fan_light",
+                  "name": "Lumière ventilateur",
+                  "icon": "mdi:ceiling-light",
                   "color": "yellow",
-                  "show_entity_picture": false,
+                  "layout_options": {
+                    "grid_columns": 2,
+                    "grid_rows": 1
+                  },
+                  "tap_action": {
+                    "action": "perform-action",
+                    "perform_action": "script.office_fan_light"
+                  }
+                },
+                {
+                  "type": "tile",
+                  "entity": "script.ventilo_lumiere_couleur_suivante",
+                  "name": "Couleur suivante",
+                  "icon": "mdi:palette-advanced",
+                  "color": "deep-purple",
+                  "tap_action": {
+                    "action": "perform-action",
+                    "perform_action": "script.ventilo_lumiere_couleur_suivante"
+                  },
+                  "layout_options": {
+                    "grid_columns": 2,
+                    "grid_rows": 1
+                  }
+                },
+                {
+                  "type": "tile",
+                  "entity": "input_select.couleur_lumiere_ventilateur",
+                  "name": "Couleur",
+                  "icon": "mdi:palette",
+                  "color": "deep-purple",
                   "layout_options": {
                     "grid_columns": 2,
                     "grid_rows": 1
@@ -314,98 +911,325 @@
                   "type": "tile",
                   "entity": "script.office_fan_power",
                   "name": "Ventilateur",
-                  "color": "yellow",
-                  "show_entity_picture": false,
+                  "icon": "mdi:fan",
+                  "color": "cyan",
                   "layout_options": {
-                    "grid_columns": 4,
+                    "grid_columns": 2,
+                    "grid_rows": 1
+                  },
+                  "tap_action": {
+                    "action": "perform-action",
+                    "perform_action": "script.office_fan_power"
+                  },
+                  "hold_action": {
+                    "action": "perform-action",
+                    "perform_action": "script.office_fan_off"
+                  }
+                },
+                {
+                  "type": "button",
+                  "name": "Minuteur 1h",
+                  "icon": "mdi:timer-outline",
+                  "show_state": false,
+                  "tap_action": {
+                    "action": "perform-action",
+                    "perform_action": "remote.send_command",
+                    "target": {
+                      "entity_id": "remote.universal_remote"
+                    },
+                    "data": {
+                      "device": "fan",
+                      "command": "timer_1h"
+                    }
+                  },
+                  "layout_options": {
+                    "grid_columns": 2,
                     "grid_rows": 1
                   }
+                },
+                {
+                  "type": "tile",
+                  "entity": "switch.prise_ecrans",
+                  "name": "Prise écrans / poste",
+                  "icon": "mdi:monitor-multiple",
+                  "color": "amber",
+                  "tap_action": {
+                    "action": "toggle"
+                  },
+                  "layout_options": {
+                    "grid_columns": 2,
+                    "grid_rows": 1
+                  }
+                },
+                {
+                  "type": "tile",
+                  "entity": "remote.universal_remote",
+                  "name": "Télécommande IR/RF",
+                  "icon": "mdi:remote",
+                  "layout_options": {
+                    "grid_columns": 2,
+                    "grid_rows": 1
+                  }
+                }
+              ]
+            },
+            {
+              "type": "grid",
+              "column_span": 1,
+              "cards": [
+                {
+                  "type": "heading",
+                  "heading": "Climat & ventilation",
+                  "icon": "mdi:thermometer",
+                  "badges": []
                 },
                 {
                   "type": "sensor",
                   "graph": "line",
                   "entity": "sensor.thermometre_temperature",
                   "detail": 1,
-                  "name": "Température"
-                },
-                {
-                  "type": "sensor",
-                  "graph": "line",
-                  "entity": "sensor.thermometre_humidite",
-                  "detail": 1,
-                  "name": "Humidité"
-                }
-              ],
-              "column_span": 1
-            },
-            {
-              "type": "grid",
-              "cards": [
-                {
-                  "type": "heading",
-                  "icon": "mdi:server",
-                  "heading": "Baie informatique",
-                  "badges": [
-                    {
-                      "type": "entity",
-                      "entity": "sensor.tasmota_energy_yesterday"
-                    },
-                    {
-                      "type": "entity",
-                      "entity": "sensor.ewelink_snzb_02p_batterie"
-                    }
-                  ]
-                },
-                {
-                  "graph": "line",
-                  "type": "sensor",
-                  "entity": "sensor.tasmota_energy_power",
-                  "detail": 1,
-                  "name": "Puissance",
+                  "name": "Température bureau",
+                  "hours_to_show": 24,
                   "layout_options": {
                     "grid_columns": 2,
                     "grid_rows": 2
                   }
                 },
                 {
-                  "graph": "line",
                   "type": "sensor",
-                  "entity": "sensor.tasmota_energy_yesterday",
+                  "graph": "line",
+                  "entity": "sensor.thermometre_humidite",
                   "detail": 1,
-                  "name": "Puissance 24h",
+                  "name": "Humidité bureau",
+                  "hours_to_show": 24,
                   "layout_options": {
                     "grid_columns": 2,
                     "grid_rows": 2
-                  },
-                  "hours_to_show": 168
+                  }
                 },
                 {
-                  "graph": "line",
-                  "type": "sensor",
-                  "entity": "sensor.tasmota_energy_today",
+                  "type": "tile",
+                  "entity": "input_boolean.ventilation_auto_bureau",
+                  "name": "Ventilation auto",
+                  "icon": "mdi:fan-auto",
+                  "color": "green",
+                  "features": [
+                    {
+                      "type": "toggle"
+                    }
+                  ],
+                  "layout_options": {
+                    "grid_columns": 2,
+                    "grid_rows": 1
+                  }
+                },
+                {
+                  "type": "tile",
+                  "entity": "input_number.vitesse_ventilateur_bureau",
+                  "name": "Vitesse ventilateur",
+                  "icon": "mdi:fan",
+                  "color": "cyan",
+                  "features": [
+                    {
+                      "type": "numeric-input",
+                      "style": "buttons"
+                    }
+                  ],
+                  "layout_options": {
+                    "grid_columns": 2,
+                    "grid_rows": 1
+                  }
+                }
+              ]
+            },
+            {
+              "type": "grid",
+              "column_span": 1,
+              "cards": [
+                {
+                  "type": "heading",
+                  "heading": "Stockage & sécurité UNVR",
+                  "icon": "mdi:nas",
+                  "badges": [
+                    {
+                      "type": "entity",
+                      "entity": "sensor.unvr_recording_capacity"
+                    }
+                  ]
+                },
+                {
+                  "type": "glance",
+                  "title": "État des disques",
+                  "show_state": true,
+                  "state_color": true,
+                  "columns": 4,
+                  "entities": [
+                    {
+                      "entity": "binary_sensor.unvr_hdd_1",
+                      "name": "HDD 1"
+                    },
+                    {
+                      "entity": "binary_sensor.unvr_hdd_2",
+                      "name": "HDD 2"
+                    },
+                    {
+                      "entity": "binary_sensor.unvr_hdd_3",
+                      "name": "HDD 3"
+                    },
+                    {
+                      "entity": "binary_sensor.unvr_hdd_4",
+                      "name": "HDD 4"
+                    }
+                  ]
+                },
+                {
+                  "type": "gauge",
+                  "entity": "sensor.unvr_storage_utilization",
+                  "name": "Stockage utilisé",
+                  "needle": true,
+                  "layout_options": {
+                    "grid_columns": 2,
+                    "grid_rows": 3
+                  },
+                  "min": 0,
+                  "max": 100
+                },
+                {
+                  "type": "tile",
+                  "entity": "sensor.unvr_recording_capacity",
+                  "name": "Capacité enreg.",
+                  "icon": "mdi:record-rec",
+                  "color": "blue",
+                  "layout_options": {
+                    "grid_columns": 2,
+                    "grid_rows": 2
+                  }
+                },
+                {
+                  "type": "alarm-panel",
+                  "name": "Alarme UNVR",
+                  "entity": "alarm_control_panel.bureau_unvr_alarm_manager",
+                  "states": [
+                    "arm_away",
+                    "arm_home"
+                  ]
+                },
+                {
+                  "type": "tile",
+                  "entity": "select.bureau_unvr_profil_de_l_alarme",
+                  "name": "Profil d'alarme",
+                  "icon": "mdi:shield-account",
+                  "color": "red",
                   "layout_options": {
                     "grid_columns": 4,
                     "grid_rows": 1
-                  },
-                  "hours_to_show": 168,
-                  "detail": 1
-                },
-                {
-                  "type": "sensor",
-                  "entity": "sensor.ewelink_snzb_02p_temperature",
-                  "graph": "line",
-                  "detail": 1,
-                  "name": "Température baie"
-                },
-                {
-                  "type": "sensor",
-                  "entity": "sensor.ewelink_snzb_02p_humidite",
-                  "graph": "line",
-                  "detail": 1,
-                  "name": "Humidité baie"
+                  }
                 }
-              ],
-              "column_span": 1
+              ]
+            },
+            {
+              "type": "grid",
+              "column_span": 1,
+              "cards": [
+                {
+                  "type": "heading",
+                  "heading": "Consommation homelab",
+                  "icon": "mdi:server-network",
+                  "badges": [
+                    {
+                      "type": "entity",
+                      "entity": "sensor.tasmota_energy_power",
+                      "color": "red",
+                      "name": "Puissance"
+                    }
+                  ]
+                },
+                {
+                  "type": "gauge",
+                  "entity": "sensor.tasmota_energy_power",
+                  "name": "Puissance homelab",
+                  "unit": "W",
+                  "needle": true,
+                  "min": 0,
+                  "max": 1000,
+                  "severity": {
+                    "green": 0,
+                    "yellow": 500,
+                    "red": 800
+                  },
+                  "layout_options": {
+                    "grid_columns": 2,
+                    "grid_rows": 3
+                  }
+                },
+                {
+                  "type": "sensor",
+                  "graph": "line",
+                  "entity": "sensor.tasmota_energy_power",
+                  "detail": 1,
+                  "name": "Puissance (24h)",
+                  "hours_to_show": 24,
+                  "layout_options": {
+                    "grid_columns": 2,
+                    "grid_rows": 3
+                  }
+                },
+                {
+                  "type": "tile",
+                  "entity": "sensor.tasmota_energy_today",
+                  "name": "Aujourd'hui",
+                  "icon": "mdi:calendar-today",
+                  "color": "blue",
+                  "layout_options": {
+                    "grid_columns": 2,
+                    "grid_rows": 1
+                  }
+                },
+                {
+                  "type": "tile",
+                  "entity": "sensor.tasmota_energy_total",
+                  "name": "Total cumulé",
+                  "icon": "mdi:counter",
+                  "color": "indigo",
+                  "layout_options": {
+                    "grid_columns": 2,
+                    "grid_rows": 1
+                  }
+                },
+                {
+                  "type": "glance",
+                  "title": "Détail par équipement",
+                  "show_state": true,
+                  "state_color": true,
+                  "columns": 4,
+                  "entities": [
+                    {
+                      "entity": "sensor.smart_plug_mini_puissance",
+                      "name": "Serveur Docker"
+                    },
+                    {
+                      "entity": "sensor.nas_puissance",
+                      "name": "UNVR"
+                    },
+                    {
+                      "entity": "sensor.switch_poe_puissance",
+                      "name": "Switch PoE"
+                    },
+                    {
+                      "entity": "sensor.firewall_puissance",
+                      "name": "Firewall"
+                    },
+                    {
+                      "entity": "sensor.freebox_puissance",
+                      "name": "Freebox"
+                    },
+                    {
+                      "entity": "sensor.homelab_autres_non_mesures",
+                      "name": "Autres"
+                    }
+                  ]
+                }
+              ]
             }
           ]
         },
@@ -431,20 +1255,6 @@
                       "entity": "sensor.thermostat_chambre_parentale_batterie"
                     }
                   ]
-                },
-                {
-                  "type": "tile",
-                  "entity": "light.yeelight_colora_0xeda9237",
-                  "name": "Lumière",
-                  "features": [
-                    {
-                      "type": "light-color-temp"
-                    }
-                  ],
-                  "layout_options": {
-                    "grid_columns": 4,
-                    "grid_rows": 2
-                  }
                 },
                 {
                   "type": "tile",
@@ -545,6 +1355,24 @@
                   }
                 },
                 {
+                  "type": "tile",
+                  "entity": "cover.volet_roulant_leo",
+                  "name": "Volet roulant",
+                  "icon": "mdi:roller-shade",
+                  "features": [
+                    {
+                      "type": "cover-open-close"
+                    },
+                    {
+                      "type": "cover-position"
+                    }
+                  ],
+                  "layout_options": {
+                    "grid_columns": 4,
+                    "grid_rows": 2
+                  }
+                },
+                {
                   "type": "sensor",
                   "graph": "line",
                   "entity": "sensor.sonoff_snzb_02d_temperature_3",
@@ -631,56 +1459,145 @@
           "sections": [
             {
               "type": "grid",
+              "column_span": 1,
               "cards": [
                 {
                   "type": "heading",
-                  "heading": "Salle d'eau",
+                  "heading": "Chauffage",
+                  "icon": "mdi:radiator",
                   "badges": [
                     {
                       "type": "entity",
-                      "entity": "sensor.sonoff_snzb_02d_batterie_2"
+                      "entity": "sensor.chauffage_fil_pilote_demande_instantanee",
+                      "name": "Puissance"
+                    },
+                    {
+                      "type": "entity",
+                      "entity": "sensor.chauffage_fil_pilote_consommation",
+                      "name": "Conso"
                     }
                   ]
                 },
                 {
                   "type": "tile",
                   "entity": "switch.chauffage_fil_pilote",
-                  "features_position": "bottom",
-                  "vertical": false,
                   "name": "Chauffage",
-                  "icon": "mdi:radiator"
+                  "icon": "mdi:radiator",
+                  "color": "primary",
+                  "features": [
+                    {
+                      "type": "toggle"
+                    }
+                  ],
+                  "layout_options": {
+                    "grid_columns": 4,
+                    "grid_rows": 1
+                  }
                 },
                 {
                   "type": "tile",
                   "entity": "select.chauffage_fil_pilote_mode_du_fil_pilote",
-                  "name": "Mode"
-                },
-                {
-                  "type": "tile",
-                  "entity": "sensor.chauffage_fil_pilote_consommation",
-                  "name": "Consommation"
+                  "name": "Mode",
+                  "icon": "mdi:tune",
+                  "layout_options": {
+                    "grid_columns": 2,
+                    "grid_rows": 1
+                  }
                 },
                 {
                   "type": "tile",
                   "entity": "sensor.chauffage_fil_pilote_demande_instantanee",
-                  "name": "Puissance instantanée"
+                  "name": "Puissance",
+                  "icon": "mdi:flash",
+                  "color": "amber",
+                  "layout_options": {
+                    "grid_columns": 2,
+                    "grid_rows": 1
+                  }
                 },
                 {
-                  "type": "sensor",
-                  "graph": "line",
-                  "entity": "sensor.sonoff_snzb_02d_temperature_2",
-                  "detail": 1,
-                  "name": "Température"
+                  "type": "history-graph",
+                  "title": "Puissance chauffage (24 h)",
+                  "hours_to_show": 24,
+                  "entities": [
+                    {
+                      "entity": "sensor.chauffage_fil_pilote_demande_instantanee",
+                      "name": "Puissance"
+                    }
+                  ]
                 },
                 {
-                  "type": "sensor",
-                  "graph": "line",
-                  "entity": "sensor.sonoff_snzb_02d_humidite_2",
-                  "detail": 1,
-                  "name": "Humidité"
+                  "type": "entities",
+                  "title": "Programmation automatique",
+                  "state_color": true,
+                  "show_header_toggle": false,
+                  "entities": [
+                    {
+                      "entity": "automation.06_45_allumer_chauffage_salle_d_eau",
+                      "name": "Allumage matin"
+                    },
+                    {
+                      "entity": "automation.07_15_eteindre_chauffage_salle_d_eau",
+                      "name": "Extinction matin"
+                    }
+                  ]
                 }
-              ],
-              "column_span": 1
+              ]
+            },
+            {
+              "type": "grid",
+              "column_span": 1,
+              "cards": [
+                {
+                  "type": "heading",
+                  "heading": "Confort / Climat",
+                  "icon": "mdi:home-thermometer-outline",
+                  "badges": [
+                    {
+                      "type": "entity",
+                      "entity": "sensor.sonoff_snzb_02d_batterie_2",
+                      "name": "Capteur"
+                    }
+                  ]
+                },
+                {
+                  "type": "tile",
+                  "entity": "sensor.sonoff_snzb_02d_temperature_2",
+                  "name": "Température",
+                  "icon": "mdi:thermometer",
+                  "color": "orange",
+                  "layout_options": {
+                    "grid_columns": 2,
+                    "grid_rows": 1
+                  }
+                },
+                {
+                  "type": "tile",
+                  "entity": "sensor.sonoff_snzb_02d_humidite_2",
+                  "name": "Humidité",
+                  "icon": "mdi:water-percent",
+                  "color": "cyan",
+                  "layout_options": {
+                    "grid_columns": 2,
+                    "grid_rows": 1
+                  }
+                },
+                {
+                  "type": "history-graph",
+                  "title": "Température & Humidité (24 h)",
+                  "hours_to_show": 24,
+                  "entities": [
+                    {
+                      "entity": "sensor.sonoff_snzb_02d_temperature_2",
+                      "name": "Température"
+                    },
+                    {
+                      "entity": "sensor.sonoff_snzb_02d_humidite_2",
+                      "name": "Humidité"
+                    }
+                  ]
+                }
+              ]
             }
           ]
         },
@@ -692,53 +1609,168 @@
           "sections": [
             {
               "type": "grid",
+              "column_span": 1,
               "cards": [
                 {
                   "type": "heading",
-                  "heading": "Salle de bain",
+                  "heading": "Confort / Climat",
+                  "icon": "mdi:thermostat",
                   "badges": [
                     {
                       "type": "entity",
-                      "entity": "sensor.sonoff_snzb_02d_batterie"
+                      "entity": "sensor.sonoff_trvzb_action_cvc_3",
+                      "name": "CVC"
                     },
                     {
                       "type": "entity",
-                      "entity": "sensor.sonoff_trvzb_batterie_3"
+                      "entity": "sensor.sonoff_trvzb_batterie_3",
+                      "name": "Vanne"
+                    },
+                    {
+                      "type": "entity",
+                      "entity": "sensor.sonoff_snzb_02d_batterie",
+                      "name": "Capteur"
+                    }
+                  ]
+                },
+                {
+                  "type": "thermostat",
+                  "entity": "climate.sonoff_trvzb_thermostat_3",
+                  "name": "Thermostat"
+                },
+                {
+                  "type": "tile",
+                  "entity": "sensor.sonoff_snzb_02d_temperature",
+                  "name": "Température",
+                  "icon": "mdi:thermometer",
+                  "color": "orange",
+                  "layout_options": {
+                    "grid_columns": 2,
+                    "grid_rows": 1
+                  }
+                },
+                {
+                  "type": "tile",
+                  "entity": "sensor.sonoff_snzb_02d_humidite",
+                  "name": "Humidité",
+                  "icon": "mdi:water-percent",
+                  "color": "cyan",
+                  "layout_options": {
+                    "grid_columns": 2,
+                    "grid_rows": 1
+                  }
+                },
+                {
+                  "type": "tile",
+                  "entity": "button.thermostat_mode_boost_3",
+                  "name": "Boost",
+                  "icon": "mdi:rocket-launch",
+                  "color": "red",
+                  "layout_options": {
+                    "grid_columns": 2,
+                    "grid_rows": 1
+                  }
+                },
+                {
+                  "type": "tile",
+                  "entity": "switch.thermostat_fenetre_ouverte_3",
+                  "name": "Fenêtre ouverte",
+                  "icon": "mdi:window-open-variant",
+                  "layout_options": {
+                    "grid_columns": 2,
+                    "grid_rows": 1
+                  }
+                },
+                {
+                  "type": "history-graph",
+                  "title": "Température & Humidité (24 h)",
+                  "hours_to_show": 24,
+                  "entities": [
+                    {
+                      "entity": "sensor.sonoff_snzb_02d_temperature",
+                      "name": "Température"
+                    },
+                    {
+                      "entity": "sensor.sonoff_snzb_02d_humidite",
+                      "name": "Humidité"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "grid",
+              "column_span": 1,
+              "cards": [
+                {
+                  "type": "heading",
+                  "heading": "Eau chaude sanitaire",
+                  "icon": "mdi:water-boiler",
+                  "badges": [
+                    {
+                      "type": "entity",
+                      "entity": "sensor.shellyplus1pm_78ee4cc98a34_puissance",
+                      "name": "Puissance"
+                    },
+                    {
+                      "type": "entity",
+                      "entity": "sensor.shellyplus1pm_78ee4cc98a34_energie",
+                      "name": "Conso totale"
                     }
                   ]
                 },
                 {
                   "type": "tile",
-                  "entity": "climate.sonoff_trvzb_thermostat_3",
-                  "show_entity_picture": false,
-                  "name": "Thermostat",
+                  "entity": "switch.shellyplus1pm_78ee4cc98a34",
+                  "name": "Chauffe-eau",
+                  "icon": "mdi:water-boiler",
                   "color": "primary",
                   "features": [
                     {
-                      "type": "target-temperature"
+                      "type": "toggle"
                     }
                   ],
                   "layout_options": {
                     "grid_columns": 4,
-                    "grid_rows": 2
+                    "grid_rows": 1
+                  }
+                },
+                {
+                  "type": "tile",
+                  "entity": "schedule.planning_chauffe_eau",
+                  "name": "Planning hebdomadaire",
+                  "icon": "mdi:calendar-clock",
+                  "color": "indigo",
+                  "layout_options": {
+                    "grid_columns": 2,
+                    "grid_rows": 1
+                  }
+                },
+                {
+                  "type": "tile",
+                  "entity": "input_boolean.chauffe_eau_absence",
+                  "name": "Absence / Vacances",
+                  "icon": "mdi:home-export-outline",
+                  "color": "red",
+                  "features": [
+                    {
+                      "type": "toggle"
+                    }
+                  ],
+                  "layout_options": {
+                    "grid_columns": 2,
+                    "grid_rows": 1
                   }
                 },
                 {
                   "type": "sensor",
                   "graph": "line",
-                  "entity": "sensor.sonoff_snzb_02d_temperature",
-                  "detail": 1,
-                  "name": "Température"
-                },
-                {
-                  "type": "sensor",
-                  "graph": "line",
-                  "entity": "sensor.sonoff_snzb_02d_humidite",
-                  "detail": 1,
-                  "name": "Humidité"
+                  "entity": "sensor.shellyplus1pm_78ee4cc98a34_puissance",
+                  "detail": 2,
+                  "name": "Puissance chauffe-eau",
+                  "hours_to_show": 24
                 }
-              ],
-              "column_span": 1
+              ]
             }
           ]
         },
@@ -750,33 +1782,149 @@
           "sections": [
             {
               "type": "grid",
+              "column_span": 1,
               "cards": [
                 {
                   "type": "heading",
                   "heading": "Cellier",
+                  "icon": "mdi:home-thermometer-outline",
                   "badges": [
                     {
                       "type": "entity",
-                      "entity": "sensor.sonoff_snzb_02d_batterie_5"
+                      "entity": "sensor.sonoff_snzb_02d_batterie_5",
+                      "name": "Capteur"
                     }
                   ]
                 },
                 {
-                  "graph": "line",
-                  "type": "sensor",
+                  "type": "tile",
                   "entity": "sensor.sonoff_snzb_02d_temperature_5",
-                  "detail": 1,
-                  "name": "Température"
+                  "name": "Température",
+                  "icon": "mdi:thermometer",
+                  "color": "orange",
+                  "layout_options": {
+                    "grid_columns": 2,
+                    "grid_rows": 1
+                  }
                 },
                 {
-                  "graph": "line",
-                  "type": "sensor",
+                  "type": "tile",
                   "entity": "sensor.sonoff_snzb_02d_humidite_5",
-                  "detail": 1,
-                  "name": "Humidité"
+                  "name": "Humidité",
+                  "icon": "mdi:water-percent",
+                  "color": "cyan",
+                  "layout_options": {
+                    "grid_columns": 2,
+                    "grid_rows": 1
+                  }
+                },
+                {
+                  "type": "gauge",
+                  "entity": "sensor.sonoff_snzb_02d_humidite_5",
+                  "name": "Humidité",
+                  "unit": "%",
+                  "needle": true,
+                  "min": 0,
+                  "max": 100,
+                  "severity": {
+                    "green": 0,
+                    "yellow": 65,
+                    "red": 75
+                  }
+                },
+                {
+                  "type": "history-graph",
+                  "title": "Température & Humidité (24 h)",
+                  "hours_to_show": 24,
+                  "entities": [
+                    {
+                      "entity": "sensor.sonoff_snzb_02d_temperature_5",
+                      "name": "Température"
+                    },
+                    {
+                      "entity": "sensor.sonoff_snzb_02d_humidite_5",
+                      "name": "Humidité"
+                    }
+                  ]
                 }
-              ],
-              "column_span": 1
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Cave",
+          "path": "cave",
+          "icon": "mdi:stairs-down",
+          "type": "sections",
+          "sections": [
+            {
+              "type": "grid",
+              "column_span": 1,
+              "cards": [
+                {
+                  "type": "heading",
+                  "heading": "Cave",
+                  "icon": "mdi:home-thermometer-outline",
+                  "badges": [
+                    {
+                      "type": "entity",
+                      "entity": "sensor.ewelink_snzb_02p_batterie",
+                      "name": "Capteur"
+                    }
+                  ]
+                },
+                {
+                  "type": "tile",
+                  "entity": "sensor.ewelink_snzb_02p_temperature",
+                  "name": "Température",
+                  "icon": "mdi:thermometer",
+                  "color": "orange",
+                  "layout_options": {
+                    "grid_columns": 2,
+                    "grid_rows": 1
+                  }
+                },
+                {
+                  "type": "tile",
+                  "entity": "sensor.ewelink_snzb_02p_humidite",
+                  "name": "Humidité",
+                  "icon": "mdi:water-percent",
+                  "color": "cyan",
+                  "layout_options": {
+                    "grid_columns": 2,
+                    "grid_rows": 1
+                  }
+                },
+                {
+                  "type": "gauge",
+                  "entity": "sensor.ewelink_snzb_02p_humidite",
+                  "name": "Humidité",
+                  "unit": "%",
+                  "needle": true,
+                  "min": 0,
+                  "max": 100,
+                  "severity": {
+                    "green": 0,
+                    "yellow": 65,
+                    "red": 75
+                  }
+                },
+                {
+                  "type": "history-graph",
+                  "title": "Température & Humidité (24 h)",
+                  "hours_to_show": 24,
+                  "entities": [
+                    {
+                      "entity": "sensor.ewelink_snzb_02p_temperature",
+                      "name": "Température"
+                    },
+                    {
+                      "entity": "sensor.ewelink_snzb_02p_humidite",
+                      "name": "Humidité"
+                    }
+                  ]
+                }
+              ]
             }
           ]
         },

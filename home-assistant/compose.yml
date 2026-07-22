@@ -13,7 +13,13 @@ services:
       - /opt/docker/home-assistant/config:/config
       - /etc/localtime:/etc/localtime:ro
       - /run/dbus:/run/dbus:ro
-      - /dev/ttyUSB0:/dev/ttyUSB0
+    # Zigbee dongle mapped via stable by-id path as a device (not a volume bind).
+    # A volume bind silently creates an empty DIRECTORY when the node is missing at
+    # boot (Docker starts before udev enumerates USB), which then blocks the real
+    # char device and breaks ZHA with "[Errno 21] Is a directory". `devices:` instead
+    # fails fast and retries via restart policy until the node exists.
+    devices:
+      - /dev/serial/by-id/usb-ITead_Sonoff_Zigbee_3.0_USB_Dongle_Plus_16f8365619b6ed1180a7da0ea8669f5d-if00-port0:/dev/ttyUSB0
     restart: unless-stopped
     # Note: no-new-privileges not set — privileged mode required for device control
     deploy:
@@ -39,8 +45,11 @@ services:
       retries: 3
       start_period: 60s
     labels:
-      # Watchtower automatic update
-      - com.centurylinklabs.watchtower.enable=true
+      # Watchtower auto-update DISABLED for HA: it recreates the container outside of
+      # compose (losing device passthrough / depends_on) and HA `stable` can ship
+      # breaking changes. Update deliberately: `docker compose pull && docker compose up -d`.
+      # (Incident 2026-07-11: Watchtower recreation orphaned the container -> 502.)
+      - com.centurylinklabs.watchtower.enable=false
 
     # Host network required for direct LAN access (Broadlink UDP, mDNS, device discovery)
     # Traefik routing handled via file provider (traefik/config/home-assistant.yml)
@@ -80,6 +89,9 @@ services:
       timeout: 10s
       retries: 3
       start_period: 10s
+    labels:
+      # Excluded from Watchtower alongside HA (stateful broker; update with the stack).
+      - com.centurylinklabs.watchtower.enable=false
     networks:
       lan:
 
@@ -110,6 +122,10 @@ services:
       timeout: 10s
       retries: 3
       start_period: 30s
+
+    labels:
+      # Excluded from Watchtower alongside HA (Matter fabric state; update with the stack).
+      - com.centurylinklabs.watchtower.enable=false
 
     # Force CHIP SDK to use the real LAN interface for mDNS (not a Docker bridge)
     command: --storage-path /data --paa-root-cert-dir /data/credentials --primary-interface ens18

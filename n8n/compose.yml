@@ -50,6 +50,8 @@ services:
         max-file: "3"
     volumes:
       - n8n_data:/home/node/.n8n
+      # Downtify playlist library (read-only) for "Downtify → Plex Playlists Auto-Import"
+      - /mnt/media/musics:/musics:ro
     environment:
       - TZ=Europe/Paris
       - DB_TYPE=postgresdb

@@ -206,40 +206,43 @@ services:
       - lan
       - backend
 
-  paperless-ai:
-    container_name: paperless-ai
-    image: clusterzx/paperless-ai:latest
-    restart: unless-stopped
-    security_opt:
-      - no-new-privileges:true
-    deploy:
-      resources:
-        limits:
-          memory: 1G
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
-    volumes:
-      - paperless_ai_data:/app/data
-    environment:
-      - PUID=1000
-      - PGID=1000
-      - PAPERLESS_AI_PORT=3000
-    depends_on:
-      webserver:
-        condition: service_healthy
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.paperless-ai.entrypoints=websecure"
-      - "traefik.http.routers.paperless-ai.rule=Host(`paperless-ai.${DOMAIN}`)"
-      - "traefik.http.services.paperless-ai.loadBalancer.server.port=3000"
-      - "traefik.http.routers.paperless-ai.middlewares=tinyauth@docker"
-      - "com.centurylinklabs.watchtower.enable=true"
-    networks:
-      - lan
-      - backend
+  # paperless-ai: disabled 2026-06-19 — misconfigured (invalid CUSTOM_MODEL=openrouter/free,
+  # all ACTIVATE_* actions off) so it enriched nothing while error-looping every 30 min.
+  # Data volume (paperless_ai_data) retained. Re-enable after setting a valid model + enabling actions.
+  # paperless-ai:
+  #   container_name: paperless-ai
+  #   image: clusterzx/paperless-ai:latest
+  #   restart: unless-stopped
+  #   security_opt:
+  #     - no-new-privileges:true
+  #   deploy:
+  #     resources:
+  #       limits:
+  #         memory: 1G
+  #   logging:
+  #     driver: json-file
+  #     options:
+  #       max-size: "10m"
+  #       max-file: "3"
+  #   volumes:
+  #     - paperless_ai_data:/app/data
+  #   environment:
+  #     - PUID=1000
+  #     - PGID=1000
+  #     - PAPERLESS_AI_PORT=3000
+  #   depends_on:
+  #     webserver:
+  #       condition: service_healthy
+  #   labels:
+  #     - "traefik.enable=true"
+  #     - "traefik.http.routers.paperless-ai.entrypoints=websecure"
+  #     - "traefik.http.routers.paperless-ai.rule=Host(`paperless-ai.${DOMAIN}`)"
+  #     - "traefik.http.services.paperless-ai.loadBalancer.server.port=3000"
+  #     - "traefik.http.routers.paperless-ai.middlewares=tinyauth@docker"
+  #     - "com.centurylinklabs.watchtower.enable=true"
+  #   networks:
+  #     - lan
+  #     - backend
 
 volumes:
   pg_data:

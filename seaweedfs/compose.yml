@@ -1,0 +1,70 @@
+name: seaweedfs
+
+services:
+  seaweedfs:
+    image: chrislusf/seaweedfs:latest
+    container_name: seaweedfs
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    command: >
+      server
+      -dir=/data
+      -master.volumeSizeLimitMB=1024
+      -filer
+      -filer.dirListLimit=10000
+      -s3
+      -s3.port=8333
+      -volume.max=0
+    environment:
+      - TZ=Europe/Paris
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    volumes:
+      - ./data:/data
+      - ./filerdata:/data/filerldb2
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:9333/cluster/status || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    labels:
+      - "traefik.enable=true"
+
+      # Filer Web UI (main user-facing interface)
+      - "traefik.http.routers.seaweedfs.entrypoints=websecure"
+      - "traefik.http.routers.seaweedfs.rule=Host(`seaweedfs.${DOMAIN}`)"
+      - "traefik.http.routers.seaweedfs.service=seaweedfs"
+      - "traefik.http.services.seaweedfs.loadBalancer.server.port=8888"
+      - "traefik.http.routers.seaweedfs.middlewares=tinyauth@docker"
+
+      # Master UI on a separate subdomain
+      - "traefik.http.routers.seaweedfs-master.entrypoints=websecure"
+      - "traefik.http.routers.seaweedfs-master.rule=Host(`seaweedfs-master.${DOMAIN}`)"
+      - "traefik.http.routers.seaweedfs-master.service=seaweedfs-master"
+      - "traefik.http.services.seaweedfs-master.loadBalancer.server.port=9333"
+      - "traefik.http.routers.seaweedfs-master.middlewares=tinyauth@docker"
+
+      # S3 API endpoint (no tinyauth — uses S3 signature auth or anonymous depending on config)
+      - "traefik.http.routers.seaweedfs-s3.entrypoints=websecure"
+      - "traefik.http.routers.seaweedfs-s3.rule=Host(`s3.${DOMAIN}`)"
+      - "traefik.http.routers.seaweedfs-s3.service=seaweedfs-s3"
+      - "traefik.http.services.seaweedfs-s3.loadBalancer.server.port=8333"
+
+      # Watchtower automatic update
+      - "com.centurylinklabs.watchtower.enable=true"
+
+    networks:
+      lan:
+
+networks:
+  lan:
+    external: true

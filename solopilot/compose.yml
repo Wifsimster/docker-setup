@@ -1,9 +1,9 @@
-name: x-ai-weekly-bot
+name: solopilot
 
 services:
-  x-ai-weekly-bot:
-    image: ghcr.io/wifsimster/x-ai-weekly-bot:latest
-    container_name: x-ai-weekly-bot
+  solopilot:
+    image: ghcr.io/wifsimster/solopilot:latest
+    container_name: solopilot
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
@@ -32,9 +32,9 @@ services:
       start_period: 10s
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.x-ai-weekly-bot.entrypoints=websecure"
-      - "traefik.http.routers.x-ai-weekly-bot.rule=Host(`x-ai-weekly-bot.${DOMAIN}`)"
-      - "traefik.http.services.x-ai-weekly-bot.loadBalancer.server.port=3000"
+      - "traefik.http.routers.solopilot.entrypoints=websecure"
+      - "traefik.http.routers.solopilot.rule=Host(`solopilot.${DOMAIN}`) || Host(`x-ai-weekly-bot.${DOMAIN}`)"
+      - "traefik.http.services.solopilot.loadBalancer.server.port=3000"
     cap_drop:
       - ALL
     networks:
@@ -42,6 +42,8 @@ services:
 
 volumes:
   bot-data:
+    name: solopilot_bot-data
+    external: true
 
 networks:
   lan:
