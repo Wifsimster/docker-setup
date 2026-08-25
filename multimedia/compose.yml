@@ -1,6 +1,59 @@
 name: multimedia
 
 services:
+  cleanuparr:
+    image: ghcr.io/cleanuparr/cleanuparr:latest
+    container_name: cleanuparr
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+      - PORT=11011
+      - UMASK=002
+    volumes:
+      - ${CLEANUPARR_CONFIG_PATH}:/config
+      # Needed for the hardlink / orphaned-file checks — same paths as the arrs see
+      - ${DOWNLOADS_LOCATION}:/data/downloads
+      - ${MUSIC_LOCATION}:/data/music
+      - ${TV_SHOWS_LOCATION}:/data/tv-shows
+      - ${MOVIES_LOCATION}:/data/movies
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11011/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    labels:
+      - "traefik.enable=true"
+
+      # Entrypoint
+      - "traefik.http.routers.cleanuparr.entrypoints=websecure"
+
+      # Router
+      - "traefik.http.routers.cleanuparr.rule=Host(`cleanuparr.${DOMAIN}`)"
+
+      # Service
+      - "traefik.http.services.cleanuparr.loadBalancer.server.port=11011"
+      - "traefik.http.routers.cleanuparr.middlewares=tinyauth@docker"
+
+      # Watchtower automatic update
+      - "com.centurylinklabs.watchtower.enable=true"
+
+    networks:
+      lan:
+
   lidarr:
     image: ghcr.io/linuxserver/lidarr:latest
     container_name: lidarr

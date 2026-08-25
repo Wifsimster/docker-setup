@@ -1045,91 +1045,21 @@
     target:
       entity_id: switch.prise_machine_a_laver
   mode: single
-- id: canicule_maison_aeration_ouvrir
-  alias: 'Canicule Maison - Aération nocturne : ouvrir volets à 20%'
-  description: 'Mode canicule : la nuit, si l''extérieur est plus frais que l''intérieur
-    et qu''il fait encore chaud, ouvre TOUS les volets de la maison (Sonoff + Tahoma)
-    à 20% pour laisser entrer l''air frais. Notifie Damien et Christelle.'
+- id: prise_television_toujours_allumee
+  alias: Prise Télévision — toujours allumée
+  description: Rallume automatiquement la prise TV si elle est coupée (bouton physique,
+    retour de coupure secteur, appui accidentel dans HA). Complète le réglage matériel
+    «comportement à la mise sous tension = On».
   triggers:
-  - trigger: state
-    entity_id: binary_sensor.canicule_exterieur_plus_chaud
+  - platform: state
+    entity_id: switch.prise_television
     to: 'off'
-  - trigger: sun
-    event: sunset
-  - trigger: state
-    entity_id: input_boolean.mode_canicule
-    to: 'on'
-  conditions:
-  - condition: state
-    entity_id: input_boolean.mode_canicule
-    state: 'on'
-  - condition: state
-    entity_id: binary_sensor.canicule_exterieur_plus_chaud
-    state: 'off'
-  - condition: state
-    entity_id: sun.sun
-    state: below_horizon
-  - condition: numeric_state
-    entity_id: sensor.thermometre_temperature_5
-    above: 23
+    for:
+      seconds: 10
+  conditions: []
   actions:
-  - action: cover.set_cover_position
-    target:
-      entity_id:
-      - cover.salon_sonoff_mini_zbrbs_nord_1
-      - cover.salon_sonoff_mini_zbrbs_nord_2
-      - cover.salon_sonoff_mini_zbrbs_sud
-      - cover.volet_roulant_bureau
-      - cover.volet_roulant_leo
-    data:
-      position: 20
-  - action: notify.mobile_app_telephone_damien
-    data:
-      title: Volets maison — Canicule
-      message: "\U0001F319 Aération : tous les volets de la maison ouverts à 20 %
-        pour rafraîchir (extérieur {{ states('sensor.ewelink_snzb_02p_temperature_2')
-        }}°C < intérieur {{ states('sensor.thermometre_temperature_5') }}°C)."
-  - action: notify.mobile_app_telephone_christelle
-    data:
-      title: Volets maison — Canicule
-      message: "\U0001F319 Aération : tous les volets de la maison ouverts à 20 %
-        pour rafraîchir (extérieur {{ states('sensor.ewelink_snzb_02p_temperature_2')
-        }}°C < intérieur {{ states('sensor.thermometre_temperature_5') }}°C)."
+  - target:
+      entity_id: switch.prise_television
+    action: switch.turn_on
   mode: single
-- id: canicule_maison_aeration_fermer
-  alias: 'Canicule Maison - Aération nocturne : fermer volets si extérieur plus chaud'
-  description: 'Mode canicule : dès que l''extérieur redevient plus chaud que l''intérieur,
-    referme partiellement TOUS les volets de la maison (10%) pour bloquer la chaleur
-    tout en gardant la lumière. Notifie Damien et Christelle.'
-  triggers:
-  - trigger: state
-    entity_id: binary_sensor.canicule_exterieur_plus_chaud
-    to: 'on'
-  conditions:
-  - condition: state
-    entity_id: input_boolean.mode_canicule
-    state: 'on'
-  actions:
-  - action: cover.set_cover_position
-    target:
-      entity_id:
-      - cover.salon_sonoff_mini_zbrbs_nord_1
-      - cover.salon_sonoff_mini_zbrbs_nord_2
-      - cover.salon_sonoff_mini_zbrbs_sud
-      - cover.volet_roulant_bureau
-      - cover.volet_roulant_leo
-    data:
-      position: 10
-  - action: notify.mobile_app_telephone_damien
-    data:
-      title: Volets maison — Canicule
-      message: '☀️ Fermeture partielle : tous les volets de la maison à 10 % (lumière
-        conservée) — extérieur redevenu plus chaud (ext {{ states(''sensor.ewelink_snzb_02p_temperature_2'')
-        }}°C ≥ int {{ states(''sensor.thermometre_temperature_5'') }}°C).'
-  - action: notify.mobile_app_telephone_christelle
-    data:
-      title: Volets maison — Canicule
-      message: '☀️ Fermeture partielle : tous les volets de la maison à 10 % (lumière
-        conservée) — extérieur redevenu plus chaud (ext {{ states(''sensor.ewelink_snzb_02p_temperature_2'')
-        }}°C ≥ int {{ states(''sensor.thermometre_temperature_5'') }}°C).'
-  mode: single
+  max_exceeded: silent

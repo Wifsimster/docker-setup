@@ -51,12 +51,13 @@ template:
           {% set total = states('sensor.tasmota_energy_power') | float(0) %}
           {% set ns = namespace(s=0) %}
           {% set metered = [
-            'sensor.smart_plug_mini_puissance',
+            'sensor.docker_server_puissance',
             'sensor.nas_puissance',
             'sensor.switch_poe_puissance',
             'sensor.firewall_puissance',
             'sensor.freebox_puissance',
-            'sensor.unvr_puissance'] %}
+            'sensor.unvr_puissance',
+            'sensor.prise_ordinateur_fixe_puissance'] %}
           {% for e in metered %}
             {% set v = states(e) %}
             {% if v not in ['unknown','unavailable','none'] %}
