@@ -37,7 +37,48 @@ services:
     networks:
       lan:
 
+  # Chat backend of the conversational resume (/?ui=alpha), reached only
+  # through the nginx /api/ proxy in the `resume` image -> no traefik router.
+  # Without a provider variable set it answers 503 / live:false and the
+  # frontend silently falls back to its scripted engine.
+  # Published on Docker Hub since PR #31 (release.yml has a second build-push
+  # with `target: chat`), so it pulls and deploys like any other service.
+  chat:
+    image: wifsimster/resume-chat:latest
+    container_name: resume-chat
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    environment:
+      - TZ=Europe/Paris
+      # Option 1 - Google AI Studio (free tier): https://aistudio.google.com/apikey
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - GEMINI_MODEL=${GEMINI_MODEL:-gemini-2.5-flash}
+      # Option 2 - any OpenAI-compatible endpoint (takes precedence when set)
+      - CHAT_API_BASE_URL=${CHAT_API_BASE_URL:-}
+      - CHAT_API_KEY=${CHAT_API_KEY:-}
+      - CHAT_MODEL=${CHAT_MODEL:-}
+      # Conversation logs: one JSONL per day in ./chat-logs (owned by uid 1000,
+      # the container runs as `node`). GET /api/chat/logs stays 404 unless both
+      # CHAT_LOG_DIR and CHAT_ADMIN_TOKEN are set.
+      - CHAT_LOG_DIR=${CHAT_LOG_DIR:-/data/logs}
+      - CHAT_ADMIN_TOKEN=${CHAT_ADMIN_TOKEN:-}
+    volumes:
+      - ./chat-logs:/data/logs
+    networks:
+      lan:
+
 networks:
   lan:
     external: true
-

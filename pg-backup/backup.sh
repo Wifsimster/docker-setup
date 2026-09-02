@@ -1,4 +1,16 @@
 #!/bin/sh
+# =============================================================================
+# pg-backup — nightly pg_dump of every Postgres database on the host (03:00).
+#
+# Dumps land in /backups (-> /opt/docker/pg-backup/backups on the host). That
+# directory sits on the SAME disk as the databases it protects, so it is only
+# half a backup: /opt/docker/state-backup.sh runs at 04:45 and pushes the
+# dumps to the NAS and to the Hetzner borg repo. If you add a database here,
+# you get the offsite copy for free.
+#
+# NOT covered here (SQLite, handled by state-backup.sh): vaultwarden,
+# solopilot, birthday-invitation, home-assistant zigbee.db.
+# =============================================================================
 set -e
 
 DATE=$(date +%Y-%m-%d_%H%M%S)
@@ -17,6 +29,11 @@ toko-postgres|toko|toko|TOKO_DB_PASSWORD
 wawptn-postgres|wawptn|wawptn|WAWPTN_DB_PASSWORD
 koe-db|koe|koe|KOE_DB_PASSWORD
 yamtrack-postgres|yamtrack|yamtrack|YAMTRACK_DB_PASSWORD
+racontine-db|racontine|racontine|RACONTINE_DB_PASSWORD
+umami-db|umami|umami|UMAMI_DB_PASSWORD
+ghostfolio-postgres|ghostfolio|ghostfolio-db|GHOSTFOLIO_DB_PASSWORD
+infisical-db|infisical|infisical|INFISICAL_DB_PASSWORD
+litellm-db|litellm|litellm|LITELLM_DB_PASSWORD
 "
 
 echo "=== PostgreSQL backup started at $(date) ==="

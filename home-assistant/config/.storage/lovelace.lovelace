@@ -123,70 +123,18 @@
                   "icon": "mdi:window-shutter"
                 },
                 {
-                  "type": "horizontal-stack",
-                  "cards": [
+                  "type": "tile",
+                  "entity": "cover.tous_les_volets",
+                  "name": "Tous les volets",
+                  "icon": "mdi:window-shutter",
+                  "layout_options": {
+                    "grid_columns": 4,
+                    "grid_rows": 2
+                  },
+                  "features_position": "bottom",
+                  "features": [
                     {
-                      "type": "button",
-                      "name": "Tout ouvrir",
-                      "icon": "mdi:arrow-up-bold-box",
-                      "show_state": false,
-                      "icon_height": "36px",
-                      "tap_action": {
-                        "action": "perform-action",
-                        "perform_action": "cover.open_cover",
-                        "target": {
-                          "entity_id": [
-                            "cover.salon_sonoff_mini_zbrbs_nord_2",
-                            "cover.salon_sonoff_mini_zbrbs_nord_1",
-                            "cover.salon_sonoff_mini_zbrbs_sud",
-                            "cover.chambre_parentale_sonoff_mini_zbrbs",
-                            "cover.volet_roulant_bureau",
-                            "cover.chambre_anna_sonoff_mini_zbrbs"
-                          ]
-                        }
-                      }
-                    },
-                    {
-                      "type": "button",
-                      "name": "Stop",
-                      "icon": "mdi:stop",
-                      "show_state": false,
-                      "icon_height": "36px",
-                      "tap_action": {
-                        "action": "perform-action",
-                        "perform_action": "cover.stop_cover",
-                        "target": {
-                          "entity_id": [
-                            "cover.salon_sonoff_mini_zbrbs_nord_2",
-                            "cover.salon_sonoff_mini_zbrbs_nord_1",
-                            "cover.salon_sonoff_mini_zbrbs_sud",
-                            "cover.chambre_parentale_sonoff_mini_zbrbs",
-                            "cover.volet_roulant_bureau",
-                            "cover.chambre_anna_sonoff_mini_zbrbs"
-                          ]
-                        }
-                      }
-                    },
-                    {
-                      "type": "button",
-                      "name": "Tout fermer",
-                      "icon": "mdi:arrow-down-bold-box",
-                      "show_state": false,
-                      "icon_height": "36px",
-                      "tap_action": {
-                        "action": "perform-action",
-                        "perform_action": "cover.close_cover",
-                        "target": {
-                          "entity_id": [
-                            "cover.salon_sonoff_mini_zbrbs_nord_2",
-                            "cover.salon_sonoff_mini_zbrbs_nord_1",
-                            "cover.salon_sonoff_mini_zbrbs_sud",
-                            "cover.chambre_parentale_sonoff_mini_zbrbs",
-                            "cover.volet_roulant_bureau",
-                            "cover.chambre_anna_sonoff_mini_zbrbs"
-                          ]
-                        }
-                      }
+                      "type": "cover-open-close"
                     }
                   ]
                 }

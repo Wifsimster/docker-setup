@@ -28,16 +28,33 @@ services:
       # Optional "respond by" date (YYYY-MM-DD); closes RSVPs once passed.
       - EVENT_RSVP_DEADLINE=${EVENT_RSVP_DEADLINE:-}
       - DB_PATH=/app/data/rsvp.db
-      # Admin login (Better Auth email/password). The account is seeded from
-      # these on first start; BETTER_AUTH_SECRET signs the session cookies and
-      # BETTER_AUTH_URL is the external origin used for cookie/origin scoping.
+      # Bootstrap admin (Better Auth). This account is seeded on first start and
+      # re-granted the admin role on every boot, so the operator can't be locked
+      # out. Everyone else registers themselves and is promoted from /admin.
+      # BETTER_AUTH_SECRET signs the session cookies and BETTER_AUTH_URL is the
+      # external origin used for cookie/origin scoping.
       - ADMIN_EMAIL=${ADMIN_EMAIL}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD}
       - ADMIN_NAME=${ADMIN_NAME:-Admin}
       - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
-      - BETTER_AUTH_URL=${BETTER_AUTH_URL:-https://leo-birthday.${DOMAIN}}
+      - BETTER_AUTH_URL=${BETTER_AUTH_URL:-https://birthday.${DOMAIN}}
+      # Transactional email (Resend SMTP), used for the sign-up verification and
+      # password-reset links. Required: sign-up cannot complete without it, and
+      # the server refuses to start in production when unset.
+      - MAIL_FROM=${MAIL_FROM}
+      - RESEND_API_KEY=${RESEND_API_KEY}
+      - SMTP_HOST=${SMTP_HOST:-smtp.resend.com}
+      - SMTP_PORT=${SMTP_PORT:-465}
+      - SMTP_USER=${SMTP_USER:-resend}
+      # Google sign-in. Leave both blank to hide the button entirely.
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-}
       # Restrict cross-origin API access (comma-separated). Empty = same-origin only.
       - CORS_ORIGIN=${CORS_ORIGIN:-}
+      # Public origin used for canonical / og:url / sitemap links, and the
+      # opt-out that keeps the invitation out of search engines.
+      - PUBLIC_BASE_URL=${PUBLIC_BASE_URL:-https://birthday.${DOMAIN}}
+      - SEO_ALLOW_INDEXING=${SEO_ALLOW_INDEXING:-true}
       # Proxy hops in front of the backend (Traefik -> Node) so that per-IP
       # rate limiting sees the real client address.
       - TRUST_PROXY=${TRUST_PROXY:-1}
@@ -50,7 +67,7 @@ services:
       - "traefik.http.routers.birthday-invitation.entrypoints=websecure"
 
       # Router
-      - "traefik.http.routers.birthday-invitation.rule=Host(`leo-birthday.${DOMAIN}`)"
+      - "traefik.http.routers.birthday-invitation.rule=Host(`birthday.${DOMAIN}`)"
 
       # Service
       - "traefik.http.services.birthday-invitation.loadBalancer.server.port=3000"

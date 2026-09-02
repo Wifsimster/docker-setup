@@ -3,7 +3,11 @@ name: pg-backup
 services:
   pg-backup:
     container_name: pg-backup
-    image: postgres:16-alpine
+    # pg_dump reads OLDER servers but refuses NEWER ones, so this image must
+    # track the highest Postgres major running on the host (racontine-db is 17).
+    # Bump it before upgrading any database, or that database's dump starts
+    # failing with "aborting because of server version mismatch".
+    image: postgres:17-alpine
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
@@ -40,6 +44,11 @@ services:
       wawptn_backend:
       koe_internal:
       yamtrack_backend:
+      racontine_default:
+      umami_backend:
+      ghostfolio_backend:
+      infisical_backend:
+      litellm_backend:
 
 networks:
   lan:
@@ -71,3 +80,18 @@ networks:
   yamtrack_backend:
     external: true
     name: yamtrack_backend
+  racontine_default:
+    external: true
+    name: racontine_default
+  umami_backend:
+    external: true
+    name: umami_backend
+  ghostfolio_backend:
+    external: true
+    name: ghostfolio_backend
+  infisical_backend:
+    external: true
+    name: infisical_backend
+  litellm_backend:
+    external: true
+    name: litellm_backend

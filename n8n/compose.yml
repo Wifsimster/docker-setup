@@ -54,6 +54,7 @@ services:
       - /mnt/media/musics:/musics:ro
     environment:
       - TZ=Europe/Paris
+      - GENERIC_TIMEZONE=Europe/Paris
       - DB_TYPE=postgresdb
       - DB_POSTGRESDB_HOST=n8n-db
       - DB_POSTGRESDB_PORT=5432
@@ -64,6 +65,7 @@ services:
       - N8N_PROTOCOL=https
       - WEBHOOK_URL=https://n8n.${DOMAIN}/
       - N8N_EDITOR_BASE_URL=https://n8n.${DOMAIN}/
+      - JARVIS_PG_PASSWORD=${JARVIS_PG_PASSWORD}
       - NODE_FUNCTION_ALLOW_BUILTIN=*
       - NODE_FUNCTION_ALLOW_EXTERNAL=*
     labels:

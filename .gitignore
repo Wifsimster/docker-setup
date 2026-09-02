@@ -19,6 +19,16 @@
 !litellm/config.yaml
 !pg-backup/backup.sh
 !pg-backup/crontab
+
+# Backup / maintenance scripts. No secrets in them — they source credentials
+# from /root/.borg-photos.env and /root/.borg-discord-webhook at runtime.
+!photos-backup.sh
+!state-backup.sh
+!borg-check.sh
+!ha-config-backup.sh
+!gramps-backup.sh
+!disk-cleanup.sh
+!disk-guard.sh
 !reports/*.md
 !discord-bridge/bot.py
 !discord-bridge/Dockerfile
@@ -31,3 +41,9 @@
 
 # Explicitly exclude homepage config containing secrets
 homepage/config/services.yaml
+
+# Nested application checkouts — each has its own git remote, not ours to
+# vendor. Their .env files are still protected offsite by state-backup.sh.
+the-box/repo/
+printcast/
+battistella-pro/
