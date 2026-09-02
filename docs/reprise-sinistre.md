@@ -7,8 +7,58 @@ Runbook de restauration de l'infrastructure Docker en cas de panne majeure (cras
 - Serveur Debian avec Docker et Docker Compose installés
 - Accès au NAS Unraid (montages NFS sous `/mnt/`)
 - Accès au dépôt Git contenant les fichiers `compose.yml`
-- Dumps PostgreSQL (`pg-backup/backups/*.dump`)
-- Fichiers `.env` de chaque service (stockés séparément, **non versionnés**)
+- **La passphrase borg** — sans elle le dépôt Hetzner est illisible (voir ci-dessous)
+
+## 0. Où sont les sauvegardes
+
+Trois niveaux, du plus proche au plus résistant :
+
+| Niveau | Emplacement | Contenu | Fréquence |
+|--------|-------------|---------|-----------|
+| Local | `/opt/docker/pg-backup/backups` | 14 dumps PostgreSQL | quotidien 03:00 |
+| Local | `/home/wifsimster/backups` | tarballs gramps + config HA | hebdo dimanche |
+| LAN (NAS) | `/mnt/media/data/backups/` | `postgres/`, `gramps/`, `home-assistant/` | quotidien / hebdo |
+| **Hors site** | dépôt borg Hetzner Storage Box | **tout ce qui compte** | quotidien 04:45 |
+
+Le dépôt hors site contient deux familles d'archives, prunées indépendamment :
+
+- `photos-*` (hebdo, dimanche 02:30) — `/mnt/media/photos` + `pg_dumpall` immich
+- `data-*` (quotidien, 04:45) — dumps PostgreSQL (sauf immich, déjà dans
+  `photos-*`), bases SQLite, `.env` de tous les services, documents Paperless,
+  tarballs gramps/HA
+
+**En cas d'incendie ou de vol, seul le niveau hors site subsiste.** Le serveur
+et le NAS sont dans la même maison.
+
+### ⚠️ Dépendance circulaire à surveiller
+
+La passphrase borg vit dans `/root/.borg-photos.env` et
+`/root/borg-photos-key-paper.txt` — **sur ce serveur**. Elle est aussi dans
+Vaultwarden, dont la sauvegarde est… dans le dépôt borg chiffré par cette même
+passphrase.
+
+Si le serveur disparaît sans qu'une copie de la passphrase existe **ailleurs**
+(papier imprimé rangé hors du domicile, coffre bancaire, autre machine), le
+dépôt Hetzner est définitivement illisible et toutes les sauvegardes hors site
+sont perdues. C'est le seul maillon que l'automatisation ne peut pas couvrir.
+
+### Restaurer depuis le dépôt hors site
+
+```bash
+# Les identifiants du dépôt sont dans /root/.borg-photos.env
+set -a; source /root/.borg-photos.env; set +a
+export BORG_RSH="ssh -i /root/.ssh/hetzner_borg -p 23 -o BatchMode=yes"
+export BORG_REMOTE_PATH=borg-1.2
+
+borg list                          # lister les archives disponibles
+borg list ::data-YYYYMMDD-HHMM     # inspecter le contenu d'une archive
+
+# Extraire (les chemins sont relatifs au répertoire courant)
+mkdir -p /var/tmp/restore && cd /var/tmp/restore
+borg extract ::data-YYYYMMDD-HHMM var/tmp/state-backup-staging   # SQLite + .env
+borg extract ::data-YYYYMMDD-HHMM opt/docker/pg-backup/backups   # dumps PostgreSQL
+borg extract ::data-YYYYMMDD-HHMM mnt/media/documents            # documents Paperless
+```
 
 ## 1. Restaurer le système de base
 
@@ -20,8 +70,11 @@ cd /opt/docker
 # Créer le réseau Docker partagé
 docker network create lan
 
-# Restaurer les fichiers .env pour chaque service
-# (depuis votre stockage sécurisé de secrets)
+# Restaurer les fichiers .env pour chaque service.
+# Ils sont volontairement gitignorés, donc ABSENTS du dépôt cloné ci-dessus.
+# Ils sont en revanche dans chaque archive data-* du dépôt borg :
+#   configs.tar.gz contient tous les /opt/docker/*/.env et compose.yml
+tar -xzf /var/tmp/restore/var/tmp/state-backup-staging/configs.tar.gz -C /opt/docker
 ```
 
 ## 2. Restaurer les montages NFS
@@ -124,10 +177,69 @@ docker exec -i n8n-db pg_restore \
   -U n8n -d n8n --clean --if-exists \
   < pg-backup/backups/n8n_YYYY-MM-DD_HHMMSS.dump
 
-# Langfuse
-docker exec -i langfuse-db pg_restore \
-  -U langfuse -d langfuse --clean --if-exists \
-  < pg-backup/backups/langfuse_YYYY-MM-DD_HHMMSS.dump
+# Racontine
+docker exec -i racontine-db pg_restore \
+  -U racontine -d racontine --clean --if-exists \
+  < pg-backup/backups/racontine_YYYY-MM-DD_HHMMSS.dump
+
+# Umami
+docker exec -i umami-db pg_restore \
+  -U umami -d umami --clean --if-exists \
+  < pg-backup/backups/umami_YYYY-MM-DD_HHMMSS.dump
+
+# Ghostfolio (nom de base avec tiret)
+docker exec -i ghostfolio-postgres pg_restore \
+  -U ghostfolio -d ghostfolio-db --clean --if-exists \
+  < pg-backup/backups/ghostfolio-db_YYYY-MM-DD_HHMMSS.dump
+
+# Koe / Toko / WAWPTN / Yamtrack — même schéma :
+#   docker exec -i <conteneur> pg_restore -U <user> -d <base> --clean --if-exists < <dump>
+```
+
+> **Langfuse a été supprimé le 2026-08-05** (boucle de redémarrages OOM) ; ses
+> anciens dumps ne sont plus produits.
+
+### 4.2 bis Restaurer les bases SQLite
+
+`pg_restore` ne les voit pas. Elles sont dans `data-*/var/tmp/state-backup-staging/sqlite/`.
+**Arrêter le service avant de remplacer le fichier**, et supprimer les `-wal`/`-shm`
+résiduels, sinon SQLite rejouera un journal qui ne correspond plus à la base.
+
+```bash
+SQL=/var/tmp/restore/var/tmp/state-backup-staging/sqlite
+
+# Vaultwarden — le plus critique
+cd /opt/docker/vaultwarden && docker compose down
+rm -f data/db.sqlite3-wal data/db.sqlite3-shm
+cp $SQL/vaultwarden.sqlite3 data/db.sqlite3
+cp $SQL/vaultwarden-rsa_key.pem data/rsa_key.pem   # sans lui, toutes les sessions cassent
+tar -xzf $SQL/vaultwarden-attachments.tar.gz -C data/
+chown -R 1000:1000 data && docker compose up -d
+
+# Home Assistant — réseau Zigbee (ZHA)
+cd /opt/docker/home-assistant && docker compose down
+rm -f config/zigbee.db-wal config/zigbee.db-shm
+cp $SQL/zigbee.sqlite3 config/zigbee.db
+docker compose up -d
+# Sans cette base, il faut ré-appairer tous les équipements Zigbee un par un.
+
+# Solopilot (CRM, factures, compta)
+cd /opt/docker/solopilot && docker compose down
+docker run --rm -v solopilot_bot-data:/d -v $SQL:/s alpine \
+  sh -c 'rm -f /d/bot.db-wal /d/bot.db-shm && cp /s/solopilot.sqlite3 /d/bot.db'
+docker compose up -d
+
+# Birthday invitation (RSVP)
+cd /opt/docker/birthday-invitation && docker compose down
+docker run --rm -v birthday-invitation_birthday_db:/d -v $SQL:/s alpine \
+  sh -c 'rm -f /d/rsvp.db-wal /d/rsvp.db-shm && cp /s/birthday.sqlite3 /d/rsvp.db'
+docker compose up -d
+```
+
+Vérifier chaque base restaurée avant de redémarrer le service :
+
+```bash
+sqlite3 <fichier> "PRAGMA integrity_check;"   # doit répondre exactement "ok"
 ```
 
 > **Note :** Remplacer `YYYY-MM-DD_HHMMSS` par le timestamp du dump le plus récent.
@@ -210,23 +322,69 @@ docker exec pg-backup crontab -l
 docker exec pg-backup sh /backup.sh
 ```
 
-## Données non sauvegardées
+## Couverture des sauvegardes
 
-Les éléments suivants ne sont **pas** couverts par les sauvegardes automatiques et doivent être restaurés manuellement :
+### Couvert automatiquement
+
+| Donnée | Sauvegardé par | Où |
+|--------|----------------|-----|
+| 14 bases PostgreSQL | `pg-backup` (quotidien) | local + NAS + hors site |
+| Vaultwarden (base, clé RSA, pièces jointes) | `state-backup.sh` | hors site |
+| Solopilot, zigbee.db, RSVP birthday | `state-backup.sh` | hors site |
+| Fichiers `.env` de tous les services | `state-backup.sh` (`configs.tar.gz`) | hors site |
+| Documents Paperless | `state-backup.sh` | NAS + hors site |
+| Photos Immich (388 Go) | `photos-backup.sh` (hebdo) | hors site |
+| Config Home Assistant | `ha-config-backup.sh` (hebdo) | NAS + hors site |
+| Gramps | `gramps-backup.sh` (hebdo) | NAS + hors site |
+
+### Non couvert — et pourquoi c'est acceptable
 
 | Donnée | Emplacement | Action |
 |--------|-------------|--------|
-| Fichiers `.env` | Chaque dossier service | Restaurer depuis stockage sécurisé |
-| Config Traefik `acme.json` | `traefik/` | Sera regénéré automatiquement (Let's Encrypt) |
-| Données Redis | Volumes Docker | Pertes acceptables (cache, files d'attente) |
-| Médias Immich | Volume `UPLOAD_LOCATION` | Restaurer depuis NAS/backup externe |
-| Médias Paperless | Volume `paperless_media` | Restaurer depuis NAS (`/mnt/documents`) |
-| Config Home Assistant | Volume monté | Restaurer depuis backup HA intégré |
-| Données Vaultwarden | Volume Docker | **Critique** — restaurer depuis backup externe |
-| Bibliothèque Plex | Volume Docker | Reconstruit par scan (métadonnées perdues) |
+| Passphrase borg | `/root/.borg-photos.env` | ⚠️ **Doit exister hors du domicile** (voir §0) |
+| Config Traefik `acme.json` | `traefik/` | Regénéré automatiquement (Let's Encrypt) |
+| Données Redis | Volumes Docker | Cache et files d'attente, perte acceptable |
+| Historique recorder HA | `home-assistant_v2.db` | Volontairement exclu (~760 Mo de courbes) |
+| Miniatures / transcodes Immich | `thumbs/`, `encoded-video/` | 44 Go regénérés par Immich après restauration |
+| Films / séries / musique | `/mnt/media` | Volumétrie non sauvegardable, re-téléchargeable |
+| Bibliothèque Plex | Volume Docker | Reconstruite par scan (métadonnées perdues) |
+
+## Vérifier que les sauvegardes fonctionnent vraiment
+
+Une sauvegarde jamais relue n'est qu'une hypothèse. Trois contrôles :
+
+```bash
+# 1. Fraîcheur — quand chaque job a-t-il tourné pour la dernière fois ?
+tail -3 /var/log/state-backup.log /var/log/photos-backup.log \
+        /var/log/ha-config-backup.log /var/log/gramps-backup.log
+
+# 2. Intégrité du dépôt (automatique le 1er de chaque mois, alerte Discord)
+/opt/docker/borg-check.sh
+
+# 3. Exercice de restauration — à refaire au moins une fois par an.
+#    Extraire une archive récente et vérifier le contenu SANS rien écraser :
+mkdir -p /var/tmp/drill && cd /var/tmp/drill
+set -a; source /root/.borg-photos.env; set +a
+export BORG_RSH="ssh -i /root/.ssh/hetzner_borg -p 23 -o BatchMode=yes"
+export BORG_REMOTE_PATH=borg-1.2
+borg extract "::$(borg list --short --glob-archives 'data-*' | tail -1)" \
+     var/tmp/state-backup-staging
+sqlite3 var/tmp/state-backup-staging/sqlite/vaultwarden.sqlite3 \
+     "PRAGMA integrity_check; SELECT COUNT(*) FROM ciphers;"
+# Comparer au vault en production : les compteurs doivent correspondre.
+rm -rf /var/tmp/drill
+```
+
+Dernier exercice réalisé : **2026-09-02** — vaultwarden (452 entrées, identique
+à la production), zigbee (24 équipements), solopilot et birthday tous à
+`integrity_check = ok` ; 13 dumps PostgreSQL validés au `pg_restore --list`.
 
 ## Contacts et escalade
 
-- **Alertes Discord** : Les échecs de backup sont notifiés automatiquement via webhook
+- **Alertes Discord** (salon #backups) : `photos-backup`, `state-backup` et
+  `borg-check` notifient succès ET échec ; `pg-backup` notifie uniquement les
+  échecs. `state-backup` alerte aussi si aucun dump PostgreSQL n'a moins de
+  26 h — c'est le garde-fou qui détecte un `crond` mort dans le conteneur
+  `pg-backup`, cas qu'aucune alerte d'échec ne peut signaler.
 - **Uptime Kuma** : Surveillance de disponibilité avec alertes configurées
 - **Beszel** : Alertes système (CPU, RAM, disque) vers Discord

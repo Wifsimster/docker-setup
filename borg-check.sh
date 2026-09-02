@@ -9,7 +9,7 @@
 # --verify-data is deliberately NOT used: it re-downloads every chunk (~230 GB)
 # and would take hours on a home uplink every month. The repository + archive
 # structural check catches the realistic failure modes; the annual proof that
-# the data itself is good is the restore drill (see docs/backups.md).
+# the data itself is good is the restore drill (see docs/reprise-sinistre.md).
 #
 # Shares /var/lock/state-backup.lock with state-backup.sh so the two never hold
 # the repo at once. Installed via root crontab: 30 5 1 * *.
