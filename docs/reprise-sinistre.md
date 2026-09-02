@@ -30,7 +30,7 @@ Le dépôt hors site contient deux familles d'archives, prunées indépendamment
 **En cas d'incendie ou de vol, seul le niveau hors site subsiste.** Le serveur
 et le NAS sont dans la même maison.
 
-### ⚠️ Dépendance circulaire à surveiller
+### ⚠️ Dépendance circulaire à surveiller — suivi : issue #37
 
 La passphrase borg vit dans `/root/.borg-photos.env` et
 `/root/borg-photos-key-paper.txt` — **sur ce serveur**. Elle est aussi dans
