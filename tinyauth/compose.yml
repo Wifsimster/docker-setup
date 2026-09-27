@@ -16,6 +16,13 @@ services:
       - TINYAUTH_AUTH_TRUSTEDPROXIES=10.0.0.0/8,172.16.0.0/12,192.168.0.0/16
       - TINYAUTH_UI_TITLE=Homelab
       - TINYAUTH_LOG_LEVEL=info
+      # IP bypass, limited to what codedev (192.168.0.102, Jarvis/OpenClaw) needs:
+      # Actual Budget (its API client cannot pass Tinyauth; Actual keeps its own
+      # password) and Paperless (token-authenticated). codedev pins these two
+      # hosts to 192.168.0.237 in /etc/hosts so Tinyauth sees its LAN IP.
+      # App ID = subdomain; restart Tinyauth to apply.
+      - TINYAUTH_APPS_ACTUAL_IP_BYPASS=${CODEDEV_IP:-192.168.0.102}
+      - TINYAUTH_APPS_PAPERLESS_IP_BYPASS=${CODEDEV_IP:-192.168.0.102}
     volumes:
       - ./users.txt:/users.txt:ro
     healthcheck:
