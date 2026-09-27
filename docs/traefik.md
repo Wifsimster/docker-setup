@@ -120,6 +120,8 @@ Le cookie est scopé sur `.battistella.ovh`, ce qui permet de réutiliser la mê
 - "traefik.http.routers.<service>.middlewares=tinyauth@docker"
 ```
 
+**Bypass LAN pour codedev (Jarvis)** : la VM `codedev` (192.168.0.102) accède sans login Tinyauth à **Actual Budget** et **Paperless** uniquement, via `TINYAUTH_APPS_<APP>_IP_BYPASS` dans [tinyauth/compose.yml](../tinyauth/compose.yml) (ID d'app = sous-domaine). Ces deux services gardent leur propre authentification (mot de passe Actual, jeton Paperless). Les autres services, et toutes les interfaces d'administration, restent derrière Tinyauth. Pour que Tinyauth voie l'IP LAN et non celle de la box (hairpin NAT), codedev épingle `actual` et `paperless` sur `192.168.0.237` dans son `/etc/hosts`. Ajouter un service = une variable côté Tinyauth (puis redémarrage) + une entrée dans ce `/etc/hosts`, avec une raison.
+
 > 🎯 Tinyauth est une **solution intermédiaire**. Une migration vers **Authelia SSO** est prévue pour centraliser l'authentification sur l'ensemble des services internes avec WebAuthn, ACLs par service et session unique — voir [#30](https://github.com/Wifsimster/docker-setup/issues/30).
 
 ## Timeouts étendus
