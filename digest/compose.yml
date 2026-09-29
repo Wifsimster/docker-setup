@@ -1,0 +1,45 @@
+name: digest
+
+services:
+  digest:
+    container_name: digest
+    image: nginx:alpine
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 64M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost/ || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    volumes:
+      - ./www:/usr/share/nginx/html:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.digest.entrypoints=websecure"
+      - "traefik.http.routers.digest.rule=Host(`digest.${DOMAIN}`)"
+      - "traefik.http.services.digest.loadBalancer.server.port=80"
+      - "traefik.http.routers.digest.middlewares=tinyauth@docker"
+      # Liens secrets par personne (/s/<jeton>/), sans connexion. Le reste du site reste derriere tinyauth.
+      - "traefik.http.routers.digest-share.entrypoints=websecure"
+      - "traefik.http.routers.digest-share.rule=Host(`digest.${DOMAIN}`) && PathPrefix(`/s/`)"
+      - "traefik.http.routers.digest-share.priority=100"
+      - "traefik.http.routers.digest-share.service=digest"
+      - com.centurylinklabs.watchtower.enable=true
+    networks:
+      lan:
+
+networks:
+  lan:
+    external: true
