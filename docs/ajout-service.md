@@ -92,7 +92,7 @@ cd <nom-du-service> && docker compose up -d
 ### 8. Mettre à jour la documentation
 
 - Ajouter le service dans le `README.md` (tableau de la section concernée)
-- Mettre à jour `CLAUDE.md` si nécessaire
+- Mettre à jour `AGENTS.md` si nécessaire
 
 ## Ajout d'un service avec base de données
 
