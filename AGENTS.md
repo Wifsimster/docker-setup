@@ -18,6 +18,13 @@ docker-setup/
 ├── CLAUDE.md                  # Imports AGENTS.md (Claude Code entry point)
 ├── README.md                  # Infrastructure documentation
 ├── .gitignore                 # Tracks only compose.yml, hwaccel.*.yml, CLAUDE.md and AGENTS.md
+├── photos-backup.sh           # Weekly offsite borg backup of the Immich library (Hetzner)
+├── state-backup.sh            # Daily offsite borg backup of everything except photos
+├── borg-check.sh              # Monthly integrity check of the Hetzner borg repo
+├── ha-config-backup.sh        # Weekly Home Assistant config backup to the NAS
+├── gramps-backup.sh           # Weekly Gramps Web data backup to the NAS
+├── disk-cleanup.sh            # Disk space cleanup (cron)
+├── disk-guard.sh              # Hourly guard: runs disk-cleanup.sh above a usage threshold
 ├── traefik/compose.yml        # Core: reverse proxy, TLS, Let's Encrypt (OVH DNS) — point d'entrée de toute l'infrastructure
 ├── multimedia/                # Unified media stack (single compose project)
 │   ├── compose.yml            # Plex, Sonarr, Radarr, Lidarr, Prowlarr,
@@ -49,9 +56,29 @@ docker-setup/
 ├── copro-pilot/compose.yml    # Co-ownership app (+ Postgres)
 ├── the-box/compose.yml        # Game management app (+ Postgres, Redis)
 ├── unifi/compose.yml          # Network controller
+├── tinyauth/compose.yml       # tinyauth (steveiliop56/tinyauth:v5)
+├── ntfy/compose.yml           # ntfy (binwiederhier/ntfy)
+├── n8n/compose.yml            # n8n (+ Postgres)
+├── litellm/compose.yml        # LiteLLM (berriai/litellm) (+ Postgres)
+├── langfuse/compose.yml       # Langfuse web + worker (+ Postgres, ClickHouse, MinIO, Redis)
+├── digest/compose.yml         # Static site (nginx:alpine)
+├── discord-bridge/compose.yml # Built locally (build: .)
+├── seaweedfs/compose.yml      # SeaweedFS (chrislusf/seaweedfs)
+├── ghostfolio/compose.yml     # Ghostfolio (+ Postgres, Redis)
+├── downtify/compose.yml       # henriquesebastiao/downtify
+├── metube/compose.yml         # alexta69/metube
+├── koe/compose.yml            # wifsimster/koe-server (+ Postgres)
+├── racontine/compose.yml      # wifsimster/racontine-server + racontine-web (+ Postgres)
+├── solopilot/compose.yml      # wifsimster/solopilot
+├── toko/compose.yml           # wifsimster/toko (+ Postgres)
+├── wawptn/compose.yml         # wifsimster/wawptn (+ Postgres)
+├── tribu/compose.yml          # tribu + tribu-api (local builds)
+├── umami/compose.yml          # Umami (+ Postgres)
+├── yamtrack/compose.yml       # Yamtrack (+ Postgres, Redis)
+├── tileserver/compose.yml     # maptiler/tileserver-gl
 └── pg-backup/                 # Daily PostgreSQL backups
-    ├── compose.yml            # postgres:16-alpine + crond
-    ├── backup.sh              # Dump script (5 databases, 7-day retention)
+    ├── compose.yml            # postgres:17-alpine + crond
+    ├── backup.sh              # Dump script (14 databases, 7-day retention)
     ├── crontab                # Schedule: daily at 03:00
     └── .env                   # DB credentials (gitignored)
 ```
@@ -137,7 +164,7 @@ networks:
 
 ### Volumes
 
-- Config data: relative paths from compose file (e.g., `../bazarr/data`, `../plex/library`)
+- Config data: relative paths from compose file (e.g., `./data` in `vaultwarden/compose.yml`, `../plex/library`)
 - Named Docker volumes: for databases and internal state (`pg_data`, `redis_data`)
 - NFS mounts: single host-level mount at `/mnt/media` with subdirectories (`movies/`, `tv-shows/`, `downloads/`, `musics/`, `photos/`, `documents/`, `data/`)
 
