@@ -164,7 +164,7 @@ networks:
 
 ### Volumes
 
-- Config data: relative paths from compose file (e.g., `./data` in `vaultwarden/compose.yml`, `../plex/library`)
+- Config data: relative paths from compose file (e.g., `./data` in `vaultwarden/compose.yml`, `./config` in `stirling/compose.yml`)
 - Named Docker volumes: for databases and internal state (`pg_data`, `redis_data`)
 - NFS mounts: single host-level mount at `/mnt/media` with subdirectories (`movies/`, `tv-shows/`, `downloads/`, `musics/`, `photos/`, `documents/`, `data/`)
 
@@ -228,8 +228,8 @@ Follow the pattern in `paperless-ngx/compose.yml` or `the-box/compose.yml`:
 
 ## Important Notes
 
-- **No Dockerfiles**: All services use pre-built images. Do not create Dockerfiles.
-- **No build step**: There is nothing to compile or build. Changes take effect via `docker compose up -d`.
+- **Pre-built images, except three stacks that build locally**: Almost every service uses a pre-built image. The exceptions build their own image: `discord-bridge` (`build: .`, `discord-bridge/Dockerfile`), `paperless-ngx`'s `protonmail-bridge` (`build: ./protonmail-bridge`), and `tribu` + `tribu-api` (built from `/home/wifsimster/tribu-src`, outside this repo). Do not create new Dockerfiles: use a pre-built image.
+- **Build step only for those services**: For image-based services, changes take effect via `docker compose up -d`. For the local builds above, rebuild with `docker compose up -d --build`.
 - **Secrets in `.env`**: Never hardcode passwords, API keys, or tokens in compose files. Use `${VARIABLE}` interpolation from `.env` files.
 - **Image tags**: Most services use `:latest`. The multimedia stack (LinuxServer images) and some others may pin specific versions.
 - **NFS storage**: All media is stored under a single NFS mount `/mnt/media` from Unraid (`192.168.0.240:/mnt/user/media`). Hardlinks work across all subdirectories.

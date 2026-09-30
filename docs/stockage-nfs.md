@@ -137,7 +137,7 @@ docker start $(docker ps -aq --filter status=exited)
 
 Certaines données ne sont **pas sur le NAS** et restent sur le serveur :
 
-- **Configurations des services** — Répertoires relatifs (ex: `../plex/library`)
+- **Configurations des services** — Répertoires relatifs au compose (ex: `./data` dans `vaultwarden/compose.yml`)
 - **Bases de données** — Volumes Docker nommés (`pg_data`, `redis_data`)
 - **Certificats TLS** — `traefik/acme/`
 - **Fichiers temporaires** — `/transcode` pour Plex (tmpfs en RAM)
