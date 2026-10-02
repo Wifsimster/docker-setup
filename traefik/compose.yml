@@ -130,17 +130,8 @@ services:
 
         networks:
             lan:
-            # Dedicated, internal network to Orbite (see orbite/compose.yml): only
-            # Traefik and Orbite are attached, nothing on `lan` can reach Orbite.
-            orbite-front:
 
 networks:
     lan:
         name: lan
         external: true
-    # Owned by this project so it exists whenever Traefik runs; Orbite joins it
-    # as external. internal: true = no outbound route from this network.
-    orbite-front:
-        name: orbite-front
-        driver: bridge
-        internal: true

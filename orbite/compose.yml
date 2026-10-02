@@ -1,22 +1,22 @@
 name: orbite
 
-# Orbite: private relationship map (single user, very sensitive data).
-# Exposed on the Internet behind Tinyauth (password + TOTP, one allowed user).
+# Orbite: private relationship map (single user).
+# Exposed behind the existing Tinyauth, like the other services.
 # Runbook, secrets and rollback: docs/deploiement.md in the (private) orbite repo.
 #
-# Request path on router `orbite`, in this order:
-#   1. orbite-ratelimit   per client IP, before anything else
-#   2. orbite-strip       drops client-supplied Remote-* and X-Orbite-Proxy-Secret
-#   3. orbite-auth        Tinyauth ForwardAuth; copies Remote-User from Tinyauth
-#                         (authResponseHeaders also deletes any client value)
-#   4. secHeaders         shared HSTS / nosniff headers (traefik/compose.yml)
-#   5. orbite-headers     noindex, hide server banners (CSP is set by the app)
-#   6. orbite-proxy@file  injects X-Orbite-Proxy-Secret. Defined in the
+# Router `orbite` middlewares:
+#   1. orbite-auth        Tinyauth ForwardAuth (same endpoint as tinyauth@docker)
+#                         + authResponseHeaders=Remote-User, which the app needs
+#   2. secHeaders         shared HSTS / nosniff headers (traefik/compose.yml)
+#   3. orbite-proxy@file  injects X-Orbite-Proxy-Secret. Defined in the
 #                         untracked traefik/config/orbite.yml: the secret never
 #                         lives in this repo. If that file is missing, Traefik
 #                         disables the router (fail closed).
-# The app itself rejects any request without the proxy secret AND a whitelisted
-# Remote-User (401/403), assets included.
+# The app rejects any request without the proxy secret AND a Remote-User listed
+# in ORBITE_ALLOWED_USERS.
+#
+# msgvault relay: MSGVAULT_RELAY_URL in .env, codedev over the LAN
+# (http://192.168.0.102:8787).
 #
 # No Watchtower label on purpose: updates are manual (bump ORBITE_IMAGE_TAG).
 
@@ -44,10 +44,6 @@ services:
       - HEALTH_PORT=8081
       - DATA_DIR=/data
       - ORBITE_PUBLIC_ORIGIN=https://orbite.${DOMAIN}
-    # The relay hostname (MagicDNS, on the tailnet) is pinned to codedev's
-    # tailnet address from .env: no dependency on MagicDNS inside Docker.
-    extra_hosts:
-      - "${MSGVAULT_RELAY_HOSTNAME:?set MSGVAULT_RELAY_HOSTNAME in .env}:${MSGVAULT_RELAY_TAILNET_IP:?set MSGVAULT_RELAY_TAILNET_IP in .env}"
     volumes:
       - orbite-data:/data
     # Healthcheck comes from the image (GET 127.0.0.1:8081/healthz, loopback only).
@@ -55,7 +51,6 @@ services:
       resources:
         limits:
           memory: 384M
-          pids: 128
     logging:
       driver: json-file
       options:
@@ -63,8 +58,6 @@ services:
         max-file: "3"
     labels:
       - "traefik.enable=true"
-      # Traefik reaches Orbite only through the dedicated internal network.
-      - "traefik.docker.network=orbite-front"
 
       # Entrypoint
       - "traefik.http.routers.orbite.entrypoints=websecure"
@@ -72,58 +65,26 @@ services:
       # Router
       - "traefik.http.routers.orbite.rule=Host(`orbite.${DOMAIN}`)"
       - "traefik.http.routers.orbite.service=orbite"
-      - "traefik.http.routers.orbite.middlewares=orbite-ratelimit@docker,orbite-strip@docker,orbite-auth@docker,secHeaders@docker,orbite-headers@docker,orbite-proxy@file"
+      - "traefik.http.routers.orbite.middlewares=orbite-auth@docker,secHeaders@docker,orbite-proxy@file"
 
       # Service
       - "traefik.http.services.orbite.loadBalancer.server.port=8080"
 
-      # 1. Rate limiting per client IP (default source criterion: remote address)
-      - "traefik.http.middlewares.orbite-ratelimit.ratelimit.average=240"
-      - "traefik.http.middlewares.orbite-ratelimit.ratelimit.period=1m"
-      - "traefik.http.middlewares.orbite-ratelimit.ratelimit.burst=120"
-
-      # 2. Strip identity / secret headers sent by the client (empty value = remove)
-      - "traefik.http.middlewares.orbite-strip.headers.customrequestheaders.X-Orbite-Proxy-Secret="
-      - "traefik.http.middlewares.orbite-strip.headers.customrequestheaders.Remote-User="
-      - "traefik.http.middlewares.orbite-strip.headers.customrequestheaders.Remote-Name="
-      - "traefik.http.middlewares.orbite-strip.headers.customrequestheaders.Remote-Email="
-      - "traefik.http.middlewares.orbite-strip.headers.customrequestheaders.Remote-Groups="
-      - "traefik.http.middlewares.orbite-strip.headers.customrequestheaders.Remote-Sub="
-
-      # 3. Tinyauth ForwardAuth dedicated to Orbite: same endpoint as tinyauth@docker,
-      #    plus authResponseHeaders so the app receives the authenticated user.
-      #    Kept separate so other services do not start receiving Remote-User.
-      #    Allowed user and TOTP: TINYAUTH_APPS_ORBITE_* in tinyauth/compose.yml.
+      # Tinyauth ForwardAuth for Orbite: same endpoint as tinyauth@docker, plus
+      # authResponseHeaders so the app receives the authenticated user (Traefik
+      # also drops any client-supplied Remote-User). Kept separate so other
+      # services do not start receiving Remote-User.
       - "traefik.http.middlewares.orbite-auth.forwardauth.address=http://tinyauth:3000/api/auth/traefik"
       - "traefik.http.middlewares.orbite-auth.forwardauth.authResponseHeaders=Remote-User"
-      - "traefik.http.middlewares.orbite-auth.forwardauth.trustForwardHeader=false"
-      - "traefik.http.middlewares.orbite-auth.forwardauth.maxResponseBodySize=65536"
-
-      # 5. Extra response headers (the app sets CSP, frame, referrer, COOP/CORP)
-      - "traefik.http.middlewares.orbite-headers.headers.customresponseheaders.X-Robots-Tag=noindex, nofollow, noarchive"
-      - "traefik.http.middlewares.orbite-headers.headers.customresponseheaders.Server="
-      - "traefik.http.middlewares.orbite-headers.headers.customresponseheaders.X-Powered-By="
 
     networks:
-      orbite-front:
-      orbite-egress:
+      lan:
 
 volumes:
-  # Fixed name: back it up with Borg from /var/lib/docker/volumes/orbite-data/_data
+  # Fixed name: backed up by state-backup.sh from /var/lib/docker/volumes/orbite-data/_data
   orbite-data:
     name: orbite-data
 
 networks:
-  # Created by traefik/compose.yml (internal: no route out). Only Traefik and
-  # Orbite are attached, so no container on `lan` can reach Orbite directly.
-  orbite-front:
-    name: orbite-front
+  lan:
     external: true
-  # Outbound only, to reach the msgvault relay over the host's Tailscale
-  # (codedev:8443). Fixed subnet so the host firewall can pin it (see runbook).
-  orbite-egress:
-    name: orbite-egress
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 10.203.88.0/29
