@@ -107,6 +107,7 @@ Le cookie est scopé sur `.battistella.ovh`, ce qui permet de réutiliser la mê
 | Service | Middleware |
 |---|---|
 | Homepage | `tinyauth@docker` |
+| Orbite | `orbite-auth@docker` (même endpoint Tinyauth + `authResponseHeaders=Remote-User`, un seul utilisateur autorisé, TOTP) |
 
 **Déclaration du middleware** (labels du conteneur `tinyauth`) :
 

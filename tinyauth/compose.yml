@@ -23,6 +23,14 @@ services:
       # App ID = subdomain; restart Tinyauth to apply.
       - TINYAUTH_APPS_ACTUAL_IP_BYPASS=${CODEDEV_IP:-192.168.0.102}
       - TINYAUTH_APPS_PAPERLESS_IP_BYPASS=${CODEDEV_IP:-192.168.0.102}
+      # Orbite (very sensitive data, exposed on the Internet): exactly one allowed
+      # user, matched on the full domain. That user MUST have a TOTP secret in
+      # users.txt (username:bcrypt:totp), Tinyauth then requires the code at login.
+      # The username lives in .env only; compose refuses to start without it,
+      # so a missing value can never fall back to "every user allowed".
+      # Never add an IP bypass for Orbite.
+      - TINYAUTH_APPS_ORBITE_CONFIG_DOMAIN=orbite.${DOMAIN}
+      - TINYAUTH_APPS_ORBITE_USERS_ALLOW=${ORBITE_ALLOWED_USER:?set ORBITE_ALLOWED_USER in tinyauth/.env}
     volumes:
       - ./users.txt:/users.txt:ro
     healthcheck:
@@ -52,6 +60,14 @@ services:
 
       # Service
       - "traefik.http.services.tinyauth.loadBalancer.server.port=3000"
+
+      # Rate limiting per client IP on the login UI/API (brute force), on top of
+      # Tinyauth's own per-user lockout. ForwardAuth checks call tinyauth:3000
+      # directly and are not affected.
+      - "traefik.http.middlewares.tinyauth-ratelimit.ratelimit.average=60"
+      - "traefik.http.middlewares.tinyauth-ratelimit.ratelimit.period=1m"
+      - "traefik.http.middlewares.tinyauth-ratelimit.ratelimit.burst=30"
+      - "traefik.http.routers.tinyauth.middlewares=tinyauth-ratelimit@docker"
 
       # ForwardAuth middleware — referenced by other services as tinyauth@docker
       - "traefik.http.middlewares.tinyauth.forwardauth.address=http://tinyauth:3000/api/auth/traefik"

@@ -155,6 +155,7 @@ graph LR
 | 🌐 **Battistella.pro** | Site portfolio | `battistella.pro` |
 | 🎵 **Koe** | App musique karaoké | `koe.example.com` |
 | 🖨️ **Printcast** | Impression à distance | `printcast.example.com` |
+| 🪐 **Orbite** | Carte privée de l'entourage — Tinyauth + TOTP, un seul utilisateur, mises à jour manuelles | `orbite.example.com` |
 
 ---
 
@@ -176,6 +177,7 @@ graph LR
 | 🔐 **Tinyauth** | ForwardAuth Traefik — formulaire de login HTML (compatible Bitwarden mobile) en amont des services sans auth native | `tinyauth.example.com` |
 | <img src="https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/pi-hole.svg" width="16"/> **Pi-hole** | Blocage pub DNS | `pihole.example.com` |
 | 📧 **ProtonMail Bridge** | Pont SMTP/IMAP pour ProtonMail | _interne_ |
+| 🚫 **Fail2ban** | Bannissement des IP en échec répété (journal d'accès Traefik : Orbite, connexion Tinyauth) | _arrière-plan_ |
 
 > 🔒 Les secrets (`.env`) ne sont jamais commités. Homepage utilise `{{HOMEPAGE_VAR_*}}` pour la substitution d'environnement.
 >

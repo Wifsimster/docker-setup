@@ -1,0 +1,47 @@
+name: fail2ban
+
+# Bans abusive client IPs seen by Traefik, at the host firewall (DOCKER-USER
+# chain: Traefik's published ports are DNATed, so INPUT would not see them).
+# Source: traefik/logs/access.json (JSON, statuses 400-599 only), read-only.
+# Jails/filters live in ./data (untracked): templates and tests are in
+# deploy/fail2ban/ of the (private) orbite repo. Current jails:
+#   - orbite:         401/403/429 on router orbite@docker
+#   - tinyauth-login: 401/429 on Tinyauth /api/user/login and /api/user/totp
+# Private ranges (LAN, Docker, hairpin NAT) are never banned (ignoreip).
+# Unban: docker exec fail2ban fail2ban-client set <jail> unbanip <IP>
+
+services:
+  fail2ban:
+    image: crazymax/fail2ban:1.1.1
+    container_name: fail2ban
+    restart: unless-stopped
+    # Must manipulate the host's iptables: host network + NET_ADMIN/NET_RAW only.
+    network_mode: host
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      - TZ=Europe/Paris
+      - F2B_LOG_TARGET=STDOUT
+      - F2B_LOG_LEVEL=INFO
+      - F2B_DB_PURGE_AGE=30d
+      - IPTABLES_MODE=auto
+    volumes:
+      - ./data:/data
+      - ../traefik/logs:/var/log/traefik:ro
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    labels:
+      # Watchtower automatic update (rebuilds of the pinned tag only)
+      - "com.centurylinklabs.watchtower.enable=true"
