@@ -13,6 +13,8 @@
 #     birthday rsvp.db      (its sidecar snapshots; the sidecar writes to a
 #                           local docker volume that never left the disk)
 #     zigbee.db             ZHA network — losing it means re-pairing the fleet
+#     orbite.sqlite         Orbite (private relationship map: annotations,
+#                           circles, audit log). Volume orbite-data.
 #
 #   Postgres dumps        /opt/docker/pg-backup/backups sat on the SAME disk as
 #                         the databases it protects. One dead disk lost both.
@@ -156,6 +158,7 @@ snapshot_sqlite vaultwarden  /opt/docker/vaultwarden/data/db.sqlite3
 snapshot_sqlite solopilot    /var/lib/docker/volumes/solopilot_bot-data/_data/bot.db
 snapshot_sqlite zigbee       /opt/docker/home-assistant/config/zigbee.db
 snapshot_sqlite birthday     /var/lib/docker/volumes/birthday-invitation_birthday_db/_data/rsvp.db
+snapshot_sqlite orbite       /var/lib/docker/volumes/orbite-data/_data/orbite.sqlite
 
 # Vaultwarden's attachments and RSA signing key live beside the DB and are just
 # as required for a working restore as the database itself.
