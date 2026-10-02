@@ -31,6 +31,11 @@ services:
       # Never add an IP bypass for Orbite.
       - TINYAUTH_APPS_ORBITE_CONFIG_DOMAIN=orbite.${DOMAIN}
       - TINYAUTH_APPS_ORBITE_USERS_ALLOW=${ORBITE_ALLOWED_USER:?set ORBITE_ALLOWED_USER in tinyauth/.env}
+      # USERS_ALLOW only applies to local/LDAP users. OAuth users are checked
+      # against OAUTH_WHITELIST instead (an empty list = allowed), and OAuth login
+      # skips TOTP. This value is not an e-mail address, so it matches no OAuth
+      # account: OAuth can never open Orbite, even if a provider is added later.
+      - TINYAUTH_APPS_ORBITE_OAUTH_WHITELIST=no-oauth-for-orbite
     volumes:
       - ./users.txt:/users.txt:ro
     healthcheck:
