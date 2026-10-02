@@ -155,6 +155,7 @@ graph LR
 | 🌐 **Battistella.pro** | Site portfolio | `battistella.pro` |
 | 🎵 **Koe** | App musique karaoké | `koe.example.com` |
 | 🖨️ **Printcast** | Impression à distance | `printcast.example.com` |
+| 🪐 **Orbite** | Carte privée de l'entourage — derrière Tinyauth, mises à jour manuelles | `orbite.example.com` |
 
 ---
 

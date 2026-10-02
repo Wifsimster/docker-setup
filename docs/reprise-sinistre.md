@@ -234,6 +234,12 @@ cd /opt/docker/birthday-invitation && docker compose down
 docker run --rm -v birthday-invitation_birthday_db:/d -v $SQL:/s alpine \
   sh -c 'rm -f /d/rsvp.db-wal /d/rsvp.db-shm && cp /s/birthday.sqlite3 /d/rsvp.db'
 docker compose up -d
+
+# Orbite — le conteneur tourne en uid 65532 : le fichier restauré doit lui appartenir
+cd /opt/docker/orbite && docker compose down
+docker run --rm -v orbite-data:/d -v $SQL:/s alpine \
+  sh -c 'rm -f /d/orbite.sqlite-wal /d/orbite.sqlite-shm && cp /s/orbite.sqlite3 /d/orbite.sqlite && chown 65532:65532 /d/orbite.sqlite && chmod 600 /d/orbite.sqlite'
+docker compose up -d
 ```
 
 Vérifier chaque base restaurée avant de redémarrer le service :
@@ -330,7 +336,7 @@ docker exec pg-backup sh /backup.sh
 |--------|----------------|-----|
 | 14 bases PostgreSQL | `pg-backup` (quotidien) | local + NAS + hors site |
 | Vaultwarden (base, clé RSA, pièces jointes) | `state-backup.sh` | hors site |
-| Solopilot, zigbee.db, RSVP birthday | `state-backup.sh` | hors site |
+| Solopilot, zigbee.db, RSVP birthday, Orbite | `state-backup.sh` | hors site |
 | Fichiers `.env` de tous les services | `state-backup.sh` (`configs.tar.gz`) | hors site |
 | Documents Paperless | `state-backup.sh` | NAS + hors site |
 | Photos Immich (388 Go) | `photos-backup.sh` (hebdo) | hors site |
@@ -372,6 +378,8 @@ borg extract "::$(borg list --short --glob-archives 'data-*' | tail -1)" \
 sqlite3 var/tmp/state-backup-staging/sqlite/vaultwarden.sqlite3 \
      "PRAGMA integrity_check; SELECT COUNT(*) FROM ciphers;"
 # Comparer au vault en production : les compteurs doivent correspondre.
+sqlite3 var/tmp/state-backup-staging/sqlite/orbite.sqlite3 \
+     "PRAGMA integrity_check; SELECT COUNT(*) FROM person;"
 rm -rf /var/tmp/drill
 ```
 
