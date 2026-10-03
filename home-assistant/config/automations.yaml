@@ -2293,3 +2293,79 @@
       data:
         priority: normal
   mode: single
+- id: christelle_arrivee_annonce
+  alias: Christelle - Annonce de son arrivée
+  description: 'Une seule fois par trajet : quand Christelle repasse sous 8 km de la
+    maison en se rapprochant (Proximity), annonce sur les Sonos « Christelle arrive
+    dans environ X minutes » si Damien est là et entre 08h00 et 23h00, et push discret
+    à Damien (toujours). X = distance / vitesse d''approche entre les deux derniers
+    relevés GPS (45 km/h par défaut). Waze Travel Time n''est pas utilisable (API Waze
+    en 403 depuis HA, 2026-10-03). Réarmée quand Christelle repasse par la maison ou
+    après 2 h. Les trajets de moins de 8 km ne déclenchent rien.'
+  triggers:
+  - trigger: numeric_state
+    entity_id: sensor.maison_distance_avec_christelle
+    below: 8000
+  conditions:
+  - condition: state
+    entity_id: sensor.maison_direction_du_deplacement_de_christelle
+    state: towards
+  - condition: not
+    conditions:
+    - condition: state
+      entity_id: person.christelle
+      state: home
+  - alias: Partie de la maison depuis au moins 5 min (pas un aller-retour express)
+    condition: template
+    value_template: '{{ (now() - states.person.christelle.last_changed).total_seconds()
+      > 300 }}'
+  - alias: Une seule annonce par trajet (réarmée au retour à la maison ou après 2 h)
+    condition: template
+    value_template: '{% set lt = this.attributes.last_triggered %}{{ lt is none or
+      states.person.christelle.last_changed > lt or (now() - lt).total_seconds() > 7200
+      }}'
+  variables:
+    minutes: "{%- set d = trigger.to_state.state | float(0) / 1000 -%}\n{%- set d0 = trigger.from_state.state
+      | float(0) / 1000 if trigger.from_state else 0 -%}\n{%- set dt = (as_timestamp(trigger.to_state.last_changed)
+      - as_timestamp(trigger.from_state.last_changed)) if trigger.from_state else 0 -%}\n\
+      {%- set v = (d0 - d) / (dt / 60) if dt > 0 and d0 > d else 0 -%}\n{%- set v =
+      v if 0.17 <= v <= 2.2 else 0.75 -%}\n{{ [1, (d / v) | round(0) | int] | max }}"
+    phrase: Christelle arrive dans environ {{ minutes }} minute{{ 's' if minutes | int
+      > 1 else '' }}.
+  actions:
+  - action: notify.mobile_app_telephone_damien
+    data:
+      title: "\U0001F697 Christelle arrive"
+      message: '{{ phrase }}'
+      data:
+        tag: christelle_arrivee
+        importance: low
+  - if:
+    - condition: state
+      entity_id: person.wifsimster
+      state: home
+    - condition: time
+      after: 08:00:00
+      before: '23:00:00'
+    then:
+    - action: script.annonce
+      data:
+        message: '{{ phrase }}'
+        piece: toutes
+        volume: 40
+  mode: single
+- id: christelle_arrivee_effacer
+  alias: Christelle - Effacer le push d'arrivée
+  description: Retire le push « Christelle arrive » du téléphone de Damien quand elle
+    est à la maison.
+  triggers:
+  - trigger: state
+    entity_id: person.christelle
+    to: home
+  actions:
+  - action: notify.mobile_app_telephone_damien
+    data:
+      message: clear_notification
+      data:
+        tag: christelle_arrivee
+  mode: single
