@@ -6,6 +6,10 @@ services:
   db:
     image: postgres:17-alpine
     container_name: racontine-db
+    deploy:
+      resources:
+        limits:
+          memory: 512M
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
@@ -29,6 +33,10 @@ services:
   server:
     image: ghcr.io/wifsimster/racontine-server:latest
     container_name: racontine-server
+    deploy:
+      resources:
+        limits:
+          memory: 512M
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
@@ -50,6 +58,10 @@ services:
   web:
     image: ghcr.io/wifsimster/racontine-web:latest
     container_name: racontine-web
+    deploy:
+      resources:
+        limits:
+          memory: 128M
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
