@@ -1,0 +1,622 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>Résumé de la semaine — la maison</title>
+<style>
+:root {
+  color-scheme: light;
+  --plane: #f9f9f7;
+  --surface: #fcfcfb;
+  --ink: #0b0b0b;
+  --ink2: #52514e;
+  --muted: #898781;
+  --grid: #e1e0d9;
+  --axis: #c3c2b7;
+  --border: rgba(11,11,11,.10);
+  --s1: #2a78d6;
+  --s2: #eb6834;
+  --neutral: #c3c2b7;
+  --track: #cde2fb;
+  --h1: #cde2fb; --h2: #86b6ef; --h3: #5598e7; --h4: #2a78d6; --h5: #184f95;
+  --good: #0ca30c;
+  --good-text: #006300;
+  --warning: #fab219;
+  --critical: #d03b3b;
+  --shadow: 0 1px 2px rgba(11,11,11,.04);
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --plane: #0d0d0d; --surface: #1a1a19; --ink: #ffffff; --ink2: #c3c2b7; --muted: #898781;
+    --grid: #2c2c2a; --axis: #383835; --border: rgba(255,255,255,.10);
+    --s1: #3987e5; --s2: #d95926; --neutral: #55544f; --track: #184f95;
+    --h1: #104281; --h2: #184f95; --h3: #256abf; --h4: #3987e5; --h5: #6da7ec;
+    --good-text: #0ca30c; --shadow: none;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --plane: #0d0d0d; --surface: #1a1a19; --ink: #ffffff; --ink2: #c3c2b7; --muted: #898781;
+  --grid: #2c2c2a; --axis: #383835; --border: rgba(255,255,255,.10);
+  --s1: #3987e5; --s2: #d95926; --neutral: #55544f; --track: #184f95;
+  --h1: #104281; --h2: #184f95; --h3: #256abf; --h4: #3987e5; --h5: #6da7ec;
+  --good-text: #0ca30c; --shadow: none;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--plane); color: var(--ink);
+  font: 16px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.ribbon {
+  background: var(--ink); color: var(--plane); text-align: center;
+  font-size: 13px; padding: 6px 12px; letter-spacing: .02em;
+}
+.wrap { max-width: 600px; margin: 0 auto; padding: 20px 16px 48px; display: grid; gap: 14px; }
+
+.eyebrow { margin: 0; color: var(--ink2); font-size: 13px; letter-spacing: .06em; text-transform: uppercase; }
+h1 { margin: 4px 0 12px; font-size: 26px; line-height: 1.15; font-weight: 650; letter-spacing: -.01em; }
+h2 { margin: 0; font-size: 17px; font-weight: 620; letter-spacing: -.005em; }
+.sub { margin: 2px 0 0; color: var(--ink2); font-size: 14px; }
+
+.status { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px 6px 8px; border-radius: 999px;
+  background: var(--surface); border: 1px solid var(--border); font-size: 14px; font-weight: 550; }
+.dot-ico { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; color: #fff; flex: none; }
+.dot-ico svg { width: 14px; height: 14px; }
+.dot-ico.good { background: var(--good); }
+.dot-ico.warn { background: var(--warning); color: #3a2a00; }
+
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 16px; box-shadow: var(--shadow); }
+.card-h { display: flex; gap: 12px; align-items: flex-start; justify-content: space-between; margin-bottom: 12px; }
+.tbl-btn { flex: none; font: inherit; font-size: 13px; color: var(--ink2); background: transparent; border: 1px solid var(--border);
+  border-radius: 8px; padding: 4px 10px; cursor: pointer; }
+.tbl-btn:hover { background: var(--plane); }
+.tbl-btn[aria-pressed="true"] { color: var(--ink); border-color: var(--ink2); }
+
+.hero { display: grid; gap: 4px; padding: 20px 16px 18px; }
+.hero .num { font-size: 64px; line-height: 1; font-weight: 700; letter-spacing: -.03em; }
+.hero .lbl { color: var(--ink2); font-size: 15px; }
+.split { display: flex; height: 8px; gap: 2px; margin-top: 14px; }
+.split i { display: block; border-radius: 4px; }
+.split i:first-child { background: var(--s1); }
+.split i:last-child { background: var(--track); }
+.split-lbl { display: flex; justify-content: space-between; font-size: 13px; color: var(--ink2); margin-top: 6px; }
+.key { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+
+.kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.tile { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 12px; display: grid; gap: 2px; min-width: 0; }
+.tile .k { font-size: 13px; color: var(--ink2); line-height: 1.25; }
+.tile .v { font-size: 24px; font-weight: 650; letter-spacing: -.02em; line-height: 1.15; white-space: nowrap; }
+.tile .v small { font-size: 14px; font-weight: 500; color: var(--ink2); letter-spacing: 0; margin-left: 2px; }
+.tile .d { font-size: 13px; font-weight: 600; color: var(--ink2); display: flex; align-items: center; gap: 4px; white-space: nowrap; }
+.tile .d svg { width: 12px; height: 12px; flex: none; }
+.tile .cap { font-size: 12px; color: var(--ink2); }
+.tile svg.spark { width: 100%; height: 22px; margin-top: 6px; display: block; }
+
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 0 0 6px; font-size: 13px; color: var(--ink2); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { display: inline-block; width: 16px; height: 0; border-top: 2px solid; border-radius: 2px; }
+.viz svg { display: block; width: 100%; overflow: visible; }
+.viz svg text { font: 12px system-ui, -apple-system, "Segoe UI", sans-serif; }
+.t-muted { fill: var(--muted); }
+.t-ink2 { fill: var(--ink2); }
+.t-ink { fill: var(--ink); }
+.grid-l { stroke: var(--grid); stroke-width: 1; }
+.axis-l { stroke: var(--axis); stroke-width: 1; }
+svg [tabindex]:focus-visible, svg:focus-visible { outline: 2px solid var(--ink2); outline-offset: 2px; }
+.cell { transition: opacity .12s; }
+.cell:hover, .cell:focus-visible { stroke: var(--ink); stroke-width: 1.5; }
+.bar { transition: opacity .12s; }
+.scale { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--ink2); margin-top: 10px; }
+.scale i { display: block; width: 22px; height: 10px; border-radius: 3px; }
+
+table.data { width: 100%; border-collapse: collapse; font-size: 14px; }
+table.data th, table.data td { text-align: left; padding: 7px 4px; border-bottom: 1px solid var(--grid); }
+table.data th { color: var(--ink2); font-weight: 550; }
+table.data td.n, table.data th.n { text-align: right; font-variant-numeric: tabular-nums; }
+
+.list { list-style: none; margin: 0; padding: 0; display: grid; }
+.list li { display: grid; grid-template-columns: 32px 1fr auto; gap: 12px; align-items: center; padding: 10px 0; border-top: 1px solid var(--grid); }
+.list li:first-child { border-top: 0; padding-top: 2px; }
+.ico { width: 32px; height: 32px; border-radius: 10px; display: grid; place-items: center; background: var(--plane); color: var(--ink2); }
+.ico svg { width: 18px; height: 18px; }
+.list .t { font-size: 15px; line-height: 1.3; }
+.list .s { font-size: 13px; color: var(--ink2); }
+.list .r { font-size: 15px; font-weight: 600; text-align: right; }
+.more { color: var(--ink2); font-size: 13px; margin: 8px 0 0; }
+
+.meter { display: grid; gap: 6px; margin-top: 10px; }
+.meter .row { display: flex; justify-content: space-between; font-size: 14px; }
+.meter .row b { font-weight: 600; white-space: nowrap; margin-left: 12px; }
+.meter .track { height: 10px; border-radius: 5px; background: var(--track); overflow: hidden; }
+.meter .fill { height: 100%; border-radius: 5px; background: var(--s1); }
+.meter .fill.warn { background: var(--warning); }
+.meter .fill.crit { background: var(--critical); }
+
+details.tech > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 10px; }
+details.tech > summary::-webkit-details-marker { display: none; }
+details.tech .chev { margin-left: auto; width: 18px; height: 18px; color: var(--ink2); transition: transform .15s; }
+details.tech[open] .chev { transform: rotate(180deg); }
+.tech-body { margin-top: 14px; display: grid; gap: 4px; }
+.srow { display: grid; grid-template-columns: 22px 1fr; gap: 10px; padding: 8px 0; border-top: 1px solid var(--grid); font-size: 14px; align-items: start; }
+.srow:first-child { border-top: 0; }
+.srow .s { color: var(--ink2); font-size: 13px; }
+.h3 { margin: 14px 0 0; font-size: 13px; color: var(--ink2); text-transform: uppercase; letter-spacing: .05em; font-weight: 600; }
+
+.foot { color: var(--ink2); font-size: 13px; text-align: center; margin-top: 4px; }
+.foot a { color: var(--ink2); }
+.archive { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 14px; margin-top: 4px; }
+
+.tip { position: fixed; z-index: 10; pointer-events: none; background: var(--ink); color: var(--plane); border-radius: 10px;
+  padding: 8px 10px; font-size: 13px; box-shadow: 0 6px 20px rgba(0,0,0,.25); max-width: 240px; }
+.tip .ttl { opacity: .75; margin-bottom: 4px; }
+.tip .r { display: flex; align-items: center; gap: 8px; }
+.tip .r i { display: inline-block; width: 12px; border-top: 2px solid; border-radius: 2px; }
+.tip .r b { font-weight: 650; font-size: 15px; }
+.tip .r span { opacity: .8; }
+
+@media (max-width: 420px) {
+  .hero .num { font-size: 56px; }
+  .tile .v { font-size: 21px; }
+}
+@media (forced-colors: active) {
+  .lineB { stroke-dasharray: 6 4; }
+  .card, .tile { border-color: CanvasText; }
+}
+@media print { .ribbon, .tbl-btn { display: none; } body { background: #fff; } }
+</style>
+</head>
+<body data-palette="#2a78d6,#eb6834">
+<div class="ribbon" id="ribbon">Aperçu de la mise en page — données fictives</div>
+
+<main class="wrap" id="app">
+  <header>
+    <p class="eyebrow" id="range"></p>
+    <h1>Le résumé de la maison</h1>
+    <span class="status" id="status"></span>
+  </header>
+
+  <section class="card hero" aria-label="Photos et vidéos">
+    <div class="num" id="hero-num"></div>
+    <div class="lbl">nouveaux souvenirs ajoutés cette semaine</div>
+    <div class="split" id="hero-split" aria-hidden="true"></div>
+    <div class="split-lbl" id="hero-lbl"></div>
+  </section>
+
+  <section class="kpis" id="kpis" aria-label="Chiffres de la semaine"></section>
+
+  <section class="card">
+    <div class="card-h">
+      <div><h2>Qui était à la maison</h2><p class="sub">Heures passées à la maison chaque jour</p></div>
+      <button class="tbl-btn" aria-pressed="false" data-for="presence">Tableau</button>
+    </div>
+    <div class="viz" id="presence"></div>
+    <div class="tbl" id="presence-tbl" hidden></div>
+  </section>
+
+  <section class="card">
+    <div class="card-h">
+      <div><h2>Températures</h2><p class="sub">Moyenne de chaque journée (°C)</p></div>
+      <button class="tbl-btn" aria-pressed="false" data-for="temps">Tableau</button>
+    </div>
+    <div class="legend" id="temps-legend"></div>
+    <div class="viz" id="temps"></div>
+    <div class="tbl" id="temps-tbl" hidden></div>
+  </section>
+
+  <section class="card">
+    <div class="card-h">
+      <div><h2>Photos et vidéos par jour</h2><p class="sub" id="photos-sub"></p></div>
+      <button class="tbl-btn" aria-pressed="false" data-for="photos">Tableau</button>
+    </div>
+    <div class="viz" id="photos"></div>
+    <div class="tbl" id="photos-tbl" hidden></div>
+  </section>
+
+  <section class="card">
+    <div class="card-h"><div><h2>Chez nous cette semaine</h2><p class="sub">Ce qui s’est passé dans la maison</p></div></div>
+    <ul class="list" id="events"></ul>
+  </section>
+
+  <section class="card">
+    <div class="card-h"><div><h2>À la télé</h2><p class="sub">Épisodes et films ajoutés à la bibliothèque</p></div></div>
+    <ul class="list" id="media"></ul>
+    <p class="more" id="media-more"></p>
+  </section>
+
+  <section class="card">
+    <div class="card-h"><div><h2>Internet</h2><p class="sub">Publicités et traqueurs bloqués sur le réseau</p></div></div>
+    <div class="meter" id="dns"></div>
+  </section>
+
+  <details class="card tech" id="tech">
+    <summary id="tech-sum"></summary>
+    <div class="tech-body" id="tech-body"></div>
+  </details>
+
+  <p class="foot" id="foot"></p>
+</main>
+
+<div class="tip" id="tip" role="tooltip" hidden></div>
+
+<script>
+/* ===== Données fictives : le générateur réel remplacera uniquement cet objet ===== */
+const DATA = /*DATA_START*/{
+  range: "Semaine du 28 septembre au 4 octobre 2026",
+  generated: "dimanche 4 octobre à 20:00",
+  days: ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"],
+  daysLong: ["lundi 28 sept.", "mardi 29 sept.", "mercredi 30 sept.", "jeudi 1er oct.", "vendredi 2 oct.", "samedi 3 oct.", "dimanche 4 oct."],
+  status: { ok: true, text: "Tout fonctionne normalement" },
+  photos: { perDay: [9, 14, 6, 11, 18, 27, 16], images: 76, videos: 25, prev: 84 },
+  kpis: [
+    { k: "Ouvertures du portail", v: 23, unit: "", delta: -4, spark: [3, 4, 2, 5, 3, 4, 2] },
+    { k: "Musique écoutée", v: "12 h 40", unit: "", delta: "+1 h 10", dir: 1, spark: [1, 2, 1, 2, 1, 3, 2.5] },
+    { k: "Épisodes et films", v: 7, unit: "", delta: 2, spark: [0, 1, 1, 0, 2, 2, 1] }
+  ],
+  presence: {
+    people: ["Christelle", "Damien"],
+    hours: [[15, 14, 16, 13, 19, 22, 21], [11, 12, 10, 13, 17, 21, 20]]
+  },
+  temps: {
+    inside: [22.4, 22.1, 21.8, 22.3, 22.9, 22.7, 22.2],
+    outside: [14.2, 12.8, 11.5, 13.9, 16.4, 15.1, 12.3]
+  },
+  events: [
+    { icon: "gate", t: "Portail", s: "Ouvert 23 fois, surtout en fin de journée", r: "23" },
+    { icon: "blinds", t: "Volets", s: "Ouverts le matin, fermés au coucher du soleil", r: "41" },
+    { icon: "music", t: "Musique", s: "Salon 8 h 05 · Chambre de Léo 4 h 35", r: "12 h 40" },
+    { icon: "washer", t: "Machine à laver", s: "Cycles terminés", r: "4" },
+    { icon: "camera", t: "Caméras", s: "Passage détecté jeudi à 14:32 devant le portail", r: "3" }
+  ],
+  media: [
+    { t: "Silo", s: "Saison 2 · épisodes 6 et 7", r: "2" },
+    { t: "Slow Horses", s: "Saison 5 · épisodes 3 et 4", r: "2" },
+    { t: "Le Comte de Monte-Cristo", s: "Film · 2024", r: "1" }
+  ],
+  mediaMore: "+ 2 autres épisodes",
+  dns: { total: 432377, blocked: 84817 },
+  tech: {
+    warnings: 1,
+    rows: [
+      { ok: true, t: "Sauvegardes", s: "Base de données photos sauvegardée 7 jours sur 7 · sauvegarde des machines virtuelles réussie" },
+      { ok: true, t: "Stockage Unraid", s: "Tous les disques en bonne santé · dernière vérification de la parité le 18 sept., 0 erreur" },
+      { ok: true, t: "Serveurs", s: "3 machines virtuelles en marche · 91 services actifs" },
+      { ok: false, t: "Site « Anniversaire Léo » hors ligne", s: "Ne répond plus depuis 3 jours (surveillance Uptime Kuma)" },
+      { ok: true, t: "Mises à jour automatiques", s: "3 services mis à jour : tautulli, qbittorrent, sonarr" }
+    ],
+    meters: [
+      { l: "Stockage Unraid", p: 70 },
+      { l: "Disques virtuels des serveurs", p: 27 },
+      { l: "Disque de sauvegarde", p: 7 }
+    ]
+  },
+  archive: [{ label: "Semaine du 21 sept.", href: "#" }, { label: "Semaine du 14 sept.", href: "#" }, { label: "Semaine du 7 sept.", href: "#" }],
+  preview: true
+}/*DATA_END*/;
+
+/* ===== Petits utilitaires (aucune donnée injectée via innerHTML) ===== */
+const NS = "http://www.w3.org/2000/svg";
+const fr = n => n.toLocaleString("fr-FR");
+const fr1 = n => n.toLocaleString("fr-FR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+function svg(tag, attrs, parent) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (parent) parent.append(e);
+  return e;
+}
+function h(tag, attrs, ...kids) {
+  const e = document.createElement(tag);
+  for (const k in (attrs || {})) k === "class" ? (e.className = attrs[k]) : e.setAttribute(k, attrs[k]);
+  e.append(...kids.filter(x => x != null));
+  return e;
+}
+const ICONS = {
+  check: "M20 6L9 17l-5-5",
+  bell: "M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0",
+  alert: "M12 8v5M12 17h.01",
+  gate: "M4 4v16M20 4v16M4 8h16M4 16h16M12 8v8",
+  blinds: "M4 4h16M4 8h16M4 12h16M4 16h10M14 16v4",
+  music: "M9 18V5l12-2v13M6 21a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM18 19a3 3 0 1 0 0-6 3 3 0 0 0 0 6z",
+  washer: "M6 2h12a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zM12 18a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM8 6h.01M12 6h.01",
+  camera: "M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2zM12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z",
+  up: "M12 19V5M5 12l7-7 7 7",
+  down: "M12 5v14M19 12l-7 7-7-7",
+  flat: "M5 12h14",
+  play: "M6 4l14 8-14 8V4z",
+  chev: "M6 9l6 6 6-6"
+};
+function icon(name, w = 1.9) {
+  const s = svg("svg", { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", "stroke-width": w, "stroke-linecap": "round", "stroke-linejoin": "round", "aria-hidden": "true" });
+  svg("path", { d: ICONS[name] }, s);
+  return s;
+}
+
+/* ===== Infobulle : survol souris et focus clavier ===== */
+const tip = document.getElementById("tip");
+function showTip(cx, cy, title, rows) {
+  tip.replaceChildren(h("div", { class: "ttl" }, title));
+  rows.forEach(r => {
+    const line = h("div", { class: "r" });
+    if (r.color) { const k = h("i"); k.style.borderTopColor = r.color; line.append(k); }
+    line.append(h("b", {}, r.value), h("span", {}, r.label || ""));
+    tip.append(line);
+  });
+  tip.hidden = false;
+  const w = tip.offsetWidth, hh = tip.offsetHeight;
+  let x = cx + 14, y = cy - hh - 12;
+  if (x + w > innerWidth - 8) x = cx - w - 14;
+  if (x < 8) x = 8;
+  if (y < 8) y = cy + 18;
+  tip.style.left = x + "px"; tip.style.top = y + "px";
+}
+const hideTip = () => { tip.hidden = true; };
+function centerOf(elm) { const r = elm.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; }
+
+/* ===== En-tête, statut, héros ===== */
+function hideCard(id) { const e = document.getElementById(id); if (e) (e.closest('.card') || e).hidden = true; }
+function renderTop() {
+  if (!DATA.preview) document.getElementById('ribbon').remove();
+  document.getElementById("range").textContent = DATA.range;
+  const st = document.getElementById("status");
+  const ok = DATA.status.ok;
+  const ico = h("span", { class: "dot-ico " + (ok ? "good" : "warn") });
+  ico.append(icon(ok ? "check" : "alert", 2.6));
+  st.append(ico, h("span", {}, DATA.status.text));
+
+  const p = DATA.photos, total = p.perDay.reduce((a, b) => a + b, 0);
+  document.getElementById("hero-num").textContent = fr(total);
+  const split = document.getElementById("hero-split");
+  const a = h("i"), b = h("i");
+  a.style.flex = p.images; b.style.flex = p.videos;
+  split.append(a, b);
+  const k1 = h("i", { class: "key" }); k1.style.background = "var(--s1)";
+  const k2 = h("i", { class: "key" }); k2.style.background = "var(--track)";
+  document.getElementById("hero-lbl").append(
+    h("span", {}, k1, p.images + " photos"),
+    h("span", {}, k2, p.videos + " vidéos")
+  );
+  const diff = total - p.prev, bestDay = p.perDay.indexOf(Math.max(...p.perDay));
+  document.getElementById("photos-sub").textContent =
+    "Meilleur jour : " + DATA.daysLong[bestDay].split(" ")[0] + " · " + (diff >= 0 ? "+" : "−") + Math.abs(diff) + " vs semaine dernière";
+}
+
+/* ===== Tuiles de chiffres avec mini-courbe ===== */
+function sparkline(vals) {
+  const w = 100, hgt = 22, pad = 3;
+  const s = svg("svg", { viewBox: `0 0 ${w} ${hgt}`, class: "spark", preserveAspectRatio: "none", "aria-hidden": "true" });
+  const mn = Math.min(...vals), mx = Math.max(...vals), rng = mx - mn || 1;
+  const pts = vals.map((v, i) => [pad + i * (w - 2 * pad) / (vals.length - 1), hgt - pad - (v - mn) / rng * (hgt - 2 * pad)]);
+  const line = (arr, col) => svg("polyline", { points: arr.map(p => p.join(",")).join(" "), fill: "none", "stroke-width": 2, "stroke-linejoin": "round", "stroke-linecap": "round", style: `stroke:${col};vector-effect:non-scaling-stroke` }, s);
+  line(pts, "var(--neutral)");
+  line(pts.slice(-2), "var(--s1)");
+  return s;
+}
+function renderKpis() {
+  const host = document.getElementById("kpis");
+  if (!DATA.kpis.length) { host.hidden = true; return; }
+  DATA.kpis.forEach(k => {
+    const dir = typeof k.delta === "number" ? Math.sign(k.delta) : (k.dir || 0);
+    const dtxt = typeof k.delta === "number" ? (k.delta > 0 ? "+" : k.delta < 0 ? "−" : "") + Math.abs(k.delta) : k.delta;
+    const tile = h("div", { class: "tile" },
+      h("div", { class: "k" }, k.k),
+      h("div", { class: "v" }, String(k.v)),
+      (() => { const d = h("div", { class: "d" }); d.append(icon(dir > 0 ? "up" : dir < 0 ? "down" : "flat", 2.8), h("span", {}, dtxt)); return d; })(),
+      h("div", { class: "cap" }, "vs semaine dernière")
+    );
+    tile.append(sparkline(k.spark));
+    host.append(tile);
+  });
+}
+
+/* ===== Carte de chaleur : présence (séquentiel, un seul ton) ===== */
+const BUCKETS = [[0, 8], [8, 12], [12, 16], [16, 20], [20, 25]];
+const bucketOf = v => BUCKETS.findIndex(([a, b]) => v >= a && v < b) + 1;
+function renderPresence() {
+  const host = document.getElementById("presence");
+  if (!DATA.presence) { hideCard("presence"); return; }
+  host.replaceChildren();
+  const W = host.clientWidth || 320, labelW = 78, top = 22, cellH = 38, gap = 2;
+  const n = DATA.days.length, cw = (W - labelW) / n;
+  const H = top + DATA.presence.people.length * (cellH + gap) + 2;
+  const s = svg("svg", { viewBox: `0 0 ${W} ${H}`, height: H, role: "img", "aria-label": "Heures passées à la maison, par personne et par jour" }, host);
+  DATA.days.forEach((d, i) => svg("text", { x: labelW + i * cw + cw / 2, y: 13, "text-anchor": "middle", class: "t-muted" }, s).textContent = d);
+  DATA.presence.people.forEach((name, r) => {
+    const y = top + r * (cellH + gap);
+    svg("text", { x: 0, y: y + cellH / 2 + 4, class: "t-ink2" }, s).textContent = name;
+    DATA.presence.hours[r].forEach((v, i) => {
+      const rect = svg("rect", { x: labelW + i * cw + gap / 2, y, width: cw - gap, height: cellH, rx: 7, class: "cell", tabindex: 0,
+        style: `fill:var(--h${bucketOf(v)})`, "aria-label": `${name}, ${DATA.daysLong[i]} : ${v} heures à la maison` }, s);
+      const go = () => { const [cx, cy] = centerOf(rect); showTip(cx, cy - 8, DATA.daysLong[i], [{ value: v + " h", label: name + " à la maison" }]); };
+      rect.addEventListener("pointermove", go); rect.addEventListener("focus", go);
+      rect.addEventListener("pointerleave", hideTip); rect.addEventListener("blur", hideTip);
+    });
+  });
+  const sc = h("div", { class: "scale" }, "Moins");
+  BUCKETS.forEach((b, i) => { const sw = h("i"); sw.style.background = `var(--h${i + 1})`; sw.title = `${b[0]}–${b[1]} h`; sc.append(sw); });
+  sc.append("Plus d’heures");
+  host.append(sc);
+  fillTable("presence-tbl", ["Jour", ...DATA.presence.people.map(p => p + " (h)")],
+    DATA.days.map((d, i) => [DATA.daysLong[i], ...DATA.presence.hours.map(a => a[i])]));
+}
+
+/* ===== Courbes : températures (deux séries, un seul axe) ===== */
+function niceTicks(mn, mx, step) { const t = []; for (let v = Math.floor(mn / step) * step; v <= mx + 1e-9; v += step) t.push(v); return t; }
+function renderTemps() {
+  const host = document.getElementById("temps");
+  if (!DATA.temps) { hideCard("temps"); return; }
+  host.replaceChildren();
+  const series = [
+    { name: "Dans la maison", cls: "lineA", color: "var(--s1)", vals: DATA.temps.inside },
+    { name: "Dehors", cls: "lineB", color: "var(--s2)", vals: DATA.temps.outside }
+  ];
+  const lg = document.getElementById("temps-legend");
+  if (!lg.children.length) series.forEach(se => { const k = h("i"); k.style.borderTopColor = se.color; lg.append(h("span", {}, k, se.name)); });
+
+  const W = host.clientWidth || 320, H = 230, m = { l: 32, r: 76, t: 12, b: 26 };
+  const pw = W - m.l - m.r, ph = H - m.t - m.b, n = DATA.days.length;
+  const all = [...DATA.temps.inside, ...DATA.temps.outside], mn = Math.min(...all), mx = Math.max(...all);
+  const step = (mx - mn) > 12 ? 5 : (mx - mn) > 5 ? 2 : 1;
+  const ticks = niceTicks(Math.floor((mn - .5) / step) * step, Math.ceil((mx + .5) / step) * step, step), lo = ticks[0], hi = ticks[ticks.length - 1];
+  const X = i => m.l + 8 + i * (pw - 16) / (n - 1), Y = v => m.t + ph - (v - lo) / (hi - lo) * ph;
+  const s = svg("svg", { viewBox: `0 0 ${W} ${H}`, height: H, tabindex: 0, role: "img",
+    "aria-label": "Températures moyennes de la semaine, dans la maison et dehors. Flèches gauche et droite pour parcourir les jours." }, host);
+  ticks.forEach((t, i) => {
+    svg("line", { x1: m.l, x2: W - m.r, y1: Y(t), y2: Y(t), class: i === 0 ? "axis-l" : "grid-l" }, s);
+    svg("text", { x: m.l - 8, y: Y(t) + 4, "text-anchor": "end", class: "t-muted" }, s).textContent = t;
+  });
+  DATA.days.forEach((d, i) => svg("text", { x: X(i), y: H - 6, "text-anchor": "middle", class: "t-muted" }, s).textContent = d);
+
+  const cross = svg("line", { y1: m.t, y2: m.t + ph, class: "axis-l", style: "display:none" }, s);
+  const dots = series.map(se => svg("circle", { r: 5, style: `fill:${se.color};stroke:var(--surface);stroke-width:2;display:none` }, s));
+  series.forEach(se => {
+    svg("polyline", { points: se.vals.map((v, i) => X(i) + "," + Y(v)).join(" "), fill: "none", "stroke-width": 2, "stroke-linecap": "round", "stroke-linejoin": "round", class: se.cls, style: `stroke:${se.color}` }, s);
+    const last = se.vals.length - 1;
+    svg("circle", { cx: X(last), cy: Y(se.vals[last]), r: 4.5, style: `fill:${se.color};stroke:var(--surface);stroke-width:2` }, s);
+    const t = svg("text", { x: X(last) + 12, y: Y(se.vals[last]) + 4, class: "t-ink" }, s);
+    t.textContent = fr1(se.vals[last]) + " °C";
+    t.style.fontWeight = 600;
+  });
+
+  function at(i) {
+    cross.setAttribute("x1", X(i)); cross.setAttribute("x2", X(i)); cross.style.display = "";
+    series.forEach((se, k) => { dots[k].setAttribute("cx", X(i)); dots[k].setAttribute("cy", Y(se.vals[i])); dots[k].style.display = ""; });
+    const r = s.getBoundingClientRect();
+    showTip(r.left + X(i) * r.width / W, r.top + Y(series[0].vals[i]) * r.height / H, DATA.daysLong[i],
+      series.map(se => ({ color: se.color, value: fr1(se.vals[i]) + " °C", label: se.name })));
+  }
+  const clear = () => { cross.style.display = "none"; dots.forEach(d => (d.style.display = "none")); hideTip(); };
+  const hit = svg("rect", { x: m.l, y: m.t, width: pw, height: ph, fill: "transparent" }, s);
+  hit.addEventListener("pointermove", e => {
+    const r = s.getBoundingClientRect(), px = (e.clientX - r.left) * W / r.width;
+    at(Math.max(0, Math.min(n - 1, Math.round((px - m.l - 8) / ((pw - 16) / (n - 1))))));
+  });
+  hit.addEventListener("pointerleave", clear);
+  let idx = n - 1;
+  s.addEventListener("focus", () => at(idx)); s.addEventListener("blur", clear);
+  s.addEventListener("keydown", e => {
+    if (e.key === "ArrowLeft") idx = Math.max(0, idx - 1); else if (e.key === "ArrowRight") idx = Math.min(n - 1, idx + 1); else return;
+    e.preventDefault(); at(idx);
+  });
+  fillTable("temps-tbl", ["Jour", "Maison (°C)", "Dehors (°C)"], DATA.days.map((d, i) => [DATA.daysLong[i], fr1(series[0].vals[i]), fr1(series[1].vals[i])]));
+}
+
+/* ===== Colonnes : photos par jour (mise en avant d’un seul jour) ===== */
+function topRounded(x, y, w, hgt, r) {
+  r = Math.min(r, w / 2, hgt);
+  return `M${x},${y + hgt}V${y + r}Q${x},${y} ${x + r},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${y + hgt}Z`;
+}
+function renderPhotos() {
+  const host = document.getElementById("photos");
+  host.replaceChildren();
+  const vals = DATA.photos.perDay, n = vals.length;
+  const W = host.clientWidth || 320, H = 190, m = { l: 30, r: 4, t: 18, b: 26 };
+  const pw = W - m.l - m.r, ph = H - m.t - m.b, band = pw / n, bw = Math.min(24, band * .6);
+  const maxv = Math.max(...vals, 1), pstep = [1, 2, 5, 10, 20, 25, 50, 100, 200, 500].find(x => maxv / x <= 4) || 1000;
+  const top = Math.ceil(maxv / pstep) * pstep, ticks = []; for (let t = 0; t <= top; t += pstep) ticks.push(t);
+  const Y = v => m.t + ph - v / top * ph;
+  const best = Math.max(...vals) > 0 ? vals.indexOf(Math.max(...vals)) : -1;
+  const s = svg("svg", { viewBox: `0 0 ${W} ${H}`, height: H, role: "img", "aria-label": "Photos et vidéos ajoutées chaque jour" }, host);
+  ticks.forEach((t, i) => {
+    svg("line", { x1: m.l, x2: W - m.r, y1: Y(t), y2: Y(t), class: i === 0 ? "axis-l" : "grid-l" }, s);
+    svg("text", { x: m.l - 8, y: Y(t) + 4, "text-anchor": "end", class: "t-muted" }, s).textContent = t;
+  });
+  vals.forEach((v, i) => {
+    const cx = m.l + i * band + band / 2;
+    const bar = svg("path", { d: topRounded(cx - bw / 2, Y(v), bw, Y(0) - Y(v), 4), class: "bar", style: `fill:${i === best ? "var(--s1)" : "var(--neutral)"}` }, s);
+    svg("text", { x: cx, y: H - 6, "text-anchor": "middle", class: "t-muted" }, s).textContent = DATA.days[i];
+    if (i === best) { const t = svg("text", { x: cx, y: Y(v) - 6, "text-anchor": "middle", class: "t-ink" }, s); t.textContent = v; t.style.fontWeight = 650; }
+    const hit = svg("rect", { x: m.l + i * band, y: m.t, width: band, height: ph + 2, fill: "transparent", tabindex: 0, "aria-label": `${DATA.daysLong[i]} : ${v} photos et vidéos` }, s);
+    const on = () => { bar.style.opacity = .75; const [cx2, cy2] = centerOf(bar); showTip(cx2, cy2 - 6, DATA.daysLong[i], [{ value: String(v), label: "photos et vidéos" }]); };
+    const off = () => { bar.style.opacity = 1; hideTip(); };
+    hit.addEventListener("pointermove", on); hit.addEventListener("focus", on);
+    hit.addEventListener("pointerleave", off); hit.addEventListener("blur", off);
+  });
+  fillTable("photos-tbl", ["Jour", "Photos et vidéos"], vals.map((v, i) => [DATA.daysLong[i], v]));
+}
+
+/* ===== Vue tableau : le jumeau accessible de chaque graphique ===== */
+function fillTable(id, cols, rows) {
+  const t = h("table", { class: "data" });
+  t.append(h("thead", {}, h("tr", {}, ...cols.map((c, i) => h("th", i ? { class: "n" } : {}, c)))));
+  t.append(h("tbody", {}, ...rows.map(r => h("tr", {}, ...r.map((c, i) => h(i ? "td" : "th", i ? { class: "n" } : {}, String(c)))))));
+  document.getElementById(id).replaceChildren(t);
+}
+document.querySelectorAll(".tbl-btn").forEach(b => b.addEventListener("click", () => {
+  const id = b.dataset.for, on = b.getAttribute("aria-pressed") !== "true";
+  b.setAttribute("aria-pressed", on);
+  b.textContent = on ? "Graphique" : "Tableau";
+  document.getElementById(id).hidden = on;
+  document.getElementById(id + "-tbl").hidden = !on;
+  if (id === "temps") document.getElementById("temps-legend").hidden = on;
+}));
+
+/* ===== Listes, jauge internet, bloc technique ===== */
+function renderLists() {
+  const fill = (id, rows, withIcon) => {
+    const ul = document.getElementById(id);
+    rows.forEach(r => {
+      const ic = h("span", { class: "ico" });
+      if (withIcon) ic.append(icon(r.icon)); else ic.append(icon("check", 2));
+      const li = h("li", {}, ic, h("div", {}, h("div", { class: "t" }, r.t), h("div", { class: "s" }, r.s)), h("div", { class: "r" }, r.r));
+      ul.append(li);
+    });
+  };
+  if (!DATA.events.length) hideCard("events"); else fill("events", DATA.events, true);
+  DATA.media.forEach(r => (r.icon = "play"));
+  if (!DATA.media.length) hideCard("media"); else { fill("media", DATA.media, true); document.getElementById("media-more").textContent = DATA.mediaMore; }
+
+  const dns = document.getElementById("dns");
+  if (!DATA.dns.total) { hideCard("dns"); return; }
+  const pct = DATA.dns.blocked / DATA.dns.total * 100;
+  const track = h("div", { class: "track", role: "img", "aria-label": `${fr1(pct)} % des requêtes bloquées` }, (() => { const f = h("div", { class: "fill" }); f.style.width = pct + "%"; return f; })());
+  dns.append(h("div", { class: "row" }, h("span", {}, "Requêtes bloquées"), h("b", {}, fr1(pct) + " %")), track,
+    h("div", { class: "s", style: "font-size:13px;color:var(--ink2)" }, `${fr(DATA.dns.blocked)} bloquées sur ${fr(DATA.dns.total)} requêtes`));
+}
+function renderTech() {
+  const T = DATA.tech, w = T.warnings;
+  const sum = document.getElementById("tech-sum");
+  const ico = h("span", { class: "dot-ico " + (w ? "warn" : "good") });
+  ico.append(icon(w ? "alert" : "check", 2.6));
+  const chev = icon("chev", 2); chev.setAttribute("class", "chev");
+  sum.append(ico, h("div", {}, h("h2", {}, "Technique"), h("p", { class: "sub", style: "margin:0" }, w ? `${w} point à surveiller` : "Tout est en ordre")), chev);
+  const body = document.getElementById("tech-body");
+  [...T.rows].sort((a, b) => a.ok - b.ok).forEach(r => {
+    const ic = h("span", { class: "dot-ico " + (r.ok ? "good" : "warn") });
+    ic.append(icon(r.ok ? "check" : "alert", 2.6));
+    body.append(h("div", { class: "srow" }, ic, h("div", {}, h("div", {}, r.t), h("div", { class: "s" }, r.s))));
+  });
+  body.append(h("div", { class: "h3" }, "Espace utilisé"));
+  const m = h("div", { class: "meter" });
+  T.meters.forEach(x => {
+    const f = h("div", { class: "fill" + (x.p >= 90 ? " crit" : x.p >= 80 ? " warn" : "") }); f.style.width = x.p + "%";
+    m.append(h("div", { class: "row" }, h("span", {}, x.l), h("b", {}, x.p + " %")), h("div", { class: "track" }, f));
+  });
+  body.append(m);
+}
+function renderFoot() {
+  const f = document.getElementById("foot");
+  f.append("Préparé le " + DATA.generated);
+  const ar = h("div", { class: "archive" });
+  DATA.archive.forEach(a => ar.append(h("a", { href: a.href }, a.label)));
+  f.append(ar);
+}
+
+/* ===== Lancement + redimensionnement ===== */
+renderTop(); renderKpis(); renderLists(); renderTech(); renderFoot();
+const charts = () => { renderPresence(); renderTemps(); renderPhotos(); };
+charts();
+let lastW = document.getElementById("app").clientWidth, timer;
+new ResizeObserver(() => {
+  const w = document.getElementById("app").clientWidth;
+  if (w === lastW) return;
+  lastW = w; clearTimeout(timer); timer = setTimeout(charts, 120);
+}).observe(document.getElementById("app"));
+</script>
+</body>
+</html>

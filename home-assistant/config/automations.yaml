@@ -109,11 +109,19 @@
       - delay:
           minutes: 10
     default:
-    - action: notify.all_mobiles
-      data:
-        title: Mouvement détecté
-        message: Éclairage extérieur allumé automatiquement suite à une détection
-          de mouvement
+    - if:
+      - condition: not
+        conditions:
+        - condition: time
+          after: '07:00:00'
+          before: '08:30:00'
+          weekday: [mon, tue, wed, thu, fri]
+      then:
+      - action: notify.all_mobiles
+        data:
+          title: Mouvement détecté
+          message: Éclairage extérieur allumé automatiquement suite à une détection
+            de mouvement
     - delay:
         minutes: 2
   - if:
@@ -376,6 +384,17 @@
     - condition: state
       entity_id: input_boolean.maison_absente
       state: 'on'
+  - condition: or
+    conditions:
+    - condition: state
+      entity_id: input_boolean.maison_absente
+      state: 'on'
+    - condition: not
+      conditions:
+      - condition: time
+        after: '07:00:00'
+        before: '08:30:00'
+        weekday: [mon, tue, wed, thu, fri]
   actions:
   - action: notify.all_mobiles
     data:
