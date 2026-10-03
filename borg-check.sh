@@ -23,6 +23,11 @@ log() { echo "${LOG_PREFIX} $*"; }
 
 notify() {
     local colour="$1" title="$2" msg="$3" url=""
+    # 2026-10-03 : succès muets et rien la nuit (23h-08h Paris) ; backup-watch.sh
+    # (07:15 UTC) signale échecs, retards et avertissements + bilan du dimanche.
+    [ "${colour}" = 3066993 ] && return 0
+    local h; h="$(TZ=Europe/Paris date +%-H)"
+    { [ "${h}" -ge 23 ] || [ "${h}" -lt 8 ]; } && return 0
     [ -r "${WEBHOOK_FILE}" ] && url="$(cat "${WEBHOOK_FILE}" 2>/dev/null)"
     [ -z "${url}" ] && return 0
     local payload
