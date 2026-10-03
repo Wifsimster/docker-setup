@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Collecte l'activité de la maison sur 7 jours (lecture seule) et écrit du JSON sur stdout."""
 import json, os, re, sqlite3, subprocess
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 TZ = ZoneInfo("Europe/Paris")
@@ -315,6 +315,36 @@ def disk_meters():
     return out
 
 
+# ---------- Orbite (entourage) et agenda Jarvis ----------
+AGENDA_AUTO = "/opt/docker/digest/agenda-auto.md"  # copié chaque matin depuis codedev (birthday-push.sh)
+
+
+def entourage():
+    """Anniversaires à venir (14 j), proches qui s'éloignent. Lecture seule d'Orbite."""
+    import orbite
+    con = orbite.connect()
+    rows = []
+    for b in orbite.birthdays(con):
+        d = date.fromisoformat(b["date"])
+        when = "aujourd'hui" if b["inDays"] == 0 else "demain" if b["inDays"] == 1 else f"{DAY_FULL[d.weekday()]} {short_day(datetime(d.year, d.month, d.day))}"
+        rows.append({"icon": "cake", "t": b["name"], "s": f"{when.capitalize()} · {b['circle']}", "r": f"{b['turning']} ans" if b["turning"] else ""})
+    drift = [{"icon": "drift", "t": x["name"], "s": f"{x['recent']} échanges ces 3 derniers mois, d'habitude ~{x['usual']}", "r": ""}
+             for x in orbite.drifting(con)]
+    return rows, drift
+
+
+def agenda_auto():
+    """Événements ajoutés automatiquement par Jarvis ces 7 derniers jours (lignes « - AAAA-MM-JJ — texte »)."""
+    out = []
+    with open(AGENDA_AUTO, encoding="utf-8") as fh:
+        for line in fh:
+            m = re.match(r"^- (\d{4}-\d\d-\d\d) [—-] (.+)$", line.strip())
+            if m and DAYS[0].date().isoformat() <= m.group(1) <= TODAY.date().isoformat():
+                text = m.group(2).split(" — ")[0]
+                out.append({"icon": "calendar", "t": text, "s": f"Ajouté le {short_day(datetime.fromisoformat(m.group(1)))}", "r": ""})
+    return out
+
+
 def main():
     kpis, events = [], []
 
@@ -372,6 +402,9 @@ def main():
                        "s": " · ".join(f"{t} {n}" for t, n in notes[:6]) + (f" · + {len(notes) - 6} autres" if len(notes) > 6 else ""),
                        "r": str(total)})
 
+    bdays, drift = safe(entourage, ([], []))
+    agenda = safe(agenda_auto, [])
+
     first, last = DAYS[0], DAYS[-1]
     rng = f"Semaine du {first.day if first.day > 1 else '1er'} {MON_FULL[first.month - 1] if first.month != last.month else ''}".rstrip() + f" au {last.day if last.day > 1 else '1er'} {MON_FULL[last.month - 1]} {last.year}"
 
@@ -389,6 +422,9 @@ def main():
         "media": med["items"][:5],
         "mediaMore": f"+ {len(med['items']) - 5} autres" if len(med["items"]) > 5 else "",
         "dns": dns_d,
+        "birthdays": bdays,
+        "drifting": drift,  # retiré des pages autres que celle de Damien (publish.py)
+        "agenda": agenda,
         "tech": {"warnings": warnings, "rows": rows, "meters": safe(disk_meters, [])},
         "status": {"ok": not warnings, "text": "Tout est en ordre" if not warnings else f"{warnings} point{'s' if warnings > 1 else ''} à surveiller"},
     }

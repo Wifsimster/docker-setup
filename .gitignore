@@ -33,6 +33,7 @@
 !backup-watch.sh
 # digest: publish.py et send-mail.py restent hors git (adresses de la famille).
 !digest/collect.py
+!digest/orbite.py
 !digest/template.html
 !digest/nginx.conf
 !digest/run.sh
