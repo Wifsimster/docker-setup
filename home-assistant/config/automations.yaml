@@ -602,12 +602,12 @@
     value_template: '{{ trigger.id == ''offline'' or trigger.to_state.state not in
       [''unavailable'', ''unknown''] }}'
   actions:
-  - action: notify.devices_watch_log
+  - action: persistent_notification.create
     data:
-      message: >-
-        {{ {"type": "zombie", "label": "Broadlink RM4", "state": ("hors ligne"
-        if trigger.id == "offline" else "reconnecte"), "ts": now().isoformat()}
-        | to_json }}
+      notification_id: devices_watch_broadlink
+      title: Broadlink RM4 (porte atelier)
+      message: '{{ "Hors ligne" if trigger.id == "offline" else "Reconnectée" }} depuis
+        {{ now().strftime("%d/%m %H:%M") }}.'
   mode: single
 - id: chauffe_eau_eau_chaude_1782131896
   alias: Chauffe-eau — Eau chaude sanitaire
@@ -760,11 +760,15 @@
   - condition: template
     value_template: '{{ stale | trim != '''' }}'
   actions:
-  - action: notify.devices_watch_log
+  - action: persistent_notification.create
     data:
-      message: >-
-        {{ {"type": "stale", "detail": stale, "ts": now().isoformat()} | to_json
-        }}
+      notification_id: devices_watch_stale
+      title: Capteur(s) de température figé(s)
+      message: '{{ stale }}
+
+
+        Vérifié le {{ now().strftime("%d/%m %H:%M") }}. Probable reporting Zigbee cassé
+        → pile + reconfigure ZHA + réveil bouton.'
   mode: single
   variables:
     stale: '{% set ns = namespace(items=[]) %}{% for e in integration_entities(''zha'')
@@ -810,12 +814,12 @@
       == ''offline'' or trigger.to_state.state not in [''unavailable'', ''unknown''])
       }}'
   actions:
-  - action: notify.devices_watch_log
+  - action: persistent_notification.create
     data:
-      message: >-
-        {{ {"type": "zombie", "label": trigger.to_state.name, "state": ("hors
-        ligne" if trigger.id == "offline" else "reconnecte"), "ts":
-        now().isoformat()} | to_json }}
+      notification_id: 'devices_watch_{{ trigger.entity_id }}'
+      title: 'Volet {{ trigger.to_state.name }}'
+      message: '{{ "Hors ligne" if trigger.id == "offline" else "Reconnecté" }} depuis
+        {{ now().strftime("%d/%m %H:%M") }}.'
   mode: queued
   max: 10
 - id: vmc_guard_relais
