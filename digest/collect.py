@@ -371,6 +371,21 @@ def projets():
     return [x for _, x in sorted(due, key=lambda t: t[0])] + journal[::-1]
 
 
+ENTOURAGE_JOURNAL = "/opt/docker/digest/entourage-journal.md"  # copié chaque matin depuis codedev (birthday-push.sh)
+
+
+def fiches():
+    """Fiches Orbite mises à jour par Jarvis ces 7 derniers jours (« - AAAA-MM-JJ — personne : champ mis à jour (source) »)."""
+    out = []
+    with open(ENTOURAGE_JOURNAL, encoding="utf-8") as fh:
+        for line in fh:
+            m = re.match(r"^- (\d{4}-\d\d-\d\d) [—-] ([^:]+?) : (.+)$", line.strip())
+            if m and DAYS[0].date().isoformat() <= m.group(1) <= TODAY.date().isoformat():
+                d = datetime.fromisoformat(m.group(1))
+                out.append({"icon": "check", "t": m.group(2), "s": f"{m.group(3)} · {short_day(d)}", "r": ""})
+    return out[::-1]
+
+
 def main():
     kpis, events = [], []
 
@@ -431,6 +446,7 @@ def main():
     bdays, drift = safe(entourage, ([], []))
     agenda = safe(agenda_auto, [])
     projects = safe(projets, [])
+    fiches_maj = safe(fiches, [])
 
     first, last = DAYS[0], DAYS[-1]
     rng = f"Semaine du {first.day if first.day > 1 else '1er'} {MON_FULL[first.month - 1] if first.month != last.month else ''}".rstrip() + f" au {last.day if last.day > 1 else '1er'} {MON_FULL[last.month - 1]} {last.year}"
@@ -453,6 +469,7 @@ def main():
         "drifting": drift,  # retiré des pages autres que celle de Damien (publish.py)
         "agenda": agenda,
         "projects": projects,
+        "fiches": fiches_maj,  # retiré des pages autres que celle de Damien (publish.py)
         "tech": {"warnings": warnings, "rows": rows, "meters": safe(disk_meters, [])},
         "status": {"ok": not warnings, "text": "Tout est en ordre" if not warnings else f"{warnings} point{'s' if warnings > 1 else ''} à surveiller"},
     }
