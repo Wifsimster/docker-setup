@@ -227,6 +227,8 @@ details.tech[open] .chev { transform: rotate(180deg); }
   <section class="card">
     <div class="card-h"><div><h2>Entourage</h2><p class="sub">Anniversaires des deux prochaines semaines, proches à recontacter, agenda</p></div></div>
     <ul class="list" id="people"></ul>
+    <div class="h3" id="fiches-h">Fiches mises à jour</div>
+    <ul class="list" id="fiches"></ul>
   </section>
 
   <section class="card">
@@ -582,7 +584,11 @@ function renderLists() {
   };
   if (!DATA.events.length) hideCard("events"); else fill("events", DATA.events, true);
   const people = [...(DATA.birthdays || []), ...(DATA.drifting || []), ...(DATA.agenda || [])];
-  if (!people.length) hideCard("people"); else fill("people", people, true);
+  const fiches = DATA.fiches || [];
+  if (fiches.length) fill("fiches", fiches, true);
+  else { document.getElementById("fiches-h").hidden = true; document.getElementById("fiches").hidden = true; }
+  if (!people.length) document.getElementById("people").hidden = true; else fill("people", people, true);
+  if (!people.length && !fiches.length) hideCard("people");
   if (!(DATA.projects || []).length) hideCard("projects"); else fill("projects", DATA.projects, true);
   DATA.media.forEach(r => (r.icon = "play"));
   if (!DATA.media.length) hideCard("media"); else { fill("media", DATA.media, true); document.getElementById("media-more").textContent = DATA.mediaMore; }
