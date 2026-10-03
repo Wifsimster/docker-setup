@@ -9,8 +9,8 @@
 #   - posts 🔴 if a job failed or MISSED its run (no success in the expected
 #     window: state 26 h, weekly jobs 8 days), with the last error line;
 #   - posts 🟠 if the last state-backup run logged warnings;
-#   - posts one 🟢 weekly summary on Sunday when everything is fine;
-#   - otherwise says nothing.
+#   - otherwise says nothing. The weekly summary lives in the Sunday house
+#     digest (digest/collect.py, "Sauvegardes" row), not in Discord.
 #
 # Read-only on the logs. Installed via root crontab: 15 7 * * * (07:15 UTC =
 # 08:15/09:15 Paris, after borg-check's 05:30 slot).
@@ -102,8 +102,6 @@ if red:
     print("15158332\t🔴 Backups — action requise\t" + "\n".join(red).replace("\t", " ").replace("\n", "\\n"))
 elif warns:
     print("16776960\t🟠 Backup state — avertissements\t" + "\\n".join("• " + w for w in warns).replace("\t", " "))
-elif NOW.weekday() == 6:
-    print("3066993\t🟢 Backups — bilan de la semaine\t" + "\\n".join(summary).replace("\t", " "))
 PY
 )"
 
