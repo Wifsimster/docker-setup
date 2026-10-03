@@ -603,8 +603,8 @@
   mode: single
 - id: broadlink_rm4_health_alert
   alias: Alerte - Broadlink RM4 disponibilité
-  description: Notifie les mobiles quand la télécommande RF/IR Broadlink RM4 passe
-    hors ligne ou revient.
+  description: Journalise (sans push/son) quand la télécommande RF/IR Broadlink
+    RM4 passe hors ligne ou revient ; repris dans le rapport du dimanche.
   triggers:
   - platform: state
     entity_id: remote.universal_remote
@@ -621,13 +621,12 @@
     value_template: '{{ trigger.id == ''offline'' or trigger.to_state.state not in
       [''unavailable'', ''unknown''] }}'
   actions:
-  - data:
-      title: "{% if trigger.id == 'offline' %}\U0001F534 Broadlink hors ligne{% else
-        %}\U0001F7E2 Broadlink reconnectée{% endif %}"
-      message: '{% if trigger.id == ''offline'' %}La télécommande RF/IR Broadlink
-        RM4 ne répond plus sur le réseau (vérifier alimentation/WiFi).{% else %}La
-        Broadlink RM4 est de nouveau en ligne.{% endif %}'
-    action: notify.all_mobiles
+  - action: persistent_notification.create
+    data:
+      notification_id: devices_watch_broadlink
+      title: Broadlink RM4 (porte atelier)
+      message: '{{ "Hors ligne" if trigger.id == "offline" else "Reconnectée" }} depuis
+        {{ now().strftime("%d/%m %H:%M") }}.'
   mode: single
 - id: chauffe_eau_eau_chaude_1782131896
   alias: Chauffe-eau — Eau chaude sanitaire
@@ -768,8 +767,9 @@
     pas: '{{ (ti - ci) % 3 }}'
 - id: alerte_capteur_temperature_fige
   alias: Alerte — Capteur de température figé/muet
-  description: Notifie si un thermometre Zigbee ne met plus a jour sa valeur depuis
-    > 12 h (device muet alors qu'il peut rester joignable).
+  description: Journalise (sans push/son) si un thermometre Zigbee ne met plus a
+    jour sa valeur depuis > 12 h (device muet alors qu'il peut rester joignable) ;
+    repris dans le rapport du dimanche.
   triggers:
   - trigger: time_pattern
     hours: /6
@@ -779,15 +779,15 @@
   - condition: template
     value_template: '{{ stale | trim != '''' }}'
   actions:
-  - action: notify.all_mobiles
+  - action: persistent_notification.create
     data:
-      title: ⚠️ Capteur(s) de température figé(s)
-      message: 'Ces thermomètres ne remontent plus de valeur :
+      notification_id: devices_watch_stale
+      title: Capteur(s) de température figé(s)
+      message: '{{ stale }}
 
-        {{ stale }}
 
-
-        Probable reporting Zigbee cassé → pile + reconfigure ZHA + réveil bouton.'
+        Vérifié le {{ now().strftime("%d/%m %H:%M") }}. Probable reporting Zigbee cassé
+        → pile + reconfigure ZHA + réveil bouton.'
   mode: single
   variables:
     stale: '{% set ns = namespace(items=[]) %}{% for e in integration_entities(''zha'')
@@ -797,6 +797,50 @@
       ~ ''h sans MAJ)''] %}{% endif %}{% endfor %}{{ ns.items | join(''
 
       '') }}'
+- id: alerte_volet_hors_ligne
+  alias: Alerte - Volet hors ligne
+  description: Journalise (sans push/son) quand un volet roulant cesse de repondre
+    (module Zigbee/HomeKit injoignable) ou revient ; repris dans le rapport du
+    dimanche. Cree le 2026-09-13 apres 3 jours de panne silencieuse du volet Salon
+    Sud.
+  triggers:
+  - trigger: state
+    entity_id:
+    - cover.salon_sonoff_mini_zbrbs_nord_1
+    - cover.salon_sonoff_mini_zbrbs_nord_2
+    - cover.salon_sonoff_mini_zbrbs_sud
+    - cover.chambre_parentale_sonoff_mini_zbrbs
+    - cover.chambre_anna_sonoff_mini_zbrbs
+    - cover.volet_roulant_bureau
+    to: unavailable
+    for:
+      minutes: 30
+    id: offline
+  - trigger: state
+    entity_id:
+    - cover.salon_sonoff_mini_zbrbs_nord_1
+    - cover.salon_sonoff_mini_zbrbs_nord_2
+    - cover.salon_sonoff_mini_zbrbs_sud
+    - cover.chambre_parentale_sonoff_mini_zbrbs
+    - cover.chambre_anna_sonoff_mini_zbrbs
+    - cover.volet_roulant_bureau
+    from: unavailable
+    id: online
+  conditions:
+  - condition: template
+    value_template: '{{ trigger.from_state is not none and trigger.from_state.state
+      not in [''unavailable'', ''unknown''] and trigger.to_state is not none and (trigger.id
+      == ''offline'' or trigger.to_state.state not in [''unavailable'', ''unknown''])
+      }}'
+  actions:
+  - action: persistent_notification.create
+    data:
+      notification_id: 'devices_watch_{{ trigger.entity_id }}'
+      title: 'Volet {{ trigger.to_state.name }}'
+      message: '{{ "Hors ligne" if trigger.id == "offline" else "Reconnecté" }} depuis
+        {{ now().strftime("%d/%m %H:%M") }}.'
+  mode: queued
+  max: 10
 - id: vmc_guard_relais
   alias: VMC - relais rallumé automatiquement (garde-fou)
   description: La VMC doit tourner 24/7. Si le relais du Shelly passe à OFF, on le
