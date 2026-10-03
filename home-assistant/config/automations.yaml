@@ -2324,6 +2324,11 @@
     value_template: '{% set lt = this.attributes.last_triggered %}{{ lt is none or
       states.person.christelle.last_changed > lt or (now() - lt).total_seconds() > 7200
       }}'
+  - alias: Pas déjà annoncée par le SMS Waze pour ce trajet (repli seulement)
+    condition: template
+    value_template: '{% set w = state_attr(''automation.christelle_annonce_de_son_arrivee_sms_waze'',
+      ''last_triggered'') %}{{ w is none or states.person.christelle.last_changed > w
+      or (now() - w).total_seconds() > 7200 }}'
   variables:
     minutes: "{%- set d = trigger.to_state.state | float(0) / 1000 -%}\n{%- set d0 = trigger.from_state.state
       | float(0) / 1000 if trigger.from_state else 0 -%}\n{%- set dt = (as_timestamp(trigger.to_state.last_changed)
@@ -2369,3 +2374,57 @@
       data:
         tag: christelle_arrivee
   mode: single
+- id: christelle_waze_annonce
+  alias: Christelle - Annonce de son arrivée (SMS Waze)
+  description: 'Dès que le téléphone de Damien reçoit le SMS Waze de Christelle (« J''utilise
+    Waze pour aller à Domicile, j''arriverai à HH:MM »), via le capteur « Last notification »
+    de l''app compagnon (liste blanche : Messages) : push à Damien (toujours) et annonce
+    Sonos si Damien est à la maison, entre 08h00 et 23h00. L''annonce de proximité
+    (christelle_arrivee_annonce) ne se déclenche plus pour ce trajet.'
+  triggers:
+  - trigger: state
+    entity_id: sensor.25069ptebg_last_notification
+  conditions:
+  - alias: Notification d'un SMS de Christelle
+    condition: template
+    value_template: "{{ 'christelle' in (trigger.to_state.attributes.get('android.title')
+      or '') | lower }}"
+  - alias: Texte de partage de trajet Waze, avec une heure d'arrivée
+    condition: template
+    value_template: "{% set t = (trigger.to_state.attributes.get('android.text') or trigger.to_state.state
+      or '') %}{{ t is search('utilise waze|arriverai à', ignorecase=True) and t is
+      search('\\d{1,2}[:h]\\d{2}') }}"
+  variables:
+    texte: "{{ trigger.to_state.attributes.get('android.text') or trigger.to_state.state
+      }}"
+    heure: "{% set m = texte | regex_findall('(\\d{1,2})[:h](\\d{2})') %}{{ '%02d:%02d'
+      | format(m[-1][0] | int, m[-1][1] | int) }}"
+    minutes: "{% set h, mi = heure.split(':') | map('int') | list %}{% set eta = today_at(heure)
+      %}{{ [0, ((eta - now()).total_seconds() / 60) | round(0) | int] | max if eta
+      > now() - timedelta(minutes=5) else 0 }}"
+    phrase: Christelle arrive à {{ heure | replace(':', 'h') }}{% if minutes | int
+      > 1 %}, dans environ {{ minutes }} minutes{% elif minutes | int == 1 %}, dans
+      environ une minute{% endif %}.
+  actions:
+  - action: notify.mobile_app_telephone_damien
+    data:
+      title: "\U0001F697 Christelle arrive"
+      message: '{{ phrase }}'
+      data:
+        tag: christelle_arrivee
+        importance: low
+  - if:
+    - condition: state
+      entity_id: person.wifsimster
+      state: home
+    - condition: time
+      after: 08:00:00
+      before: '23:00:00'
+    then:
+    - action: script.annonce
+      data:
+        message: '{{ phrase }}'
+        piece: toutes
+        volume: 40
+  mode: queued
+  max: 3
