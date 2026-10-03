@@ -993,23 +993,25 @@
     active la sécurité caméra 24/7 et notifie. Ne s''arme que si les 2 personnes sont
     géolocalisées not_home.'
   triggers:
+  # 2026-10-03 : `to: not_home` + `for` au lieu d'un trigger sans `to:` (déclenché
+  # à chaque mise à jour GPS, ~1 365 fois/semaine) suivi d'un delay en mode
+  # restart (délai relancé à chaque mise à jour, armement retardé sans fin).
   - trigger: state
     entity_id:
     - person.wifsimster
     - person.christelle
-  conditions:
-  - condition: template
-    value_template: '{{ states(''person.wifsimster'') == ''not_home'' and states(''person.christelle'')
-      == ''not_home'' }}'
-  actions:
-  - delay:
+    to: not_home
+    for:
       minutes: 10
-  - condition: template
+  conditions:
+  - alias: Tout le foyer est absent (les deux personnes not_home)
+    condition: template
     value_template: '{{ states(''person.wifsimster'') == ''not_home'' and states(''person.christelle'')
       == ''not_home'' }}'
   - condition: state
     entity_id: input_boolean.maison_absente
     state: 'off'
+  actions:
   - action: input_boolean.turn_on
     target:
       entity_id: input_boolean.maison_absente
@@ -1028,7 +1030,7 @@
       piece: toutes
       volume: 45
       nuit: false
-  mode: restart
+  mode: single
 - id: presence_absence_desarmement
   alias: Présence - Désarmement mode Absence (retour)
   description: 'Dès que quelqu''un rentre : désactive le mode absence, rétablit le
