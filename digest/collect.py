@@ -345,6 +345,32 @@ def agenda_auto():
     return out
 
 
+PROJETS = "/opt/docker/digest/projets-maison-journal.md"  # copié chaque matin depuis codedev (birthday-push.sh)
+
+
+def projets():
+    """Journal des projets maison des 7 derniers jours + échéances à 30 j (section « ## Échéances »)."""
+    journal, due, in_due = [], [], False
+    with open(PROJETS, encoding="utf-8") as fh:
+        for line in fh:
+            line = line.strip()
+            if line.startswith("## "):
+                in_due = line[3:].strip().lower().startswith("échéance")
+                continue
+            m = re.match(r"^- (\d{4}-\d\d-\d\d) [—-] (.+)$", line)
+            if not m:
+                continue
+            d = date.fromisoformat(m.group(1))
+            if in_due:
+                days = (d - TODAY.date()).days
+                if 0 <= days <= 30:
+                    due.append((days, {"icon": "calendar", "t": m.group(2), "s": f"Échéance {DAY_FULL[d.weekday()]} {short_day(datetime(d.year, d.month, d.day))}",
+                                       "r": "aujourd'hui" if days == 0 else f"dans {days} j"}))
+            elif DAYS[0].date() <= d <= TODAY.date():
+                journal.append({"icon": "check", "t": m.group(2), "s": f"Le {short_day(datetime(d.year, d.month, d.day))}", "r": ""})
+    return [x for _, x in sorted(due, key=lambda t: t[0])] + journal[::-1]
+
+
 def main():
     kpis, events = [], []
 
@@ -404,6 +430,7 @@ def main():
 
     bdays, drift = safe(entourage, ([], []))
     agenda = safe(agenda_auto, [])
+    projects = safe(projets, [])
 
     first, last = DAYS[0], DAYS[-1]
     rng = f"Semaine du {first.day if first.day > 1 else '1er'} {MON_FULL[first.month - 1] if first.month != last.month else ''}".rstrip() + f" au {last.day if last.day > 1 else '1er'} {MON_FULL[last.month - 1]} {last.year}"
@@ -425,6 +452,7 @@ def main():
         "birthdays": bdays,
         "drifting": drift,  # retiré des pages autres que celle de Damien (publish.py)
         "agenda": agenda,
+        "projects": projects,
         "tech": {"warnings": warnings, "rows": rows, "meters": safe(disk_meters, [])},
         "status": {"ok": not warnings, "text": "Tout est en ordre" if not warnings else f"{warnings} point{'s' if warnings > 1 else ''} à surveiller"},
     }

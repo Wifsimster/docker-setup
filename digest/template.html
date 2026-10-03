@@ -230,6 +230,11 @@ details.tech[open] .chev { transform: rotate(180deg); }
   </section>
 
   <section class="card">
+    <div class="card-h"><div><h2>Projets maison</h2><p class="sub">Avancées de la semaine et prochaines échéances</p></div></div>
+    <ul class="list" id="projects"></ul>
+  </section>
+
+  <section class="card">
     <div class="card-h"><div><h2>À la télé</h2><p class="sub">Épisodes et films ajoutés à la bibliothèque</p></div></div>
     <ul class="list" id="media"></ul>
     <p class="more" id="media-more"></p>
@@ -578,6 +583,7 @@ function renderLists() {
   if (!DATA.events.length) hideCard("events"); else fill("events", DATA.events, true);
   const people = [...(DATA.birthdays || []), ...(DATA.drifting || []), ...(DATA.agenda || [])];
   if (!people.length) hideCard("people"); else fill("people", people, true);
+  if (!(DATA.projects || []).length) hideCard("projects"); else fill("projects", DATA.projects, true);
   DATA.media.forEach(r => (r.icon = "play"));
   if (!DATA.media.length) hideCard("media"); else { fill("media", DATA.media, true); document.getElementById("media-more").textContent = DATA.mediaMore; }
 
