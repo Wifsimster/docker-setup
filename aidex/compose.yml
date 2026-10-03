@@ -1,0 +1,40 @@
+name: aidex
+
+services:
+  aidex:
+    build:
+      context: /home/wifsimster/aidex-src
+      dockerfile: Dockerfile
+    image: aidex:local
+    container_name: aidex
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    environment:
+      - TZ=Europe/Paris
+    volumes:
+      # SQLite save of the persistent world (players, collections, firsts).
+      - ./data:/data
+      # Live gauntlet progress page, editable between rounds without rebuilding.
+      - ./progress:/app/dist/progress:ro
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.aidex.entrypoints=websecure"
+      - "traefik.http.routers.aidex.rule=Host(`aidex.${DOMAIN}`)"
+      - "traefik.http.services.aidex.loadBalancer.server.port=8080"
+      - "traefik.http.routers.aidex.middlewares=secHeaders@docker"
+    networks:
+      lan:
+
+networks:
+  lan:
+    external: true

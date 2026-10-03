@@ -171,3 +171,75 @@ fermer_volets_salon:
         | int }}'
     action: cover.set_cover_position
   mode: single
+annonce:
+  alias: Annonce vocale
+  icon: mdi:bullhorn
+  description: 'Diffuse un message en français (tts.piper) sur les enceintes Sonos
+    via l''API AudioClip : l''annonce se superpose à la musique en cours et le volume
+    de l''enceinte n''est PAS modifié (le champ volume ne s''applique qu''au clip).
+    Silencieux pendant les heures calmes (21h45-07h00) sauf si nuit: true. Cibles
+    : media_player.sonos_salon, media_player.sonos_chambre_leo. `anna` inerte tant
+    que la 3e enceinte n''existe pas.'
+  mode: queued
+  max: 5
+  fields:
+    message:
+      name: Message
+      description: Texte à prononcer
+      required: true
+      example: Léo, extinction de la télé dans cinq minutes
+      selector:
+        text:
+    piece:
+      name: Pièce
+      description: Où diffuser. `anna` reste sans effet tant que la 3e enceinte n'est
+        pas installée.
+      default: toutes
+      selector:
+        select:
+          options:
+          - leo
+          - anna
+          - salon
+          - toutes
+    volume:
+      name: Volume
+      description: Volume de diffusion en %
+      default: 45
+      selector:
+        number:
+          min: 5
+          max: 100
+          step: 5
+          unit_of_measurement: '%'
+    nuit:
+      name: Forcer la nuit
+      description: Diffuser même pendant les heures calmes (21h45 - 07h00)
+      default: false
+      selector:
+        boolean:
+  sequence:
+  - alias: 'Heures calmes : on ne réveille personne sauf urgence'
+    condition: template
+    value_template: '{{ (nuit | default(false)) or (today_at(''07:00'') <= now() <=
+      today_at(''21:45'')) }}'
+  - variables:
+      cibles: '{% set p = piece | default(''toutes'') %}{% set table = {''leo'': [''media_player.sonos_chambre_leo''],''anna'':
+        [''media_player.sonos_chambre_anna''],''salon'': [''media_player.sonos_salon'']}
+        %}{% set t = table.get(p, [''media_player.sonos_chambre_leo'',''media_player.sonos_chambre_anna'',''media_player.sonos_salon''])
+        %}{{ t | select(''has_value'') | list }}'
+  - alias: 'Aucune enceinte joignable : on sort sans erreur'
+    condition: template
+    value_template: '{{ cibles | count > 0 }}'
+  - alias: 'Annonce Sonos (audioclip : se superpose à la musique, ne touche pas au
+      volume de l''enceinte)'
+    action: media_player.play_media
+    target:
+      entity_id: '{{ cibles }}'
+    data:
+      media_content_type: music
+      media_content_id: media-source://tts/tts.piper?message={{ message | urlencode
+        }}&language=fr_FR
+      announce: true
+      extra:
+        volume: '{{ volume | default(45) | int(45) }}'

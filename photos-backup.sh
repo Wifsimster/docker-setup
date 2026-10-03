@@ -37,7 +37,7 @@ ENV_FILE="/root/.borg-photos.env"
 SRC_DIR="/mnt/media/photos"
 SENTINEL="${SRC_DIR}/.backup-sentinel"
 STAGING="/var/tmp/photos-backup-staging"
-WEBHOOK_FILE="/root/.borg-discord-webhook"   # Discord #backups, catégorie Homelab IA
+WEBHOOK_FILE="/root/.borg-discord-webhook"   # Discord #backups, catégorie Homelab
 PG_CONTAINER="immich_postgres"
 PG_USER="postgres"
 

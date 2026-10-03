@@ -1,0 +1,51 @@
+name: actual
+
+services:
+  actual:
+    image: actualbudget/actual-server:latest
+    container_name: actual
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      - TZ=Europe/Paris
+      - ACTUAL_PORT=5006
+      - ACTUAL_TRUSTED_PROXIES=172.18.0.0/16
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    volumes:
+      - ./data:/data
+    labels:
+      - "traefik.enable=true"
+
+      # Entrypoint
+      - "traefik.http.routers.actual.entrypoints=websecure"
+
+      # Router
+      - "traefik.http.routers.actual.rule=Host(`actual.${DOMAIN}`)"
+
+      # Service
+      - "traefik.http.services.actual.loadBalancer.server.port=5006"
+
+      # Rate limiting middleware
+      - "traefik.http.middlewares.actual-ratelimit.ratelimit.average=50"
+      - "traefik.http.middlewares.actual-ratelimit.ratelimit.burst=300"
+      - "traefik.http.middlewares.actual-ratelimit.ratelimit.period=1s"
+      - "traefik.http.routers.actual.middlewares=tinyauth@docker,actual-ratelimit@docker"
+
+      # Watchtower automatic update
+      - "com.centurylinklabs.watchtower.enable=true"
+
+    networks:
+      lan:
+
+networks:
+  lan:
+    external: true

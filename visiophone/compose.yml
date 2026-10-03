@@ -1,0 +1,27 @@
+name: visiophone
+
+services:
+  visiophone-bridge:
+    container_name: visiophone-bridge
+    build: .
+    restart: unless-stopped
+    environment:
+      TZ: Europe/Paris
+      VTO_HOST: ${VTO_HOST}
+      VTO_USER: ${VTO_USER}
+      VTO_PASS: ${VTO_PASS}
+      MQTT_HOST: ${MQTT_HOST}
+      MQTT_PORT: ${MQTT_PORT}
+      MQTT_USER: ${MQTT_USER}
+      MQTT_PASS: ${MQTT_PASS}
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
