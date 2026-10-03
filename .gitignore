@@ -29,6 +29,12 @@
 !gramps-backup.sh
 !disk-cleanup.sh
 !disk-guard.sh
+!backup-watch.sh
+# digest: publish.py et send-mail.py restent hors git (adresses de la famille).
+!digest/collect.py
+!digest/template.html
+!digest/nginx.conf
+!digest/run.sh
 !reports/*.md
 !discord-bridge/bot.py
 !discord-bridge/Dockerfile
