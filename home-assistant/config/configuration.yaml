@@ -37,6 +37,13 @@ notify:
       - service: mobile_app_21081111rg
       - service: mobile_app_2306epn60g
       - service: mobile_app_mi_8
+  # Journal silencieux des alertes "device stale/zombie" (capteurs figes, appareils
+  # hors ligne) : plus de push/son, consolide dans le rapport du dimanche puis vide.
+  # 2026-10-03 : desactive, la plateforme YAML "file" n'existe plus (HA 2026.7) ->
+  # les 3 automatisations utilisent persistent_notification.create.
+  # - name: devices_watch_log
+  #   platform: file
+  #   filename: devices_watch_log.jsonl
 # Homelab: puissance des équipements non mesurés individuellement
 # = compteur baie (tasmota) - somme des prises mesurées
 template:

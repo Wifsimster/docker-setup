@@ -1,0 +1,90 @@
+name: orbite
+
+# Orbite: private relationship map (single user).
+# Exposed behind the existing Tinyauth, like the other services.
+# Runbook, secrets and rollback: docs/deploiement.md in the (private) orbite repo.
+#
+# Router `orbite` middlewares:
+#   1. orbite-auth        Tinyauth ForwardAuth (same endpoint as tinyauth@docker)
+#                         + authResponseHeaders=Remote-User, which the app needs
+#   2. secHeaders         shared HSTS / nosniff headers (traefik/compose.yml)
+#   3. orbite-proxy@file  injects X-Orbite-Proxy-Secret. Defined in the
+#                         untracked traefik/config/orbite.yml: the secret never
+#                         lives in this repo. If that file is missing, Traefik
+#                         disables the router (fail closed).
+# The app rejects any request without the proxy secret AND a Remote-User listed
+# in ORBITE_ALLOWED_USERS.
+#
+# msgvault relay: MSGVAULT_RELAY_URL in .env, codedev over the LAN
+# (http://192.168.0.102:8787).
+#
+# No Watchtower label on purpose: updates are manual (bump ORBITE_IMAGE_TAG).
+
+services:
+  orbite:
+    image: ghcr.io/wifsimster/orbite:${ORBITE_IMAGE_TAG:?set ORBITE_IMAGE_TAG in .env}
+    container_name: orbite
+    restart: unless-stopped
+    # Distroless "nonroot" user of the image; /data in the image belongs to it,
+    # so the named volume is created with the right owner.
+    user: "65532:65532"
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777,noexec,nosuid,nodev
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    env_file:
+      - .env
+    environment:
+      - TZ=Europe/Paris
+      - NODE_ENV=production
+      - PORT=8080
+      - HEALTH_PORT=8081
+      - DATA_DIR=/data
+      - ORBITE_PUBLIC_ORIGIN=https://orbite.${DOMAIN}
+    volumes:
+      - orbite-data:/data
+    # Healthcheck comes from the image (GET 127.0.0.1:8081/healthz, loopback only).
+    deploy:
+      resources:
+        limits:
+          memory: 384M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    labels:
+      - "traefik.enable=true"
+
+      # Entrypoint
+      - "traefik.http.routers.orbite.entrypoints=websecure"
+
+      # Router
+      - "traefik.http.routers.orbite.rule=Host(`orbite.${DOMAIN}`)"
+      - "traefik.http.routers.orbite.service=orbite"
+      - "traefik.http.routers.orbite.middlewares=orbite-auth@docker,secHeaders@docker,orbite-proxy@file"
+
+      # Service
+      - "traefik.http.services.orbite.loadBalancer.server.port=8080"
+
+      # Tinyauth ForwardAuth for Orbite: same endpoint as tinyauth@docker, plus
+      # authResponseHeaders so the app receives the authenticated user (Traefik
+      # also drops any client-supplied Remote-User). Kept separate so other
+      # services do not start receiving Remote-User.
+      - "traefik.http.middlewares.orbite-auth.forwardauth.address=http://tinyauth:3000/api/auth/traefik"
+      - "traefik.http.middlewares.orbite-auth.forwardauth.authResponseHeaders=Remote-User"
+
+    networks:
+      lan:
+
+volumes:
+  # Fixed name: backed up by state-backup.sh from /var/lib/docker/volumes/orbite-data/_data
+  orbite-data:
+    name: orbite-data
+
+networks:
+  lan:
+    external: true
