@@ -33,10 +33,10 @@ notify:
   - name: all_mobiles
     platform: group
     services:
-      - service: mobile_app_25069ptebg
-      - service: mobile_app_21081111rg
-      - service: mobile_app_2306epn60g
-      - service: mobile_app_mi_8
+      # 2026-09-17 : les 3 anciens (21081111rg, 2306epn60g, mi_8) ne rapportaient
+      # plus rien depuis 12 jours — remplaces par les 2 telephones actifs.
+      - service: mobile_app_telephone_damien
+      - service: mobile_app_telephone_christelle
   # Journal silencieux des alertes "device stale/zombie" (capteurs figes, appareils
   # hors ligne) : plus de push/son, consolide dans le rapport du dimanche puis vide.
   # 2026-10-03 : desactive, la plateforme YAML "file" n'existe plus (HA 2026.7) ->

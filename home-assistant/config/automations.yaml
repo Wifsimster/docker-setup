@@ -135,6 +135,12 @@
   - action: input_boolean.turn_off
     target:
       entity_id: input_boolean.eclairage_exterieur_auto
+  - action: script.annonce
+    data:
+      message: L'éclairage extérieur s'est allumé.
+      piece: salon
+      volume: 40
+      nuit: false
   mode: restart
 - id: '1727634762012'
   alias: 'Volet roulant sud - Sécurité : désactiver descente si montée active'
@@ -362,6 +368,12 @@
       data:
         priority: high
         ttl: 0
+  - action: script.annonce
+    data:
+      message: Le portail a été refermé automatiquement.
+      piece: salon
+      volume: 45
+      nuit: true
   mode: restart
 - id: '1709300000001'
   alias: Sécurité - Personne détectée la nuit
@@ -417,6 +429,12 @@
         ttl: 0
         channel: alarm_stream
         importance: high
+  - action: script.annonce
+    data:
+      message: 'Attention : présence détectée à l''extérieur.'
+      piece: salon
+      volume: 60
+      nuit: true
   mode: single
   max_exceeded: warning
 - id: '1709300000002'
@@ -457,6 +475,12 @@
       data:
         priority: high
         ttl: 0
+  - action: script.annonce
+    data:
+      message: Le portail est ouvert depuis trente minutes.
+      piece: salon
+      volume: 50
+      nuit: true
   mode: restart
 - id: '1709300000010'
   alias: Portail - Jeudi matin fermeture automatique a 08h30
@@ -507,34 +531,51 @@
       title: Piscine
       message: La pompe de la piscine va être arrêtée automatiquement après 1h de
         fonctionnement
+  - action: script.annonce
+    data:
+      message: Arrêt automatique du circuit piscine.
+      piece: salon
+      volume: 45
+      nuit: false
   mode: single
   max_exceeded: warning
 - id: '1709300000004'
-  alias: Batterie faible - Notification capteurs Zigbee
-  description: Verifie toutes les 6h si un capteur Zigbee a une batterie entre 5%
-    et 20% (le seuil <5% critique est gere par le workflow n8n).
+  alias: Batterie faible - Annonce capteurs
+  description: Une seule annonce par jour (18h30, salon) listant les capteurs à pile
+    faible (<20 %) ou vide (<5 %, ou injoignable depuis 24 h), avec leur pièce. Remplace
+    l'ancienne notif mobile + annonce générique + alerte n8n <5 %. Filtre sur device_class
+    battery (les entités Zigbee s'appellent *_batterie), téléphones mobile_app exclus.
   triggers:
-  - trigger: time_pattern
-    hours: /6
+  - trigger: time
+    at: '18:30:00'
   conditions:
   - condition: template
-    value_template: "{% set ns = namespace(count=0) %} {% for state in states.sensor
-      %}\n  {% if 'battery' in state.entity_id and state.state not in ['unknown',
-      'unavailable'] and 5 <= state.state | float(100) < 20 and 'mobile' not in state.entity_id
-      %}\n    {% set ns.count = ns.count + 1 %}\n  {% endif %}\n{% endfor %} {{ ns.count
-      > 0 }}"
+    value_template: '{{ message | length > 0 }}'
   actions:
-  - action: notify.all_mobiles
+  - action: script.annonce
     data:
-      title: Batterie faible
-      message: "{% set ns = namespace(sensors=[]) %} {% for state in states.sensor
-        %}\n  {% if 'battery' in state.entity_id and state.state not in ['unknown',
-        'unavailable'] and 5 <= state.state | float(100) < 20 and 'mobile' not in
-        state.entity_id %}\n    {% set ns.sensors = ns.sensors + [state.name ~ ' ('
-        ~ state.state ~ '%)'] %}\n  {% endif %}\n{% endfor %} Capteurs avec batterie
-        faible : {{ ns.sensors | join(', ') }}"
+      message: '{{ message }}'
+      piece: salon
+      volume: 40
+      nuit: false
+  variables:
+    message: "{%- set mobiles = integration_entities('mobile_app') -%}\n{%- set ns
+      = namespace(vides=[], faibles=[]) -%}\n{%- for s in states.sensor | selectattr('attributes.device_class',
+      'defined') | selectattr('attributes.device_class', 'eq', 'battery') if s.entity_id
+      not in mobiles -%}\n  {%- set nom = device_attr(s.entity_id, 'name_by_user')
+      or device_attr(s.entity_id, 'name') or s.name -%}\n  {%- set nom = nom | trim
+      -%}\n  {%- set piece = area_name(s.entity_id) -%}\n  {%- set lieu = nom if (not
+      piece or piece | lower in nom | lower) else nom ~ ' (' ~ piece ~ ')' -%}\n  {%-
+      if s.state in ['unavailable', 'unknown'] -%}\n    {%- if now() - s.last_changed
+      > timedelta(hours=24) -%}{%- set ns.vides = ns.vides + [lieu] -%}{%- endif -%}\n
+      \ {%- elif s.state | float(100) < 5 -%}\n    {%- set ns.vides = ns.vides + [lieu]
+      -%}\n  {%- elif s.state | float(100) < 20 -%}\n    {%- set ns.faibles = ns.faibles
+      + [lieu ~ ' à ' ~ (s.state | float | int) ~ ' %'] -%}\n  {%- endif -%}\n{%-
+      endfor -%}\n{%- set parts = [] -%}\n{%- if ns.vides -%}{%- set parts = parts
+      + ['Pile vide : ' ~ ns.vides | join(', ')] -%}{%- endif -%}\n{%- if ns.faibles
+      -%}{%- set parts = parts + ['Pile faible : ' ~ ns.faibles | join(', ')] -%}{%-
+      endif -%}\n{{ parts | join('. ') ~ ('.' if parts else '') }}"
   mode: single
-  max_exceeded: warning
 - id: '1709300000005'
   alias: Piscine - Failsafe extinction pompe
   description: Sécurité supplémentaire pour éteindre la pompe si elle est encore allumée
@@ -558,6 +599,12 @@
       title: Piscine - Failsafe
       message: La pompe de la piscine a été arrêtée par la sécurité (encore active
         à 22h ou après redémarrage HA)
+  - action: script.annonce
+    data:
+      message: 'Sécurité : le circuit piscine a été coupé par le failsafe.'
+      piece: toutes
+      volume: 55
+      nuit: true
   mode: single
   max_exceeded: warning
 - id: '1709300000006'
@@ -581,7 +628,7 @@
       brightness_pct: 1
       color_temp_kelvin: 2200
     target:
-      entity_id: light.yeelight_color_0x52bf405
+      entity_id: light.chambre_parentale_lumiere_chambre_parentale
   - delay:
       minutes: 5
   - action: light.turn_on
@@ -590,7 +637,7 @@
       color_temp_kelvin: 2500
       transition: 300
     target:
-      entity_id: light.yeelight_color_0x52bf405
+      entity_id: light.chambre_parentale_lumiere_chambre_parentale
   - delay:
       minutes: 5
   - action: light.turn_on
@@ -599,7 +646,7 @@
       color_temp_kelvin: 3200
       transition: 300
     target:
-      entity_id: light.yeelight_color_0x52bf405
+      entity_id: light.chambre_parentale_lumiere_chambre_parentale
   - delay:
       minutes: 5
   - action: light.turn_on
@@ -608,7 +655,7 @@
       color_temp_kelvin: 4000
       transition: 300
     target:
-      entity_id: light.yeelight_color_0x52bf405
+      entity_id: light.chambre_parentale_lumiere_chambre_parentale
   - delay:
       minutes: 5
   - action: light.turn_on
@@ -617,32 +664,9 @@
       color_temp_kelvin: 5000
       transition: 300
     target:
-      entity_id: light.yeelight_color_0x52bf405
+      entity_id: light.chambre_parentale_lumiere_chambre_parentale
   mode: single
   max_exceeded: warning
-- id: n8n_domotique_battery_low
-  alias: n8n - Alerte batterie faible
-  description: Envoie un événement à n8n quand un capteur a une batterie sous 5%
-  triggers:
-  - trigger: time_pattern
-    hours: /6
-  conditions:
-  - condition: template
-    value_template: "{% set ns = namespace(found=false) %} {% for state in states.sensor
-      %}\n  {% if 'battery' in state.entity_id and state.state not in ['unknown',
-      'unavailable'] and state.state | float(100) < 5 and 'mobile' not in state.entity_id
-      %}\n    {% set ns.found = true %}\n  {% endif %}\n{% endfor %} {{ ns.found }}"
-  actions:
-  - action: rest_command.n8n_domotique
-    data:
-      payload: "{% set ns = namespace(sensors=[]) %} {% for state in states.sensor
-        %}\n  {% if 'battery' in state.entity_id and state.state not in ['unknown',
-        'unavailable'] and state.state | float(100) < 5 and 'mobile' not in state.entity_id
-        %}\n    {% set ns.sensors = ns.sensors + [{\"entity_id\": state.entity_id,
-        \"battery_level\": state.state ~ \"%\", \"friendly_name\": state.name}] %}\n
-        \ {% endif %}\n{% endfor %} {\"event\": \"battery_low\", \"sensors\": {{ ns.sensors
-        | tojson }}}"
-  mode: single
 - id: broadlink_rm4_health_alert
   alias: Alerte - Broadlink RM4 disponibilité
   description: Journalise (sans push/son) quand la télécommande RF/IR Broadlink
@@ -839,50 +863,6 @@
       ~ ''h sans MAJ)''] %}{% endif %}{% endfor %}{{ ns.items | join(''
 
       '') }}'
-- id: alerte_volet_hors_ligne
-  alias: Alerte - Volet hors ligne
-  description: Journalise (sans push/son) quand un volet roulant cesse de repondre
-    (module Zigbee/HomeKit injoignable) ou revient ; repris dans le rapport du
-    dimanche. Cree le 2026-09-13 apres 3 jours de panne silencieuse du volet Salon
-    Sud.
-  triggers:
-  - trigger: state
-    entity_id:
-    - cover.salon_sonoff_mini_zbrbs_nord_1
-    - cover.salon_sonoff_mini_zbrbs_nord_2
-    - cover.salon_sonoff_mini_zbrbs_sud
-    - cover.chambre_parentale_sonoff_mini_zbrbs
-    - cover.chambre_anna_sonoff_mini_zbrbs
-    - cover.volet_roulant_bureau
-    to: unavailable
-    for:
-      minutes: 30
-    id: offline
-  - trigger: state
-    entity_id:
-    - cover.salon_sonoff_mini_zbrbs_nord_1
-    - cover.salon_sonoff_mini_zbrbs_nord_2
-    - cover.salon_sonoff_mini_zbrbs_sud
-    - cover.chambre_parentale_sonoff_mini_zbrbs
-    - cover.chambre_anna_sonoff_mini_zbrbs
-    - cover.volet_roulant_bureau
-    from: unavailable
-    id: online
-  conditions:
-  - condition: template
-    value_template: '{{ trigger.from_state is not none and trigger.from_state.state
-      not in [''unavailable'', ''unknown''] and trigger.to_state is not none and (trigger.id
-      == ''offline'' or trigger.to_state.state not in [''unavailable'', ''unknown''])
-      }}'
-  actions:
-  - action: persistent_notification.create
-    data:
-      notification_id: 'devices_watch_{{ trigger.entity_id }}'
-      title: 'Volet {{ trigger.to_state.name }}'
-      message: '{{ "Hors ligne" if trigger.id == "offline" else "Reconnecté" }} depuis
-        {{ now().strftime("%d/%m %H:%M") }}.'
-  mode: queued
-  max: 10
 - id: vmc_guard_relais
   alias: VMC - relais rallumé automatiquement (garde-fou)
   description: La VMC doit tourner 24/7. Si le relais du Shelly passe à OFF, on le
@@ -902,6 +882,12 @@
     data:
       title: VMC
       message: ⚠️ Le relais VMC a été coupé — rallumé automatiquement.
+  - action: script.annonce
+    data:
+      message: La VMC a été rallumée automatiquement.
+      piece: salon
+      volume: 45
+      nuit: false
   mode: single
 - id: vmc_arret_alerte
   alias: VMC arrêtée (panne moteur)
@@ -920,6 +906,12 @@
       title: VMC arrêtée
       message: ⚠️ La VMC ne consomme plus rien depuis 10 min (puissance ~0 W). Vérifier
         le moteur / disjoncteur.
+  - action: script.annonce
+    data:
+      message: 'Panne moteur : la VMC est arrêtée.'
+      piece: toutes
+      volume: 55
+      nuit: true
   mode: single
 - id: volet_salon_securite_descente
   alias: 'Volet roulant salon - Securite : desactiver descente si montee active'
@@ -1024,11 +1016,18 @@
   - action: input_boolean.turn_on
     target:
       entity_id: input_boolean.chauffe_eau_absence
-  - action: notify.all_mobiles
+  - action: persistent_notification.create
     data:
+      notification_id: maison_absence
       title: "\U0001F3E0 Maison en mode Absence"
       message: Tout le monde est parti. Chauffe-eau coupé, détection personne caméra
         active 24/7.
+  - action: script.annonce
+    data:
+      message: Mode absence activé, la maison est vide.
+      piece: toutes
+      volume: 45
+      nuit: false
   mode: restart
 - id: presence_absence_desarmement
   alias: Présence - Désarmement mode Absence (retour)
@@ -1052,10 +1051,17 @@
   - action: input_boolean.turn_off
     target:
       entity_id: input_boolean.chauffe_eau_absence
-  - action: notify.all_mobiles
+  - action: persistent_notification.create
     data:
+      notification_id: maison_absence
       title: "\U0001F3E0 Bon retour"
       message: Mode Absence désactivé — chauffe-eau rétabli selon le planning.
+  - action: script.annonce
+    data:
+      message: Bon retour. Le mode absence est désactivé.
+      piece: toutes
+      volume: 45
+      nuit: false
   mode: single
 - id: frigo_congelateur_alerte_conso
   alias: Alerte panne frigo congélateur
@@ -1079,6 +1085,12 @@
       title: ⚠️ Frigo/congélateur
       message: La Prise frigo congélateur consomme moins de 1 W depuis 2h — vérifie
         que l'appareil est bien alimenté.
+  - action: script.annonce
+    data:
+      message: 'Attention : panne détectée sur le frigo congélateur.'
+      piece: toutes
+      volume: 60
+      nuit: true
   mode: single
 - id: lave_linge_en_marche
   alias: Lave-linge en marche
@@ -1117,10 +1129,20 @@
     data:
       title: "\U0001F9FA Lave-linge"
       message: Cycle terminé — pense à étendre le linge.
+      data:
+        tag: lave_linge
   - action: notify.mobile_app_telephone_christelle
     data:
       title: "\U0001F9FA Lave-linge"
       message: Cycle terminé — pense à étendre le linge.
+      data:
+        tag: lave_linge
+  - action: script.annonce
+    data:
+      message: Le lave-linge est terminé.
+      piece: toutes
+      volume: 45
+      nuit: false
   mode: single
 - id: frigo_anti_coupure_bouton
   alias: Frigo congélateur - anti-coupure bouton
@@ -1150,21 +1172,1122 @@
     target:
       entity_id: switch.prise_machine_a_laver
   mode: single
-- id: prise_television_toujours_allumee
-  alias: Prise Télévision — toujours allumée
-  description: Rallume automatiquement la prise TV si elle est coupée (bouton physique,
-    retour de coupure secteur, appui accidentel dans HA). Complète le réglage matériel
-    «comportement à la mise sous tension = On».
+- id: alerte_volet_hors_ligne
+  alias: Alerte - Volet hors ligne
+  description: Journalise (sans push/son) quand un volet roulant cesse de repondre
+    (module Zigbee/HomeKit injoignable) ou revient ; repris dans le rapport du
+    dimanche. Cree le 2026-09-13 apres 3 jours de panne silencieuse du volet Salon
+    Sud.
   triggers:
-  - platform: state
-    entity_id: switch.prise_television
-    to: 'off'
+  - trigger: state
+    entity_id:
+    - cover.salon_sonoff_mini_zbrbs_nord_1
+    - cover.salon_sonoff_mini_zbrbs_nord_2
+    - cover.salon_sonoff_mini_zbrbs_sud
+    - cover.chambre_parentale_sonoff_mini_zbrbs
+    - cover.chambre_anna_sonoff_mini_zbrbs
+    - cover.volet_roulant_bureau
+    to: unavailable
     for:
-      seconds: 10
+      minutes: 30
+    id: offline
+  - trigger: state
+    entity_id:
+    - cover.salon_sonoff_mini_zbrbs_nord_1
+    - cover.salon_sonoff_mini_zbrbs_nord_2
+    - cover.salon_sonoff_mini_zbrbs_sud
+    - cover.chambre_parentale_sonoff_mini_zbrbs
+    - cover.chambre_anna_sonoff_mini_zbrbs
+    - cover.volet_roulant_bureau
+    from: unavailable
+    id: online
+  conditions:
+  - condition: template
+    value_template: '{{ trigger.from_state is not none and trigger.from_state.state
+      not in [''unavailable'', ''unknown''] and trigger.to_state is not none and (trigger.id
+      == ''offline'' or trigger.to_state.state not in [''unavailable'', ''unknown''])
+      }}'
+  actions:
+  - action: persistent_notification.create
+    data:
+      notification_id: 'devices_watch_{{ trigger.entity_id }}'
+      title: 'Volet {{ trigger.to_state.name }}'
+      message: '{{ "Hors ligne" if trigger.id == "offline" else "Reconnecté" }} depuis
+        {{ now().strftime("%d/%m %H:%M") }}.'
+  mode: queued
+  max: 10
+- id: '1789274000001'
+  alias: Salon - TV coupée le soir (semaine)
+  description: 'Routine Léo : extinction à 19h30 tous les soirs sauf le samedi (dim,
+    lun, mar, mer, jeu, ven). Coupée aussi la veille d''un jour férié (décision 2026-09-23)
+    : les vacances scolaires sont la SEULE exception. La TV est d''abord mise en VEILLE
+    (media_player.tv_salon) avant la coupure de la prise : elle retrouve ainsi l''état
+    veille quand la prise est rallumée à 20h30 (au lieu de redémarrer avec le son
+    de la barre).'
+  triggers:
+  - trigger: time
+    at: '19:30:00'
+  conditions:
+  - condition: time
+    weekday:
+    - mon
+    - tue
+    - wed
+    - thu
+    - fri
+    - sun
+  - alias: Hors vacances scolaires
+    condition: state
+    entity_id: input_boolean.vacances_scolaires
+    state: 'off'
+  actions:
+  - alias: Mettre la TV en veille avant de couper
+    if:
+    - condition: state
+      entity_id: media_player.tv_salon
+      state: 'on'
+    then:
+    - action: media_player.turn_off
+      target:
+        entity_id: media_player.tv_salon
+      continue_on_error: true
+    - delay:
+        seconds: 15
+  - action: switch.turn_off
+    target:
+      entity_id: switch.prise_television
+  mode: single
+- id: '1789274000002'
+  alias: Salon - TV rallumée pour les parents (20h30)
+  description: 'Rallume la PRISE TV à 20h30 les soirs où elle a été coupée (dim, lun,
+    mar, mer, jeu, ven). JAMAIS avant 20h30. Coupée aussi la veille d''un jour férié
+    (décision 2026-09-23) : les vacances scolaires sont la SEULE exception. Rallumer
+    la prise ne doit PAS rallumer l''écran ni le son (enfants endormis) : si la TV
+    démarre d''elle-même dans les 3 min, elle est remise en veille (2 tentatives)
+    ; la barre de son suit via HDMI-CEC.'
+  triggers:
+  - trigger: time
+    at: '20:30:00'
+  conditions:
+  - condition: time
+    weekday:
+    - mon
+    - tue
+    - wed
+    - thu
+    - fri
+    - sun
+  - alias: Hors vacances scolaires
+    condition: state
+    entity_id: input_boolean.vacances_scolaires
+    state: 'off'
+  actions:
+  - action: switch.turn_on
+    target:
+      entity_id: switch.prise_television
+  - alias: La TV redémarre-t-elle toute seule ?
+    wait_for_trigger:
+    - trigger: state
+      entity_id: media_player.tv_salon
+      to: 'on'
+    timeout:
+      minutes: 3
+    continue_on_timeout: true
+  - if:
+    - condition: template
+      value_template: '{{ wait.trigger is not none }}'
+    then:
+    - delay:
+        seconds: 10
+    - action: media_player.turn_off
+      target:
+        entity_id: media_player.tv_salon
+      continue_on_error: true
+    - delay:
+        seconds: 30
+    - alias: Seconde tentative si l'écran a ignoré la 1re
+      if:
+      - condition: state
+        entity_id: media_player.tv_salon
+        state: 'on'
+      then:
+      - action: media_player.turn_off
+        target:
+          entity_id: media_player.tv_salon
+        continue_on_error: true
+  mode: single
+- id: '1789274000003'
+  alias: Maison - Fermeture des volets le soir
+  description: 'Ferme tous les volets à 19h30, TOUS LES SOIRS, sans condition. INTENTIONNELLEMENT
+    indépendant du soleil/de la clarté dehors (confirmé 2026-09-17) : le but est d''imposer
+    le repère du coucher aux enfants, pas de gérer la lumière naturelle — ne pas caler
+    cet horaire sur le crépuscule/sun.sun, même en été quand il fait encore jour.
+    Découplé du calendrier scolaire le 2026-09-17 : les volets restaient ouverts les
+    nuits de mercredi, vendredi et samedi.'
+  triggers:
+  - trigger: time
+    at: '19:30:00'
   conditions: []
   actions:
-  - target:
-      entity_id: switch.prise_television
+  - action: cover.close_cover
+    target:
+      entity_id: cover.tous_les_volets
+  mode: single
+- id: '1789274000004'
+  alias: Salon - Annonce avant extinction TV
+  description: 'Prévient Léo 5 minutes avant la coupure de 19h30 (dim, lun, mar, jeu,
+    ven). PAS le mercredi : à 19h25 Léo est en devoirs (Enfants - Devoirs se déclenche
+    à la même minute), deux consignes d''affilée contreviendraient à la grille. La
+    coupure et le rallumage de la prise gardent, eux, le mercredi. Coupée aussi la
+    veille d''un jour férié (décision 2026-09-23) : les vacances scolaires sont la
+    SEULE exception.'
+  triggers:
+  - trigger: time
+    at: '19:25:00'
+  conditions:
+  - condition: time
+    weekday:
+    - mon
+    - tue
+    - thu
+    - fri
+    - sun
+  - alias: Hors vacances scolaires
+    condition: state
+    entity_id: input_boolean.vacances_scolaires
+    state: 'off'
+  actions:
+  - action: script.annonce
+    data:
+      message: Léo, extinction de la télé dans cinq minutes.
+      piece: salon
+      volume: 45
+  mode: single
+- id: '1789274000005'
+  alias: Enfants - Lever
+  description: 'Réveil à 07h15 du lundi au vendredi. Mercredi : mêmes horaires, Léo
+    va au centre aéré et Anna reste à la maison avec sa maman. Ne tourne pas si input_boolean.maison_absente
+    est on.'
+  triggers:
+  - trigger: time
+    at: 07:15:00
+  conditions:
+  - condition: time
+    weekday:
+    - mon
+    - tue
+    - wed
+    - thu
+    - fri
+  - alias: Pas un jour férié
+    condition: state
+    entity_id: binary_sensor.jour_non_ferie
+    state: 'on'
+  - alias: Hors vacances scolaires
+    condition: state
+    entity_id: input_boolean.vacances_scolaires
+    state: 'off'
+  - alias: Maison occupée (pas de routine si maison vide)
+    condition: state
+    entity_id: input_boolean.maison_absente
+    state: 'off'
+  actions:
+  - choose:
+    - alias: 'Enceinte joignable : réveil en musique, puis consigne'
+      conditions:
+      - condition: template
+        value_template: '{{ has_value(''media_player.sonos_chambre_leo'') }}'
+      sequence:
+      - alias: 'Montée progressive 1/5 : départ en douceur à 10 %'
+        action: media_player.volume_set
+        target:
+          entity_id: media_player.sonos_chambre_leo
+        data:
+          volume_level: 0.1
+      - alias: 'Réveil en musique : playlist Sonos « Pat Patrouille »'
+        action: media_player.play_media
+        target:
+          entity_id: media_player.sonos_chambre_leo
+        data:
+          media_content_type: playlist
+          media_content_id: Pat Patrouille
+      - delay:
+          seconds: 20
+      - alias: 'Montée progressive 2/5 : 15 % à T+20 s'
+        action: media_player.volume_set
+        target:
+          entity_id: media_player.sonos_chambre_leo
+        data:
+          volume_level: 0.15
+      - delay:
+          seconds: 20
+      - alias: 'Montée progressive 3/5 : 20 % à T+40 s'
+        action: media_player.volume_set
+        target:
+          entity_id: media_player.sonos_chambre_leo
+        data:
+          volume_level: 0.2
+      - delay:
+          seconds: 20
+      - alias: 'Montée progressive 4/5 : 25 % à T+60 s'
+        action: media_player.volume_set
+        target:
+          entity_id: media_player.sonos_chambre_leo
+        data:
+          volume_level: 0.25
+      - delay:
+          seconds: 20
+      - alias: 'Montée progressive 5/5 : 30 % à T+80 s (palier final)'
+        action: media_player.volume_set
+        target:
+          entity_id: media_player.sonos_chambre_leo
+        data:
+          volume_level: 0.3
+      - alias: Laisser la musique finir de réveiller Léo avant de parler
+        delay:
+          seconds: 10
+      - action: script.annonce
+        data:
+          message: Léo, debout. Sept heures quinze. Tu t'habilles d'abord.
+          piece: leo
+          volume: 25
+    default:
+    - alias: 'Repli : prévenir les parents, le réveil n''a pas eu lieu'
+      action: notify.all_mobiles
+      data:
+        title: ⚠️ Réveil de Léo non diffusé
+        message: 'L''enceinte de la chambre de Léo est injoignable (état : {{ states(''media_player.sonos_chambre_leo'')
+          }}). Le réveil de {{ now().strftime(''%H:%M'') }} n''a PAS été diffusé —
+          personne n''a été réveillé.'
+        data:
+          priority: high
+          ttl: 0
+    - action: persistent_notification.create
+      data:
+        notification_id: reveil_leo_non_diffuse
+        title: ⚠️ Réveil de Léo non diffusé
+        message: 'L''enceinte de la chambre de Léo est injoignable (état : {{ states(''media_player.sonos_chambre_leo'')
+          }}). Le réveil de {{ now().strftime(''%H:%M'') }} n''a PAS été diffusé —
+          personne n''a été réveillé.'
+  mode: single
+- id: '1789274000006'
+  alias: Enfants - Petit-déjeuner
+  description: 'Deuxième étape de la routine du matin : 5 min après le lever. Diffusé
+    dans la chambre ET le salon — Léo peut être encore dans sa chambre ou déjà à table
+    dans le salon. Du lundi au vendredi. Mercredi : mêmes horaires, Léo va au centre
+    aéré et Anna reste à la maison avec sa maman. Ne tourne pas si input_boolean.maison_absente
+    est on.'
+  triggers:
+  - trigger: time
+    at: 07:20:00
+  conditions:
+  - condition: time
+    weekday:
+    - mon
+    - tue
+    - wed
+    - thu
+    - fri
+  - alias: Pas un jour férié
+    condition: state
+    entity_id: binary_sensor.jour_non_ferie
+    state: 'on'
+  - alias: Hors vacances scolaires
+    condition: state
+    entity_id: input_boolean.vacances_scolaires
+    state: 'off'
+  - alias: Maison occupée (pas de routine si maison vide)
+    condition: state
+    entity_id: input_boolean.maison_absente
+    state: 'off'
+  actions:
+  - action: script.annonce
+    data:
+      message: Léo, à table. C'est le petit-déjeuner.
+      piece: toutes
+      volume: 35
+  mode: single
+- id: '1789274000007'
+  alias: Enfants - Départ du matin
+  description: 'Avertissement de départ à 07h50 : Anna chez nounou pour 08h00, Léo
+    à l''école (lun/mar/jeu/ven) ; le mercredi Léo au centre aéré, Anna reste avec
+    sa maman. Mêmes jours que le lever. Du lundi au vendredi. Mercredi : mêmes horaires,
+    Léo va au centre aéré et Anna reste à la maison avec sa maman. Ne tourne pas si
+    input_boolean.maison_absente est on.'
+  triggers:
+  - trigger: time
+    at: 07:50:00
+  conditions:
+  - condition: time
+    weekday:
+    - mon
+    - tue
+    - wed
+    - thu
+    - fri
+  - alias: Pas un jour férié
+    condition: state
+    entity_id: binary_sensor.jour_non_ferie
+    state: 'on'
+  - alias: Hors vacances scolaires
+    condition: state
+    entity_id: input_boolean.vacances_scolaires
+    state: 'off'
+  - alias: Maison occupée (pas de routine si maison vide)
+    condition: state
+    entity_id: input_boolean.maison_absente
+    state: 'off'
+  actions:
+  - action: script.annonce
+    data:
+      message: Léo, départ dans cinq minutes. Chaussures, puis manteau.
+      piece: toutes
+      volume: 35
+  mode: single
+- id: '1789274000008'
+  alias: Enfants - Préparation au coucher
+  description: 'Prévient 10 min avant le coucher, dans la chambre de Léo. Dents faites
+    à 19h00, pyjama mis à 18h25 : simple compte à rebours. Adressée nommément à Léo,
+    volume doux (2026-09-17). Vendredi soir = soir de semaine comme les autres (décision
+    2026-09-23) ; tourne aussi la veille d''un férié, seules les vacances scolaires
+    l''arrêtent.'
+  triggers:
+  - trigger: time
+    at: '20:20:00'
+  conditions:
+  - condition: time
+    weekday:
+    - mon
+    - tue
+    - wed
+    - thu
+    - fri
+    - sun
+  - alias: Hors vacances scolaires
+    condition: state
+    entity_id: input_boolean.vacances_scolaires
+    state: 'off'
+  actions:
+  - action: script.annonce
+    data:
+      message: Léo, dix minutes avant le lit. Termine ce que tu fais.
+      piece: leo
+      volume: 15
+  mode: single
+- id: '1789274000009'
+  alias: Enfants - Coucher
+  description: 'Coucher de Léo à 20h30, annonce dans sa chambre uniquement, adressée
+    nommément, volume doux. Même calendrier que la routine du soir. (Extinction auto
+    de la lumière retirée le 2026-09-17 : l''ampoule Yeelight a été remplacée par
+    un ventilateur de plafond CREATE WIND CALM, pas encore intégré à HA — voir project_wind_calm_fan.)
+    Vendredi soir = soir de semaine comme les autres (décision 2026-09-23) ; tourne
+    aussi la veille d''un férié, seules les vacances scolaires l''arrêtent.'
+  triggers:
+  - trigger: time
+    at: '20:30:00'
+  conditions:
+  - condition: time
+    weekday:
+    - mon
+    - tue
+    - wed
+    - thu
+    - fri
+    - sun
+  - alias: Hors vacances scolaires
+    condition: state
+    entity_id: input_boolean.vacances_scolaires
+    state: 'off'
+  actions:
+  - action: script.annonce
+    data:
+      message: Léo, au lit. Bonne nuit.
+      piece: leo
+      volume: 15
+  mode: single
+- id: '1789274000010'
+  alias: Enfants - Arrivée et douche
+  description: 'Routine du soir, étape de 18:20. Jours : lun, mar, jeu, ven, dim (dimanche ajouté le 2026-09-27 ; mercredi
+    = judo). Mercredi : même étape décalée à 19:15 (judo 18h-19h, retour vers 19h15),
+    le coucher de 20h30 restant fixe — c''est le temps TV qui absorbe le décalage.'
+  triggers:
+  - trigger: time
+    at: '18:20:00'
+    id: ecole
+  - trigger: time
+    at: '19:15:00'
+    id: mercredi
+  conditions:
+  - condition: or
+    conditions:
+    - condition: and
+      conditions:
+      - condition: trigger
+        id: ecole
+      - condition: time
+        weekday:
+        - mon
+        - tue
+        - thu
+        - fri
+        - sun
+    - condition: and
+      conditions:
+      - condition: trigger
+        id: mercredi
+      - condition: time
+        weekday:
+        - wed
+  - alias: Aujourd'hui n'est pas férié (il y avait école)
+    condition: state
+    entity_id: binary_sensor.jour_non_ferie
+    state: 'on'
+  - alias: Hors vacances scolaires
+    condition: state
+    entity_id: input_boolean.vacances_scolaires
+    state: 'off'
+  actions:
+  - action: script.annonce
+    data:
+      message: Léo, à la douche. Tout de suite, avant tout le reste.
+      piece: toutes
+      volume: 45
+  mode: single
+- id: '1789274000011'
+  alias: Enfants - Devoirs
+  description: 'Devoirs de 18h30 à 18h45 (15 min max), après douche et pyjama. Jours
+    : lun, mar, jeu, ven, dim (dimanche ajouté le 2026-09-27). Mercredi : même étape décalée à 19:25 (judo 18h-19h, retour
+    vers 19h15), le coucher de 20h30 restant fixe — c''est le temps TV qui absorbe
+    le décalage.'
+  triggers:
+  - trigger: time
+    at: '18:30:00'
+    id: ecole
+  - trigger: time
+    at: '19:25:00'
+    id: mercredi
+  conditions:
+  - condition: or
+    conditions:
+    - condition: and
+      conditions:
+      - condition: trigger
+        id: ecole
+      - condition: time
+        weekday:
+        - mon
+        - tue
+        - thu
+        - fri
+        - sun
+    - condition: and
+      conditions:
+      - condition: trigger
+        id: mercredi
+      - condition: time
+        weekday:
+        - wed
+  - alias: Aujourd'hui n'est pas férié (il y avait école)
+    condition: state
+    entity_id: binary_sensor.jour_non_ferie
+    state: 'on'
+  - alias: Hors vacances scolaires
+    condition: state
+    entity_id: input_boolean.vacances_scolaires
+    state: 'off'
+  actions:
+  - action: script.annonce
+    data:
+      message: Léo, tes devoirs maintenant. Quinze minutes, puis on mange.
+      piece: toutes
+      volume: 45
+  mode: single
+- id: '1789274000012'
+  alias: Enfants - Repas
+  description: 'Enchaînement direct après les devoirs (18h30 -> 18h45), sans temps
+    libre. Jours : lun, mar, jeu, ven. Mercredi : même étape décalée à 19:40 (judo
+    18h-19h, retour vers 19h15), le coucher de 20h30 restant fixe — c''est le temps
+    TV qui absorbe le décalage.'
+  triggers:
+  - trigger: time
+    at: '18:45:00'
+    id: ecole
+  - trigger: time
+    at: '19:40:00'
+    id: mercredi
+  conditions:
+  - condition: or
+    conditions:
+    - condition: and
+      conditions:
+      - condition: trigger
+        id: ecole
+      - condition: time
+        weekday:
+        - mon
+        - tue
+        - thu
+        - fri
+    - condition: and
+      conditions:
+      - condition: trigger
+        id: mercredi
+      - condition: time
+        weekday:
+        - wed
+  - alias: Aujourd'hui n'est pas férié (il y avait école)
+    condition: state
+    entity_id: binary_sensor.jour_non_ferie
+    state: 'on'
+  - alias: Hors vacances scolaires
+    condition: state
+    entity_id: input_boolean.vacances_scolaires
+    state: 'off'
+  actions:
+  - action: script.annonce
+    data:
+      message: Léo, range tes affaires. Puis à table.
+      piece: toutes
+      volume: 45
+  mode: single
+- id: '1789274000013'
+  alias: Enfants - Brossage des dents
+  description: 'Après le repas (18h40 -> 19h00). Jours : lun, mar, jeu, ven. Mercredi
+    : même étape décalée à 19:55 (judo 18h-19h, retour vers 19h15), le coucher de
+    20h30 restant fixe — c''est le temps TV qui absorbe le décalage.'
+  triggers:
+  - trigger: time
+    at: '19:00:00'
+    id: ecole
+  - trigger: time
+    at: '19:55:00'
+    id: mercredi
+  conditions:
+  - condition: or
+    conditions:
+    - condition: and
+      conditions:
+      - condition: trigger
+        id: ecole
+      - condition: time
+        weekday:
+        - mon
+        - tue
+        - thu
+        - fri
+    - condition: and
+      conditions:
+      - condition: trigger
+        id: mercredi
+      - condition: time
+        weekday:
+        - wed
+  - alias: Aujourd'hui n'est pas férié (il y avait école)
+    condition: state
+    entity_id: binary_sensor.jour_non_ferie
+    state: 'on'
+  - alias: Hors vacances scolaires
+    condition: state
+    entity_id: input_boolean.vacances_scolaires
+    state: 'off'
+  actions:
+  - action: script.annonce
+    data:
+      message: Léo, brosse tes dents.
+      piece: toutes
+      volume: 45
+  mode: single
+- id: '1789274000015'
+  alias: Enfants - Pyjama
+  description: 'Pyjama enfilé juste après la douche, pas le soir au coucher. Jours
+    : lun, mar, jeu, ven, dim (dimanche ajouté le 2026-09-27). Mercredi : même étape décalée à 19:20 (judo 18h-19h, retour
+    vers 19h15), le coucher de 20h30 restant fixe — c''est le temps TV qui absorbe
+    le décalage.'
+  triggers:
+  - trigger: time
+    at: '18:25:00'
+    id: ecole
+  - trigger: time
+    at: '19:20:00'
+    id: mercredi
+  conditions:
+  - condition: or
+    conditions:
+    - condition: and
+      conditions:
+      - condition: trigger
+        id: ecole
+      - condition: time
+        weekday:
+        - mon
+        - tue
+        - thu
+        - fri
+        - sun
+    - condition: and
+      conditions:
+      - condition: trigger
+        id: mercredi
+      - condition: time
+        weekday:
+        - wed
+  - alias: Aujourd'hui n'est pas férié (il y avait école)
+    condition: state
+    entity_id: binary_sensor.jour_non_ferie
+    state: 'on'
+  - alias: Hors vacances scolaires
+    condition: state
+    entity_id: input_boolean.vacances_scolaires
+    state: 'off'
+  actions:
+  - action: script.annonce
+    data:
+      message: Léo, mets ton pyjama.
+      piece: toutes
+      volume: 45
+  mode: single
+- id: '1789274000016'
+  alias: Enfants - Temps calme
+  description: 'Temps calme après la coupure de la TV. Mercredi EXCLU : judo 18h-19h,
+    retour vers 19h15, le dîner tombe précisément à cette heure-là. Mercredi : même
+    étape décalée à 20:00. Volume abaissé à 30% le 2026-09-17 (palier intermédiaire
+    entre les annonces de la soirée à 45% et le coucher à 15%, pour une transition
+    plus douce). Vendredi soir = soir de semaine comme les autres (décision 2026-09-23)
+    ; tourne aussi la veille d''un férié, seules les vacances scolaires l''arrêtent.'
+  triggers:
+  - trigger: time
+    at: '19:31:00'
+    id: ecole
+  - trigger: time
+    at: '20:00:00'
+    id: mercredi
+  conditions:
+  - condition: or
+    conditions:
+    - condition: and
+      conditions:
+      - condition: trigger
+        id: ecole
+      - condition: time
+        weekday:
+        - mon
+        - tue
+        - thu
+        - fri
+        - sun
+    - condition: and
+      conditions:
+      - condition: trigger
+        id: mercredi
+      - condition: time
+        weekday:
+        - wed
+  - alias: Hors vacances scolaires
+    condition: state
+    entity_id: input_boolean.vacances_scolaires
+    state: 'off'
+  actions:
+  - action: script.annonce
+    data:
+      message: Léo, temps calme.
+      piece: toutes
+      volume: 30
+  mode: single
+- id: '1789274000017'
+  alias: Enfants - Dernier rappel et coupure musique
+  description: 'Rappel de l''heure à 08h00 puis extinction de la musique Sonos (tout
+    le monde est parti). Juste après l''avertissement de départ de 07h50 — Anna chez
+    nounou pour 08h00, Léo à l''école (lun/mar/jeu/ven) ; le mercredi Léo au centre
+    aéré, Anna reste avec sa maman. Mêmes jours que le reste de la routine du matin.
+    Du lundi au vendredi. Mercredi : mêmes horaires, Léo va au centre aéré et Anna
+    reste à la maison avec sa maman. Ne tourne pas si input_boolean.maison_absente
+    est on.'
+  triggers:
+  - trigger: time
+    at: 08:00:00
+  conditions:
+  - condition: time
+    weekday:
+    - mon
+    - tue
+    - wed
+    - thu
+    - fri
+  - alias: Pas un jour férié
+    condition: state
+    entity_id: binary_sensor.jour_non_ferie
+    state: 'on'
+  - alias: Hors vacances scolaires
+    condition: state
+    entity_id: input_boolean.vacances_scolaires
+    state: 'off'
+  - alias: Maison occupée (pas de routine si maison vide)
+    condition: state
+    entity_id: input_boolean.maison_absente
+    state: 'off'
+  actions:
+  - action: script.annonce
+    data:
+      message: '{% if now().weekday() == 2 %}Huit heures. Vous êtes en retard : Léo
+        au centre aéré.{% else %}Huit heures. Vous êtes en retard : Anna chez nounou,
+        Léo à l''école.{% endif %}'
+      piece: toutes
+      volume: 40
+  - alias: Couper la musique sur les enceintes qui jouent (liste vide = aucune action,
+      pas d'erreur)
+    action: media_player.media_pause
+    target:
+      entity_id: '{{ [''media_player.sonos_salon'',''media_player.sonos_chambre_leo'']
+        | select(''is_state'',''playing'') | list }}'
+  mode: single
+- id: '1789274000018'
+  alias: Enfants - Ouverture du portail
+  description: 'Ouvre le portail à 07h55 pour le départ (Anna chez nounou pour 08h00,
+    Léo à l''école (lun/mar/jeu/ven) ; le mercredi Léo au centre aéré, Anna reste
+    avec sa maman) et le signale au salon. Mêmes jours que le reste de la routine
+    du matin. Le portail est un contact maintenu : s''il est déjà ouvert, open_cover
+    est sans effet et l''annonce le dit. Du lundi au vendredi. Mercredi : mêmes horaires,
+    Léo va au centre aéré et Anna reste à la maison avec sa maman. Ne tourne pas si
+    input_boolean.maison_absente est on. Refermeture automatique 15 min après l''ouverture
+    si le portail est encore ouvert (même impulsion de 30 s que les autres fermetures),
+    avec notification.'
+  triggers:
+  - trigger: time
+    at: 07:55:00
+  conditions:
+  - condition: time
+    weekday:
+    - mon
+    - tue
+    - wed
+    - thu
+    - fri
+  - alias: Pas un jour férié
+    condition: state
+    entity_id: binary_sensor.jour_non_ferie
+    state: 'on'
+  - alias: Hors vacances scolaires
+    condition: state
+    entity_id: input_boolean.vacances_scolaires
+    state: 'off'
+  - alias: Maison occupée (pas de routine si maison vide)
+    condition: state
+    entity_id: input_boolean.maison_absente
+    state: 'off'
+  actions:
+  - alias: Mémoriser l'état du portail avant d'agir
+    variables:
+      deja_ouvert: '{{ is_state(''cover.portail'', ''open'') }}'
+  - alias: Ouvrir le portail
+    action: cover.open_cover
+    target:
+      entity_id: cover.portail
+  - alias: Annonce au salon
+    action: script.annonce
+    data:
+      message: '{% if deja_ouvert %}Le portail est déjà ouvert. On y va.{% else %}J''ouvre
+        le portail. On y va.{% endif %}'
+      piece: salon
+      volume: 35
+  - alias: Laisser 15 min pour partir
+    delay:
+      minutes: 15
+  - alias: Portail encore ouvert ?
+    condition: state
+    entity_id: switch.sonoff_100259f3b2_1
+    state: 'on'
+  - alias: Impulsion de fermeture
     action: switch.turn_on
+    target:
+      entity_id: switch.sonoff_100259b4c3_1
+  - delay:
+      seconds: 30
+  - action: switch.turn_off
+    target:
+      entity_id: switch.sonoff_100259b4c3_1
+  - action: persistent_notification.create
+    data:
+      notification_id: portail_referme
+      title: Portail refermé
+      message: Le portail ouvert pour le départ du matin a été refermé automatiquement
+        (15 min après l'ouverture).
+  mode: single
+- id: '1789274000019'
+  alias: Portail - Fermeture systématique à 20h30
+  description: Referme le portail à heure fixe le soir (coucher des enfants), sans
+    attendre 1h. Complète Portail - Fermeture automatique la nuit apres 1h, qui depend
+    du coucher du soleil et peut laisser le portail ouvert tard l'ete (ajoutee le
+    2026-09-17).
+  triggers:
+  - trigger: time
+    at: '20:30:00'
+  conditions:
+  - alias: Portail ouvert
+    condition: state
+    entity_id: switch.sonoff_100259f3b2_1
+    state: 'on'
+  actions:
+  - action: switch.turn_on
+    target:
+      entity_id: switch.sonoff_100259b4c3_1
+  - delay:
+      seconds: 30
+  - action: switch.turn_off
+    target:
+      entity_id: switch.sonoff_100259b4c3_1
+  - action: persistent_notification.create
+    data:
+      notification_id: portail_referme
+      title: Portail refermé (routine du soir)
+      message: Le portail a été refermé automatiquement à 20h30 dans le cadre de la
+        routine du soir.
+  - action: script.annonce
+    data:
+      message: Le portail a été refermé pour la nuit.
+      piece: salon
+      volume: 30
+  mode: single
+- id: '1789274000020'
+  alias: Maison - Ouverture des volets le matin
+  description: 'Pendant du 19h30 : rien n''ouvrait les volets, ils restaient donc
+    fermés toute la journée (constat 2026-09-18). Deux horaires pour couvrir TOUS
+    les jours, exactement une fois : 07h20 du lundi au vendredi (juste après le réveil
+    de Léo, mercredi compris depuis le 2026-09-23), 09h00 les jours sans routine (week-end,
+    jours fériés, vacances scolaires) pour ne pas réveiller la maison trop tôt. Comme
+    la fermeture du soir, c''est un repère de rythme, pas une gestion de lumière naturelle
+    : ne pas caler ces horaires sur sun.sun. Ne bouge pas les volets si la maison
+    est vide (même règle que le package climat).'
+  triggers:
+  - trigger: time
+    at: 07:20:00
+    id: ecole
+  - trigger: time
+    at: 09:00:00
+    id: repos
+  conditions:
+  - condition: or
+    conditions:
+    - condition: and
+      conditions:
+      - condition: trigger
+        id: ecole
+      - condition: time
+        weekday:
+        - mon
+        - tue
+        - wed
+        - thu
+        - fri
+      - alias: Pas un jour férié
+        condition: state
+        entity_id: binary_sensor.jour_non_ferie
+        state: 'on'
+      - alias: Hors vacances scolaires
+        condition: state
+        entity_id: input_boolean.vacances_scolaires
+        state: 'off'
+    - condition: and
+      conditions:
+      - condition: trigger
+        id: repos
+      - alias: 'Jour sans routine : week-end, férié ou vacances scolaires'
+        condition: template
+        value_template: '{{ now().weekday() in [5, 6] or is_state(''binary_sensor.jour_non_ferie'',
+          ''off'') or is_state(''input_boolean.vacances_scolaires'', ''on'') }}'
+  - alias: 'Maison vide : aucun mouvement de volet'
+    condition: state
+    entity_id: input_boolean.maison_absente
+    state: 'off'
+  actions:
+  - alias: Ouvrir les 6 volets (groupe cover.tous_les_volets)
+    action: cover.open_cover
+    target:
+      entity_id: cover.tous_les_volets
+  mode: single
+- id: '1789718245832'
+  alias: Visiophone - Quelqu'un sonne
+  description: Déclenché par l'appui sur la platine de rue (Dahua VTO2202F). L'événement
+    ne vient pas de l'ONVIF mais du pont MQTT visiophone-bridge.
+  triggers:
+  - trigger: state
+    entity_id: event.visiophone_appel
+    attribute: event_type
+    to: sonnerie
+  conditions: []
+  actions:
+  - alias: Notification avec la vue de la platine
+    action: notify.all_mobiles
+    data:
+      title: "\U0001F514 Quelqu'un sonne"
+      message: Appel au portail
+      data:
+        image: /api/camera_proxy/camera.sonnerie_mediaprofile_channel1_mainstream
+        channel: Visiophone
+        importance: high
+        ttl: 0
+        priority: high
+        tag: visiophone
+        actions:
+        - action: VISIO_OUVRIR
+          title: Ouvrir
+        - action: URI
+          title: Voir
+          uri: /lovelace/0
+  - alias: Annonce sur les Sonos
+    action: script.annonce
+    data:
+      message: Quelqu'un sonne à la porte
+      piece: toutes
+      volume: 55
   mode: single
   max_exceeded: silent
+- id: '1789718255693'
+  alias: Visiophone - Ouvrir depuis la notification
+  description: Réponse au bouton « Ouvrir » de la notification mobile envoyée par
+    « Visiophone - Quelqu'un sonne ».
+  triggers:
+  - trigger: event
+    event_type: mobile_app_notification_action
+    event_data:
+      action: VISIO_OUVRIR
+  conditions: []
+  actions:
+  - action: button.press
+    target:
+      entity_id: button.visiophone_ouvrir_la_porte
+  mode: single
+- id: '1789318600001'
+  alias: Vacances scolaires - synchro calendrier Bordeaux
+  description: 'Aligne input_boolean.vacances_scolaires sur le calendrier officiel
+    de l''academie de Bordeaux (zone A, data.education.gouv.fr via binary_sensor.vacances_scolaires_bordeaux).
+    Bascule manuelle toujours possible : elle sera reprise a la prochaine verification.'
+  triggers:
+  - trigger: state
+    entity_id: binary_sensor.vacances_scolaires_bordeaux
+    to:
+    - 'on'
+    - 'off'
+  - trigger: homeassistant
+    event: start
+  - trigger: time_pattern
+    hours: /1
+  conditions:
+  - alias: Le capteur calendrier repond
+    condition: template
+    value_template: '{{ states(''binary_sensor.vacances_scolaires_bordeaux'') in [''on'',''off'']
+      }}'
+  - alias: Etat different de l'interrupteur
+    condition: template
+    value_template: '{{ states(''binary_sensor.vacances_scolaires_bordeaux'') != states(''input_boolean.vacances_scolaires'')
+      }}'
+  actions:
+  - action: '{{ ''input_boolean.turn_on'' if is_state(''binary_sensor.vacances_scolaires_bordeaux'',''on'')
+      else ''input_boolean.turn_off'' }}'
+    target:
+      entity_id: input_boolean.vacances_scolaires
+  - action: notify.all_mobiles
+    data:
+      title: Vacances scolaires
+      message: '{% if is_state(''binary_sensor.vacances_scolaires_bordeaux'',''on'')
+        %}Debut des {{ state_attr(''binary_sensor.vacances_scolaires_bordeaux'',''periode'')
+        }} : routines ecole desactivees jusqu''au {{ state_attr(''binary_sensor.vacances_scolaires_bordeaux'',''fin'')
+        }}.{% else %}Fin des vacances : les routines ecole (coupure TV 19h30, reveil)
+        reprennent.{% endif %}'
+  mode: single
+- id: '1758434561000'
+  alias: Salon - Veilleuse meuble (soir/matin)
+  description: Allume la lumière meuble (veilleuse salon/couloir) quand la routine
+    'Maison - Fermeture des volets le soir' se déclenche (tous les soirs, sans condition
+    de calendrier), l'éteint quand la routine 'Maison - Ouverture des volets le matin'
+    se déclenche (maison réveillée).
+  triggers:
+  - trigger: event
+    event_type: automation_triggered
+    event_data:
+      entity_id: automation.maison_fermeture_des_volets_le_soir
+    id: soir
+  - trigger: event
+    event_type: automation_triggered
+    event_data:
+      entity_id: automation.maison_ouverture_des_volets_le_matin
+    id: matin
+  conditions: []
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: soir
+      sequence:
+      - action: light.turn_on
+        target:
+          entity_id: light.salon_lumiere_ambiance_salle_a_manger
+    - conditions:
+      - condition: trigger
+        id: matin
+      sequence:
+      - action: light.turn_off
+        target:
+          entity_id: light.salon_lumiere_ambiance_salle_a_manger
+  mode: single
+- id: '1790062993718'
+  alias: Portail - Alerte ouvert depuis plus d'une heure
+  description: Alerte le jour si le portail reste ouvert plus d'1h, avec un bouton
+    pour le refermer depuis la notification. La nuit est deja couverte par l'avertissement
+    30 min et la fermeture auto apres 1h (voir automation.portail_avertissement_ouvert_depuis_30_min_la_nuit
+    et automation.portail_fermeture_automatique_la_nuit_apres_1h).
+  triggers:
+  - trigger: state
+    entity_id: switch.sonoff_100259f3b2_1
+    to: 'on'
+    for:
+      hours: 1
+  conditions:
+  - condition: state
+    entity_id: sun.sun
+    state: above_horizon
+  actions:
+  - action: notify.all_mobiles
+    data:
+      title: Portail ouvert
+      message: Le portail est ouvert depuis plus d'une heure.
+      data:
+        priority: high
+        importance: high
+        ttl: 0
+        tag: portail_ouvert_1h
+        channel: Portail
+        actions:
+        - action: PORTAIL_FERMER
+          title: Fermer le portail
+  mode: single
+- id: '1790063571937'
+  alias: Portail - Fermer depuis la notification
+  description: Reponse au bouton « Fermer le portail » de la notification envoyee
+    par « Portail - Alerte ouvert depuis plus d'une heure ». Meme sequence de pulse
+    que les autres fermetures automatiques (relais Fermeture 30s).
+  triggers:
+  - trigger: event
+    event_type: mobile_app_notification_action
+    event_data:
+      action: PORTAIL_FERMER
+  conditions:
+  - alias: Portail encore ouvert
+    condition: state
+    entity_id: switch.sonoff_100259f3b2_1
+    state: 'on'
+  actions:
+  - action: switch.turn_on
+    target:
+      entity_id: switch.sonoff_100259b4c3_1
+  - delay:
+      seconds: 30
+  - action: switch.turn_off
+    target:
+      entity_id: switch.sonoff_100259b4c3_1
+  - action: notify.all_mobiles
+    data:
+      title: Portail referme
+      message: Le portail a ete referme depuis la notification.
+      data:
+        priority: normal
+  mode: single

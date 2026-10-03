@@ -1,0 +1,29 @@
+name: Wyoming Piper
+
+services:
+  piper:
+    container_name: wyoming-piper
+    image: rhasspy/wyoming-piper:latest
+    restart: unless-stopped
+    # Voix française. `siwis` (medium) est la meilleure voix fr_FR de Piper :
+    # naturelle et rapide sur CPU. Alternatives : fr_FR-upmc-medium (voix
+    # féminine plus posée), fr_FR-gilles-low (plus légère, moins naturelle).
+    command: --voice fr_FR-siwis-medium
+    ports:
+      # HA tourne en network_mode: host -> il joint Piper sur 127.0.0.1:10200.
+      - "10200:10200"
+    volumes:
+      - /opt/docker/wyoming-piper/data:/data
+    environment:
+      TZ: ${TZ:-Europe/Paris}
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    security_opt:
+      - no-new-privileges:true

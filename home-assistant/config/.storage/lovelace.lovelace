@@ -171,6 +171,315 @@
           ]
         },
         {
+          "title": "Routine",
+          "path": "routine",
+          "icon": "mdi:calendar-clock",
+          "type": "sections",
+          "max_columns": 3,
+          "sections": [
+            {
+              "type": "grid",
+              "column_span": 1,
+              "cards": [
+                {
+                  "type": "heading",
+                  "heading": "Matin",
+                  "icon": "mdi:weather-sunset-up"
+                },
+                {
+                  "type": "tile",
+                  "tap_action": {
+                    "action": "toggle"
+                  },
+                  "layout_options": {
+                    "grid_columns": 4,
+                    "grid_rows": 1
+                  },
+                  "entity": "input_boolean.vacances_scolaires",
+                  "name": "Vacances scolaires — coupe toute la routine",
+                  "icon": "mdi:beach",
+                  "color": "amber"
+                },
+                {
+                  "type": "tile",
+                  "entity": "automation.enfants_lever",
+                  "name": "07:15 — Lever et habillage",
+                  "icon": "mdi:weather-sunset-up",
+                  "color": "purple",
+                  "tap_action": {
+                    "action": "toggle"
+                  },
+                  "layout_options": {
+                    "grid_columns": 4,
+                    "grid_rows": 1
+                  }
+                },
+                {
+                  "type": "tile",
+                  "entity": "automation.enfants_petit_dejeuner",
+                  "name": "07:20 — Petit-déjeuner",
+                  "icon": "mdi:coffee",
+                  "color": "purple",
+                  "tap_action": {
+                    "action": "toggle"
+                  },
+                  "layout_options": {
+                    "grid_columns": 4,
+                    "grid_rows": 1
+                  }
+                },
+                {
+                  "type": "tile",
+                  "entity": "automation.enfants_depart_ecole_et_nounou",
+                  "name": "07:50 — Départ école et nounou",
+                  "icon": "mdi:car-child-seat",
+                  "color": "purple",
+                  "tap_action": {
+                    "action": "toggle"
+                  },
+                  "layout_options": {
+                    "grid_columns": 4,
+                    "grid_rows": 1
+                  }
+                },
+                {
+                  "type": "tile",
+                  "tap_action": {
+                    "action": "toggle"
+                  },
+                  "layout_options": {
+                    "grid_columns": 4,
+                    "grid_rows": 1
+                  },
+                  "entity": "automation.enfants_ouverture_du_portail",
+                  "name": "07:55 — Ouverture du portail",
+                  "icon": "mdi:gate-open",
+                  "color": "purple"
+                },
+                {
+                  "type": "tile",
+                  "tap_action": {
+                    "action": "toggle"
+                  },
+                  "layout_options": {
+                    "grid_columns": 4,
+                    "grid_rows": 1
+                  },
+                  "entity": "automation.enfants_huit_heures",
+                  "name": "08:00 — Huit heures et coupure musique",
+                  "icon": "mdi:clock-alert-outline",
+                  "color": "purple"
+                }
+              ]
+            },
+            {
+              "type": "grid",
+              "column_span": 1,
+              "cards": [
+                {
+                  "type": "heading",
+                  "heading": "Soir",
+                  "icon": "mdi:weather-night"
+                },
+                {
+                  "type": "tile",
+                  "entity": "automation.enfants_arrivee_et_douche",
+                  "name": "18:20 — Arrivée et douche",
+                  "icon": "mdi:shower",
+                  "color": "purple",
+                  "tap_action": {
+                    "action": "toggle"
+                  },
+                  "layout_options": {
+                    "grid_columns": 4,
+                    "grid_rows": 1
+                  }
+                },
+                {
+                  "type": "tile",
+                  "entity": "automation.enfants_pyjama",
+                  "name": "18:25 — Pyjama",
+                  "icon": "mdi:tshirt-crew",
+                  "color": "purple",
+                  "tap_action": {
+                    "action": "toggle"
+                  },
+                  "layout_options": {
+                    "grid_columns": 4,
+                    "grid_rows": 1
+                  }
+                },
+                {
+                  "type": "tile",
+                  "entity": "automation.enfants_devoirs",
+                  "name": "18:30 — Devoirs",
+                  "icon": "mdi:book-open-variant",
+                  "color": "purple",
+                  "tap_action": {
+                    "action": "toggle"
+                  },
+                  "layout_options": {
+                    "grid_columns": 4,
+                    "grid_rows": 1
+                  }
+                },
+                {
+                  "type": "tile",
+                  "entity": "automation.enfants_repas",
+                  "name": "18:45 — Repas",
+                  "icon": "mdi:silverware-fork-knife",
+                  "color": "purple",
+                  "tap_action": {
+                    "action": "toggle"
+                  },
+                  "layout_options": {
+                    "grid_columns": 4,
+                    "grid_rows": 1
+                  }
+                },
+                {
+                  "type": "tile",
+                  "entity": "automation.enfants_brossage_des_dents",
+                  "name": "19:00 — Brossage des dents",
+                  "icon": "mdi:toothbrush-paste",
+                  "color": "purple",
+                  "tap_action": {
+                    "action": "toggle"
+                  },
+                  "layout_options": {
+                    "grid_columns": 4,
+                    "grid_rows": 1
+                  }
+                }
+              ]
+            },
+            {
+              "type": "grid",
+              "column_span": 1,
+              "cards": [
+                {
+                  "type": "heading",
+                  "heading": "Télé et coucher",
+                  "icon": "mdi:television-classic"
+                },
+                {
+                  "type": "tile",
+                  "entity": "automation.salon_annonce_avant_extinction_tv",
+                  "name": "19:25 — Annonce extinction",
+                  "icon": "mdi:bullhorn",
+                  "color": "purple",
+                  "tap_action": {
+                    "action": "toggle"
+                  },
+                  "layout_options": {
+                    "grid_columns": 4,
+                    "grid_rows": 1
+                  }
+                },
+                {
+                  "type": "tile",
+                  "entity": "automation.salon_tv_coupee_le_soir_semaine",
+                  "name": "19:30 — TV coupée",
+                  "icon": "mdi:television-off",
+                  "color": "purple",
+                  "tap_action": {
+                    "action": "toggle"
+                  },
+                  "layout_options": {
+                    "grid_columns": 4,
+                    "grid_rows": 1
+                  }
+                },
+                {
+                  "type": "tile",
+                  "entity": "automation.maison_fermeture_des_volets_le_soir",
+                  "name": "19:30 — Volets fermés",
+                  "icon": "mdi:window-shutter",
+                  "color": "purple",
+                  "tap_action": {
+                    "action": "toggle"
+                  },
+                  "layout_options": {
+                    "grid_columns": 4,
+                    "grid_rows": 1
+                  }
+                },
+                {
+                  "type": "tile",
+                  "entity": "automation.enfants_temps_calme",
+                  "name": "19:31 — Temps calme",
+                  "icon": "mdi:meditation",
+                  "color": "purple",
+                  "tap_action": {
+                    "action": "toggle"
+                  },
+                  "layout_options": {
+                    "grid_columns": 4,
+                    "grid_rows": 1
+                  }
+                },
+                {
+                  "type": "tile",
+                  "entity": "automation.salon_tv_rallumee_pour_les_parents_semaine",
+                  "name": "20:00 — TV pour les parents",
+                  "icon": "mdi:television",
+                  "color": "purple",
+                  "tap_action": {
+                    "action": "toggle"
+                  },
+                  "layout_options": {
+                    "grid_columns": 4,
+                    "grid_rows": 1
+                  }
+                },
+                {
+                  "type": "tile",
+                  "entity": "automation.enfants_preparation_au_coucher",
+                  "name": "20:20 — Avertissement coucher",
+                  "icon": "mdi:clock-alert-outline",
+                  "color": "purple",
+                  "tap_action": {
+                    "action": "toggle"
+                  },
+                  "layout_options": {
+                    "grid_columns": 4,
+                    "grid_rows": 1
+                  }
+                },
+                {
+                  "type": "tile",
+                  "entity": "automation.enfants_coucher",
+                  "name": "20:30 — Au lit",
+                  "icon": "mdi:bed",
+                  "color": "purple",
+                  "tap_action": {
+                    "action": "toggle"
+                  },
+                  "layout_options": {
+                    "grid_columns": 4,
+                    "grid_rows": 1
+                  }
+                }
+              ]
+            },
+            {
+              "type": "grid",
+              "column_span": 2,
+              "cards": [
+                {
+                  "type": "heading",
+                  "heading": "Horaires",
+                  "icon": "mdi:table-clock"
+                },
+                {
+                  "type": "markdown",
+                  "content": "## Routine des enfants\n\n**Matin** — lun, mar, jeu, ven *(pas le mercredi : jour off)*\n\n| Heure | Étape | Durée |\n|---|---|---|\n| 07:15 | Lever, on s'habille | 5 min |\n| 07:20 | Petit-déjeuner | 30 min |\n| 07:50 | Départ (nounou 08:00, école avant 08:30) | |\n\n**Soir** — lun, mar, jeu, ven *(mercredi : judo 18h-19h)*\n\n| Heure | Étape | Durée |\n|---|---|---|\n| 18:20 | Arrivée, douche | 5 min |\n| 18:25 | Pyjama | 5 min |\n| 18:30 | Devoirs | 15 min |\n| 18:45 | Repas | 15 min |\n| 19:00 | Brossage des dents | 5 min |\n\n**Télé et coucher** — dim, lun, mar, jeu\n\n| Heure | Étape | Durée |\n|---|---|---|\n| 19:05 | **Télé pour Léo** | **25 min** |\n| 19:30 | Télé coupée, volets fermés | |\n| 19:31 | Temps calme avant le dodo | 50 min |\n| 20:00 | Télé rallumée pour les parents | |\n| 20:30 | Au lit | |\n"
+                }
+              ]
+            }
+          ]
+        },
+        {
           "title": "Extérieur",
           "path": "exterieur",
           "icon": "mdi:pine-tree-variant",
@@ -424,8 +733,8 @@
               "cards": [
                 {
                   "type": "heading",
-                  "heading": "Piscine",
-                  "icon": "mdi:pool",
+                  "heading": "Château gonflable",
+                  "icon": "mdi:castle",
                   "badges": [
                     {
                       "type": "entity",
@@ -437,8 +746,8 @@
                 {
                   "type": "tile",
                   "entity": "switch.matter_over_wifi_smart_switch",
-                  "name": "Pompe piscine",
-                  "icon": "mdi:pump",
+                  "name": "Moteur château gonflable",
+                  "icon": "mdi:fan",
                   "color": "blue",
                   "layout_options": {
                     "grid_columns": 2,
@@ -681,6 +990,537 @@
                   "layout_options": {
                     "grid_columns": 4,
                     "grid_rows": 1
+                  }
+                }
+              ]
+            },
+            {
+              "type": "grid",
+              "column_span": 1,
+              "cards": [
+                {
+                  "type": "heading",
+                  "heading": "Multimédia",
+                  "icon": "mdi:television-classic",
+                  "badges": [
+                    {
+                      "type": "entity",
+                      "entity": "sensor.prise_television_puissance",
+                      "name": "Puissance"
+                    },
+                    {
+                      "type": "entity",
+                      "entity": "sensor.prise_television_consommation",
+                      "name": "Conso"
+                    }
+                  ]
+                },
+                {
+                  "type": "tile",
+                  "entity": "switch.prise_television",
+                  "name": "Prise Télévision",
+                  "icon": "mdi:television",
+                  "color": "purple",
+                  "features": [
+                    {
+                      "type": "toggle"
+                    }
+                  ],
+                  "layout_options": {
+                    "grid_columns": 4,
+                    "grid_rows": 2
+                  }
+                },
+                {
+                  "type": "tile",
+                  "entity": "media_player.sonos_salon",
+                  "name": "Sonos Salon",
+                  "icon": "mdi:speaker",
+                  "features": [
+                    {
+                      "type": "media-player-playback"
+                    },
+                    {
+                      "type": "media-player-volume-slider"
+                    }
+                  ],
+                  "layout_options": {
+                    "grid_columns": 4,
+                    "grid_rows": 3
+                  },
+                  "color": "purple"
+                },
+                {
+                  "type": "sensor",
+                  "graph": "line",
+                  "entity": "sensor.prise_television_puissance",
+                  "detail": 1,
+                  "name": "Puissance TV",
+                  "hours_to_show": 24,
+                  "layout_options": {
+                    "grid_columns": 4,
+                    "grid_rows": 2
+                  }
+                }
+              ]
+            },
+            {
+              "type": "grid",
+              "column_span": 1,
+              "cards": [
+                {
+                  "type": "heading",
+                  "heading": "Télécommande TV",
+                  "icon": "mdi:remote-tv",
+                  "badges": [
+                    {
+                      "type": "entity",
+                      "entity": "media_player.tv_salon",
+                      "show_state": true
+                    }
+                  ]
+                },
+                {
+                  "type": "button",
+                  "name": "Marche / arrêt",
+                  "icon": "mdi:power",
+                  "show_name": false,
+                  "show_icon": true,
+                  "tap_action": {
+                    "action": "perform-action",
+                    "perform_action": "media_player.toggle",
+                    "target": {
+                      "entity_id": "media_player.tv_salon"
+                    }
+                  },
+                  "grid_options": {
+                    "columns": 4,
+                    "rows": 1
+                  }
+                },
+                {
+                  "type": "button",
+                  "name": "Source",
+                  "icon": "mdi:video-input-hdmi",
+                  "show_name": false,
+                  "show_icon": true,
+                  "tap_action": {
+                    "action": "perform-action",
+                    "perform_action": "remote.send_command",
+                    "target": {
+                      "entity_id": "remote.tv_salon"
+                    },
+                    "data": {
+                      "command": "KEY_SOURCE"
+                    }
+                  },
+                  "grid_options": {
+                    "columns": 4,
+                    "rows": 1
+                  }
+                },
+                {
+                  "type": "button",
+                  "name": "Accueil",
+                  "icon": "mdi:home",
+                  "show_name": false,
+                  "show_icon": true,
+                  "tap_action": {
+                    "action": "perform-action",
+                    "perform_action": "remote.send_command",
+                    "target": {
+                      "entity_id": "remote.tv_salon"
+                    },
+                    "data": {
+                      "command": "KEY_HOME"
+                    }
+                  },
+                  "grid_options": {
+                    "columns": 4,
+                    "rows": 1
+                  }
+                },
+                {
+                  "type": "button",
+                  "name": "Volume +",
+                  "icon": "mdi:volume-plus",
+                  "show_name": false,
+                  "show_icon": true,
+                  "tap_action": {
+                    "action": "perform-action",
+                    "perform_action": "remote.send_command",
+                    "target": {
+                      "entity_id": "remote.tv_salon"
+                    },
+                    "data": {
+                      "command": "KEY_VOLUP"
+                    }
+                  },
+                  "grid_options": {
+                    "columns": 4,
+                    "rows": 1
+                  }
+                },
+                {
+                  "type": "button",
+                  "name": "Haut",
+                  "icon": "mdi:chevron-up",
+                  "show_name": false,
+                  "show_icon": true,
+                  "tap_action": {
+                    "action": "perform-action",
+                    "perform_action": "remote.send_command",
+                    "target": {
+                      "entity_id": "remote.tv_salon"
+                    },
+                    "data": {
+                      "command": "KEY_UP"
+                    }
+                  },
+                  "grid_options": {
+                    "columns": 4,
+                    "rows": 1
+                  }
+                },
+                {
+                  "type": "button",
+                  "name": "Chaîne +",
+                  "icon": "mdi:plus-box",
+                  "show_name": false,
+                  "show_icon": true,
+                  "tap_action": {
+                    "action": "perform-action",
+                    "perform_action": "remote.send_command",
+                    "target": {
+                      "entity_id": "remote.tv_salon"
+                    },
+                    "data": {
+                      "command": "KEY_CHUP"
+                    }
+                  },
+                  "grid_options": {
+                    "columns": 4,
+                    "rows": 1
+                  }
+                },
+                {
+                  "type": "button",
+                  "name": "Gauche",
+                  "icon": "mdi:chevron-left",
+                  "show_name": false,
+                  "show_icon": true,
+                  "tap_action": {
+                    "action": "perform-action",
+                    "perform_action": "remote.send_command",
+                    "target": {
+                      "entity_id": "remote.tv_salon"
+                    },
+                    "data": {
+                      "command": "KEY_LEFT"
+                    }
+                  },
+                  "grid_options": {
+                    "columns": 4,
+                    "rows": 1
+                  }
+                },
+                {
+                  "type": "button",
+                  "name": "OK",
+                  "icon": "mdi:circle-medium",
+                  "show_name": false,
+                  "show_icon": true,
+                  "tap_action": {
+                    "action": "perform-action",
+                    "perform_action": "remote.send_command",
+                    "target": {
+                      "entity_id": "remote.tv_salon"
+                    },
+                    "data": {
+                      "command": "KEY_ENTER"
+                    }
+                  },
+                  "grid_options": {
+                    "columns": 4,
+                    "rows": 1
+                  }
+                },
+                {
+                  "type": "button",
+                  "name": "Droite",
+                  "icon": "mdi:chevron-right",
+                  "show_name": false,
+                  "show_icon": true,
+                  "tap_action": {
+                    "action": "perform-action",
+                    "perform_action": "remote.send_command",
+                    "target": {
+                      "entity_id": "remote.tv_salon"
+                    },
+                    "data": {
+                      "command": "KEY_RIGHT"
+                    }
+                  },
+                  "grid_options": {
+                    "columns": 4,
+                    "rows": 1
+                  }
+                },
+                {
+                  "type": "button",
+                  "name": "Volume −",
+                  "icon": "mdi:volume-minus",
+                  "show_name": false,
+                  "show_icon": true,
+                  "tap_action": {
+                    "action": "perform-action",
+                    "perform_action": "remote.send_command",
+                    "target": {
+                      "entity_id": "remote.tv_salon"
+                    },
+                    "data": {
+                      "command": "KEY_VOLDOWN"
+                    }
+                  },
+                  "grid_options": {
+                    "columns": 4,
+                    "rows": 1
+                  }
+                },
+                {
+                  "type": "button",
+                  "name": "Bas",
+                  "icon": "mdi:chevron-down",
+                  "show_name": false,
+                  "show_icon": true,
+                  "tap_action": {
+                    "action": "perform-action",
+                    "perform_action": "remote.send_command",
+                    "target": {
+                      "entity_id": "remote.tv_salon"
+                    },
+                    "data": {
+                      "command": "KEY_DOWN"
+                    }
+                  },
+                  "grid_options": {
+                    "columns": 4,
+                    "rows": 1
+                  }
+                },
+                {
+                  "type": "button",
+                  "name": "Chaîne −",
+                  "icon": "mdi:minus-box",
+                  "show_name": false,
+                  "show_icon": true,
+                  "tap_action": {
+                    "action": "perform-action",
+                    "perform_action": "remote.send_command",
+                    "target": {
+                      "entity_id": "remote.tv_salon"
+                    },
+                    "data": {
+                      "command": "KEY_CHDOWN"
+                    }
+                  },
+                  "grid_options": {
+                    "columns": 4,
+                    "rows": 1
+                  }
+                },
+                {
+                  "type": "button",
+                  "name": "Muet",
+                  "icon": "mdi:volume-off",
+                  "show_name": false,
+                  "show_icon": true,
+                  "tap_action": {
+                    "action": "perform-action",
+                    "perform_action": "remote.send_command",
+                    "target": {
+                      "entity_id": "remote.tv_salon"
+                    },
+                    "data": {
+                      "command": "KEY_MUTE"
+                    }
+                  },
+                  "grid_options": {
+                    "columns": 4,
+                    "rows": 1
+                  }
+                },
+                {
+                  "type": "button",
+                  "name": "Retour",
+                  "icon": "mdi:keyboard-return",
+                  "show_name": false,
+                  "show_icon": true,
+                  "tap_action": {
+                    "action": "perform-action",
+                    "perform_action": "remote.send_command",
+                    "target": {
+                      "entity_id": "remote.tv_salon"
+                    },
+                    "data": {
+                      "command": "KEY_RETURN"
+                    }
+                  },
+                  "grid_options": {
+                    "columns": 4,
+                    "rows": 1
+                  }
+                },
+                {
+                  "type": "button",
+                  "name": "Lecture / pause",
+                  "icon": "mdi:play-pause",
+                  "show_name": false,
+                  "show_icon": true,
+                  "tap_action": {
+                    "action": "perform-action",
+                    "perform_action": "remote.send_command",
+                    "target": {
+                      "entity_id": "remote.tv_salon"
+                    },
+                    "data": {
+                      "command": "KEY_PLAY"
+                    }
+                  },
+                  "grid_options": {
+                    "columns": 4,
+                    "rows": 1
+                  }
+                },
+                {
+                  "type": "heading",
+                  "heading": "Applis",
+                  "heading_style": "subtitle"
+                },
+                {
+                  "type": "button",
+                  "name": "Netflix",
+                  "icon": "mdi:netflix",
+                  "show_name": true,
+                  "show_icon": true,
+                  "tap_action": {
+                    "action": "perform-action",
+                    "perform_action": "media_player.select_source",
+                    "target": {
+                      "entity_id": "media_player.tv_salon"
+                    },
+                    "data": {
+                      "source": "Netflix"
+                    }
+                  },
+                  "grid_options": {
+                    "columns": 4,
+                    "rows": 2
+                  }
+                },
+                {
+                  "type": "button",
+                  "name": "YouTube",
+                  "icon": "mdi:youtube",
+                  "show_name": true,
+                  "show_icon": true,
+                  "tap_action": {
+                    "action": "perform-action",
+                    "perform_action": "media_player.select_source",
+                    "target": {
+                      "entity_id": "media_player.tv_salon"
+                    },
+                    "data": {
+                      "source": "YouTube"
+                    }
+                  },
+                  "grid_options": {
+                    "columns": 4,
+                    "rows": 2
+                  }
+                },
+                {
+                  "type": "button",
+                  "name": "Disney+",
+                  "icon": "mdi:castle",
+                  "show_name": true,
+                  "show_icon": true,
+                  "tap_action": {
+                    "action": "perform-action",
+                    "perform_action": "media_player.select_source",
+                    "target": {
+                      "entity_id": "media_player.tv_salon"
+                    },
+                    "data": {
+                      "source": "Disney+"
+                    }
+                  },
+                  "grid_options": {
+                    "columns": 4,
+                    "rows": 2
+                  }
+                },
+                {
+                  "type": "button",
+                  "name": "Prime Video",
+                  "icon": "mdi:filmstrip",
+                  "show_name": true,
+                  "show_icon": true,
+                  "tap_action": {
+                    "action": "perform-action",
+                    "perform_action": "media_player.select_source",
+                    "target": {
+                      "entity_id": "media_player.tv_salon"
+                    },
+                    "data": {
+                      "source": "Prime Video"
+                    }
+                  },
+                  "grid_options": {
+                    "columns": 4,
+                    "rows": 2
+                  }
+                },
+                {
+                  "type": "button",
+                  "name": "Plex",
+                  "icon": "mdi:plex",
+                  "show_name": true,
+                  "show_icon": true,
+                  "tap_action": {
+                    "action": "perform-action",
+                    "perform_action": "media_player.select_source",
+                    "target": {
+                      "entity_id": "media_player.tv_salon"
+                    },
+                    "data": {
+                      "source": "Plex"
+                    }
+                  },
+                  "grid_options": {
+                    "columns": 4,
+                    "rows": 2
+                  }
+                },
+                {
+                  "type": "button",
+                  "name": "TF1+",
+                  "icon": "mdi:television-classic",
+                  "show_name": true,
+                  "show_icon": true,
+                  "tap_action": {
+                    "action": "perform-action",
+                    "perform_action": "media_player.select_source",
+                    "target": {
+                      "entity_id": "media_player.tv_salon"
+                    },
+                    "data": {
+                      "source": "TF1+ : Streaming, TV en Direct"
+                    }
+                  },
+                  "grid_options": {
+                    "columns": 4,
+                    "rows": 2
                   }
                 }
               ]
@@ -1499,20 +2339,20 @@
                 },
                 {
                   "type": "tile",
-                  "entity": "cover.volet_roulant_leo",
-                  "name": "Volet roulant",
-                  "icon": "mdi:roller-shade",
+                  "entity": "media_player.sonos_chambre_leo",
+                  "name": "Sonos Chambre Léo",
+                  "icon": "mdi:speaker",
                   "features": [
                     {
-                      "type": "cover-open-close"
+                      "type": "media-player-playback"
                     },
                     {
-                      "type": "cover-position"
+                      "type": "media-player-volume-slider"
                     }
                   ],
                   "layout_options": {
                     "grid_columns": 4,
-                    "grid_rows": 2
+                    "grid_rows": 3
                   }
                 },
                 {

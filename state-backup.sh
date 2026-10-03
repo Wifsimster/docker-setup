@@ -31,6 +31,11 @@
 #                         only until now, despite being as irreplaceable as the
 #                         photos and 0.3% of their size.
 #
+#   App upload dirs       files a service stores on disk and only REFERENCES
+#                         from its database. The pg dump alone restores rows
+#                         pointing at missing files.
+#     racontine/uploads     photos attached to the carnets
+#
 # SQLITE CONSISTENCY: every SQLite DB here is in WAL mode with an active -wal
 # file. `cp` of a live WAL database yields a torn, possibly unopenable copy, so
 # each one goes through `sqlite3 .backup`, which takes a proper read lock and
@@ -61,6 +66,7 @@ PG_DUMP_DIR="/opt/docker/pg-backup/backups"
 LOCAL_TARBALLS="/home/wifsimster/backups"
 DOCS_DIR="/mnt/media/documents"
 BIRTHDAY_SNAPSHOTS="/var/lib/docker/volumes/birthday-invitation_birthday_backups/_data"
+RACONTINE_UPLOADS="/opt/docker/racontine/uploads"
 NAS_PG_DIR="/mnt/media/data/backups/postgres"
 NAS_KEEP_DAYS=14
 
@@ -163,7 +169,16 @@ snapshot_sqlite vaultwarden  /opt/docker/vaultwarden/data/db.sqlite3
 snapshot_sqlite solopilot    /var/lib/docker/volumes/solopilot_bot-data/_data/bot.db
 snapshot_sqlite zigbee       /opt/docker/home-assistant/config/zigbee.db
 snapshot_sqlite birthday     /var/lib/docker/volumes/birthday-invitation_birthday_db/_data/rsvp.db
+snapshot_sqlite actual       /opt/docker/actual/data/server-files/account.sqlite
 snapshot_sqlite orbite       /var/lib/docker/volumes/orbite-data/_data/orbite.sqlite
+
+# Actual Budget: the budgets themselves are per-file SQLite/zip blobs in
+# user-files (written atomically by the sync server), so a tar is enough.
+if [ -d /opt/docker/actual/data/user-files ]; then
+    tar -czf "${STAGING}/sqlite/actual-user-files.tar.gz" \
+        -C /opt/docker/actual/data user-files 2>/dev/null || \
+        warn "tar des user-files actual a échoué."
+fi
 
 # Vaultwarden's attachments and RSA signing key live beside the DB and are just
 # as required for a working restore as the database itself.
@@ -211,6 +226,7 @@ borg create \
     "${PG_DUMP_DIR}" \
     "${LOCAL_TARBALLS}" \
     "${BIRTHDAY_SNAPSHOTS}" \
+    "${RACONTINE_UPLOADS}" \
     "${DOCS_DIR}"
 log "Archive created."
 
