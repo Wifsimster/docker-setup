@@ -147,6 +147,8 @@ details.tech[open] .chev { transform: rotate(180deg); }
 .srow { display: grid; grid-template-columns: 22px 1fr; gap: 10px; padding: 8px 0; border-top: 1px solid var(--grid); font-size: 14px; align-items: start; }
 .srow:first-child { border-top: 0; }
 .srow .s { color: var(--ink2); font-size: 13px; }
+.srow.v { grid-template-columns: 22px 1fr auto; }
+.srow .r { font-weight: 600; white-space: nowrap; text-align: right; }
 .h3 { margin: 14px 0 0; font-size: 13px; color: var(--ink2); text-transform: uppercase; letter-spacing: .05em; font-weight: 600; }
 
 .foot { color: var(--ink2); font-size: 13px; text-align: center; margin-top: 4px; }
@@ -245,6 +247,11 @@ details.tech[open] .chev { transform: rotate(180deg); }
   <section class="card">
     <div class="card-h"><div><h2>Internet</h2><p class="sub">Publicités et traqueurs bloqués sur le réseau</p></div></div>
     <div class="meter" id="dns"></div>
+  </section>
+
+  <section class="card" id="bat-card" hidden>
+    <div class="card-h"><div><h2>Services Battistella</h2><p class="sub" id="bat-sub"></p></div></div>
+    <div class="tech-body" id="bat"></div>
   </section>
 
   <details class="card tech" id="tech">
@@ -600,26 +607,49 @@ function renderLists() {
   dns.append(h("div", { class: "row" }, h("span", {}, "Requêtes bloquées"), h("b", {}, fr1(pct) + " %")), track,
     h("div", { class: "s", style: "font-size:13px;color:var(--ink2)" }, `${fr(DATA.dns.blocked)} bloquées sur ${fr(DATA.dns.total)} requêtes`));
 }
-function renderTech() {
-  const T = DATA.tech, w = T.warnings;
-  const sum = document.getElementById("tech-sum");
-  const ico = h("span", { class: "dot-ico " + (w ? "warn" : "good") });
-  ico.append(icon(w ? "alert" : "check", 2.6));
-  const chev = icon("chev", 2); chev.setAttribute("class", "chev");
-  sum.append(ico, h("div", {}, h("h2", {}, "Technique"), h("p", { class: "sub", style: "margin:0" }, w ? `${w} point à surveiller` : "Tout est en ordre")), chev);
-  const body = document.getElementById("tech-body");
-  [...T.rows].sort((a, b) => a.ok - b.ok).forEach(r => {
+function srows(body, rows, sort = true) {
+  (sort ? [...rows].sort((a, b) => a.ok - b.ok) : rows).forEach(r => {
     const ic = h("span", { class: "dot-ico " + (r.ok ? "good" : "warn") });
     ic.append(icon(r.ok ? "check" : "alert", 2.6));
-    body.append(h("div", { class: "srow" }, ic, h("div", {}, h("div", {}, r.t), h("div", { class: "s" }, r.s))));
+    body.append(h("div", { class: "srow" + (r.r != null ? " v" : "") }, ic, h("div", {}, h("div", {}, r.t), r.s ? h("div", { class: "s" }, r.s) : null),
+      r.r != null ? h("div", { class: "r" }, r.r) : null));
   });
-  body.append(h("div", { class: "h3" }, "Espace utilisé"));
-  const m = h("div", { class: "meter" });
-  T.meters.forEach(x => {
-    const f = h("div", { class: "fill" + (x.p >= 90 ? " crit" : x.p >= 80 ? " warn" : "") }); f.style.width = x.p + "%";
-    m.append(h("div", { class: "row" }, h("span", {}, x.l), h("b", {}, x.p + " %")), h("div", { class: "track" }, f));
+}
+function renderTech() {
+  const T = DATA.tech, w = T.warnings, D = DATA.detail;
+  /* Page sans détail technique (Christelle) : le statut de l'en-tête suffit. */
+  if (!T.rows.length && !D) { document.getElementById("tech").hidden = true; return; }
+  if (D && D.services && D.services.rows.length) {
+    document.getElementById("bat-card").hidden = false;
+    document.getElementById("bat-sub").textContent = D.services.sub;
+    srows(document.getElementById("bat"), D.services.rows, false);
+  }
+  const extra = D ? D.tech.reduce((n, s) => n + s.rows.filter(r => !r.ok).length, 0) : 0;
+  const sum = document.getElementById("tech-sum");
+  const ico = h("span", { class: "dot-ico " + (w || extra ? "warn" : "good") });
+  ico.append(icon(w || extra ? "alert" : "check", 2.6));
+  const chev = icon("chev", 2); chev.setAttribute("class", "chev");
+  const label = w ? `${w} point${w > 1 ? "s" : ""} à surveiller` : "Tout est en ordre";
+  sum.append(ico, h("div", {}, h("h2", {}, "Technique"), h("p", { class: "sub", style: "margin:0" },
+    label + (extra ? ` · ${extra} détail${extra > 1 ? "s" : ""} à regarder` : ""))), chev);
+  const body = document.getElementById("tech-body");
+  srows(body, T.rows.map(r => ({ ...r, r: null })));
+  if (!D) {
+    body.append(h("div", { class: "h3" }, "Espace utilisé"));
+    const m = h("div", { class: "meter" });
+    T.meters.forEach(x => {
+      const f = h("div", { class: "fill" + (x.p >= 90 ? " crit" : x.p >= 80 ? " warn" : "") }); f.style.width = x.p + "%";
+      m.append(h("div", { class: "row" }, h("span", {}, x.l), h("b", {}, x.p + " %")), h("div", { class: "track" }, f));
+    });
+    body.append(m);
+    return;
+  }
+  D.tech.forEach(sec => {
+    body.append(h("div", { class: "h3" }, sec.h));
+    if (sec.sub) body.append(h("div", { class: "s", style: "font-size:13px;color:var(--ink2);margin-bottom:2px" }, sec.sub));
+    srows(body, sec.rows, sec.h !== "Dev et Jarvis");
   });
-  body.append(m);
+  if (extra) document.getElementById("tech").open = true;
 }
 function renderFoot() {
   const f = document.getElementById("foot");
