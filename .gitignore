@@ -6,6 +6,8 @@
 !*/
 !**/compose.yml
 !**/hwaccel.*.yml
+!visiophone/Dockerfile
+!visiophone/bridge.py
 !CLAUDE.md
 !AGENTS.md
 !docs/*.md
