@@ -304,6 +304,30 @@ def notifications():
     return sorted(per.items(), key=lambda kv: -kv[1])
 
 
+# ---------- Piles faibles (publiées par HA le dimanche à 7h, événement piles_hebdo) ----------
+def piles():
+    import time
+    sql = ("select json_extract(d.shared_data,'$.message') from events e "
+           "join event_types t on t.event_type_id=e.event_type_id join event_data d on d.data_id=e.data_id "
+           "where t.event_type='piles_hebdo' and e.time_fired_ts>=? order by e.time_fired_ts desc limit 1")
+    row = HA.execute(sql, (time.time() - 2 * 86400,)).fetchone()
+    return (row[0] or "").strip() if row else ""
+
+
+DEV_JOURNAL = "/opt/docker/digest/dev-journal.md"  # copié chaque matin depuis codedev (birthday-push.sh)
+
+
+def dev_journal():
+    """Jardinier verify + repro Koe : lignes « - AAAA-MM-JJ — dépôt : résultat — phrase (lien) » des 7 derniers jours."""
+    out = []
+    with open(DEV_JOURNAL, encoding="utf-8") as fh:
+        for line in fh:
+            m = re.match(r"^- (\d{4}-\d\d-\d\d) [—-] ([^:]+?) : (.+)$", line.strip())
+            if m and DAYS[0].date().isoformat() <= m.group(1) <= TODAY.date().isoformat():
+                out.append((m.group(2).strip(), m.group(3).strip()))
+    return out
+
+
 def disk_meters():
     out = []
     for label, path in (("Disque du serveur Docker", "/"), ("Stockage Unraid", "/mnt/media")):
@@ -386,6 +410,318 @@ def fiches():
     return out[::-1]
 
 
+# ---------- Détails techniques et services Battistella (page de Damien seulement, voir publish.py) ----------
+# Chaque section : {"h": titre, "sub": sous-titre, "rows": [{"ok", "t", "s", "r"}]} ; une source en panne retire sa section.
+DIGEST = "/opt/docker/digest"
+KUMA_DB = "/opt/docker/uptime-kuma/data/kuma.db"
+TRAEFIK_LOGS = ("/opt/docker/traefik/logs/access.json.1", "/opt/docker/traefik/logs/access.json")  # 4xx/5xx seulement
+ACME = "/opt/docker/traefik/acme/letsencrypt.json"
+EXTRA_PRODUCTS = ("wawptn.battistella.ovh", "copro-pilot.battistella.ovh")  # produits sans site Umami
+
+
+def sh(*cmd, timeout=60):
+    return subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, check=True).stdout
+
+
+def pct(a, b):
+    return f"{100 * a / b:.2f}".rstrip("0").rstrip(".").replace(".", ",") + " %" if b else "—"
+
+
+def evo(now, prev):
+    if not prev:
+        return "nouveau" if now else ""
+    d = round(100 * (now - prev) / prev)
+    return f"{'+' if d > 0 else '−' if d < 0 else ''}{abs(d)} %"
+
+
+def host_of(url):
+    m = re.match(r"https?://([^/:]+)", url or "")
+    return m.group(1) if m else ""
+
+
+def kuma_week():
+    """Par sonde : disponibilité, incidents, durée hors ligne, latence moyenne sur 7 jours."""
+    con = ro(KUMA_DB)
+    since = datetime.fromtimestamp(W0, timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+    out = []
+    for mid, name, url in con.execute("select id,name,url from monitor where active=1"):
+        hb = [(s, parse_utc(t).timestamp(), p) for s, t, p in
+              con.execute("select status,time,ping from heartbeat where monitor_id=? and time>=? and status in (0,1) order by time", (mid, since))]
+        if not hb:
+            continue
+        up = sum(1 for s, _, _ in hb if s == 1)
+        incidents = sum(1 for i, (s, _, _) in enumerate(hb) if s == 0 and (i == 0 or hb[i - 1][0] == 1))
+        down = sum(hb[i + 1][1] - t for i, (s, t, _) in enumerate(hb[:-1]) if s == 0)
+        if hb[-1][0] == 0:
+            down += W1 - hb[-1][1]
+        pings = [p for s, _, p in hb if s == 1 and p]
+        out.append({"name": name, "host": host_of(url), "up": up, "n": len(hb), "incidents": incidents, "down": down,
+                    "ping": round(sum(pings) / len(pings)) if pings else None})
+    return out
+
+
+def fr_dur(sec):
+    m = round(sec / 60)
+    return f"{m} min" if m < 60 else f"{m // 60} h {m % 60:02d}"
+
+
+def kuma_ok(k):
+    return k["n"] and k["up"] / k["n"] >= 0.999  # moins de 10 min hors ligne sur la semaine
+
+
+def kuma_section(kw):
+    long_ = sorted((k for k in kw if k["down"] > 300), key=lambda k: k["up"] / k["n"])
+    short = [k for k in kw if 0 < k["down"] <= 300 or (k["incidents"] and k["down"] <= 300)]
+    rows = [{"ok": kuma_ok(k), "t": k["name"], "r": pct(k["up"], k["n"]),
+             "s": f"{k['incidents']} incident{'s' if k['incidents'] > 1 else ''}, {fr_dur(k['down'])} hors ligne"
+                  + (f" · {k['ping']} ms en moyenne" if k["ping"] else "")} for k in long_]
+    if short:
+        rows.append({"ok": True, "t": "Coupures de moins de 5 min", "r": str(len(short)), "s": ", ".join(k["name"] for k in short)})
+    good = [k for k in kw if not k["incidents"] and not k["down"]]
+    if good:
+        slow = sorted((k for k in good if k["ping"]), key=lambda k: -k["ping"])[:3]
+        rows.append({"ok": True, "t": f"{len(good)} services sans coupure", "r": str(len(good)),
+                     "s": ("Les plus lents : " + ", ".join(f"{k['name']} {k['ping']} ms" for k in slow)) if slow else ""})
+    return {"h": "Services (Uptime Kuma)", "sub": "Disponibilité sur 7 jours, incidents, temps de réponse", "rows": rows}
+
+
+def plural(n, word):
+    return f"{n:,} {word}{'s' if n > 1 else ''}".replace(",", " ")
+
+
+def last_line(name, pred):
+    rows = [r for r in log_rows(name) if pred(r[1])]
+    return rows[-1] if rows else None
+
+
+def backups_section():
+    rows = []
+    for label, name, ok, expected in BACKUP_JOBS:
+        week = [r for r in log_rows(name) if W0 <= r[0] <= W1]
+        done = sum(1 for _, m in week if ok(m))
+        errors = [m for _, m in week if "[ERROR]" in m]
+        last = last_line(name, ok)
+        size = last_line(name, lambda m: m.startswith("Created "))
+        detail = last[1] if last else "Aucune exécution réussie trouvée"
+        if size and name.endswith(("gramps-backup", "ha-config-backup")):
+            m = re.search(r"\(([^)]+)\)\s*$", size[1])
+            detail = f"Archive {m.group(1)} vérifiée sur le NAS" if m else detail
+        when = datetime.fromtimestamp(last[0], TZ) if last else None
+        rows.append({"ok": done >= expected and not errors, "t": label[0].upper() + label[1:], "r": f"{done}/{expected}",
+                     "s": (f"{DAY_FULL[when.weekday()]} {when:%H:%M} · " if when else "") + detail
+                          + (f" · dernière erreur : {errors[-1][:90]}" if errors else "")})
+    check = [r for r in log_rows("borg-check", "state-backup") if "PASSED" in r[1] or "FAILED" in r[1]]
+    if check:
+        d = datetime.fromtimestamp(check[-1][0], TZ)
+        rows.append({"ok": "FAILED" not in check[-1][1], "t": "Vérification Borg mensuelle", "r": "OK" if "FAILED" not in check[-1][1] else "échec",
+                     "s": f"{d.day} {MON_ABBR[d.month - 1]} · {check[-1][1][:110]}"})
+    return {"h": "Sauvegardes", "sub": "Dernière exécution réussie de chaque tâche", "rows": rows}
+
+
+def disks_section():
+    hist_path = f"{DIGEST}/disk-history.json"
+    try:
+        hist = json.load(open(hist_path, encoding="utf-8"))
+    except (OSError, ValueError):
+        hist = {}
+    today, rows, snap = TODAY.date().isoformat(), [], {}
+    old = max((d for d in hist if d <= (TODAY - timedelta(days=6)).date().isoformat()), default=None)
+    for label, path in (("Disque du serveur Docker", "/"), ("Stockage Unraid", "/mnt/media")):
+        try:
+            st = os.statvfs(path)
+        except OSError:
+            continue
+        total, free = st.f_blocks * st.f_frsize / 1e9, st.f_bavail * st.f_frsize / 1e9
+        used = total - free
+        snap[label] = round(used, 1)
+        p = round(100 * (1 - st.f_bavail / st.f_blocks))
+        delta = used - hist[old][label] if old and label in hist.get(old, {}) else None
+        rows.append({"ok": p < 85, "t": label, "r": f"{p} %",
+                     "s": f"{used:,.0f} Go utilisés sur {total:,.0f} Go · {free:,.0f} Go libres".replace(",", " ")
+                          + (f" · {'+' if delta >= 0 else '−'}{abs(delta):,.1f} Go en 7 jours".replace(",", " ").replace(".", ",") if delta is not None else "")})
+    hist[today] = snap
+    hist = dict(sorted(hist.items())[-60:])
+    with open(hist_path + ".tmp", "w", encoding="utf-8") as fh:
+        json.dump(hist, fh)
+    os.replace(hist_path + ".tmp", hist_path)
+    return {"h": "Disques", "sub": "Occupation et évolution sur la semaine", "rows": rows}
+
+
+def docker_section():
+    rows = []
+    states = [l.split("|", 2) for l in sh("docker", "ps", "-a", "--format", "{{.Names}}|{{.State}}|{{.Status}}").splitlines() if l]
+    broken = [(n, st) for n, s, st in states if s not in ("running", "created") and not st.startswith("Exited (0)")]
+    unhealthy = [n for n, s, st in states if "(unhealthy)" in st]
+    for n, st in broken:
+        rows.append({"ok": False, "t": f"Conteneur {n} arrêté", "s": st, "r": ""})
+    for n in unhealthy:
+        rows.append({"ok": False, "t": f"Conteneur {n} en mauvaise santé", "s": "Healthcheck en échec", "r": ""})
+    ids = sh("docker", "ps", "-q").split()
+    restarts = []
+    for l in sh("docker", "inspect", "--format", "{{.Name}}|{{.RestartCount}}", *ids).splitlines() if ids else []:
+        n, c = l.lstrip("/").split("|")
+        if int(c):
+            restarts.append((n, int(c)))
+    if restarts:
+        restarts.sort(key=lambda x: -x[1])
+        rows.append({"ok": False, "t": "Redémarrages automatiques", "r": str(sum(c for _, c in restarts)),
+                     "s": ", ".join(f"{n} ×{c}" for n, c in restarts[:8])})
+    logs = subprocess.run(["docker", "logs", "--since", "168h", "watchtower"], capture_output=True, text=True, timeout=60)
+    found = re.findall(r'msg="Found new (\S+) image', logs.stdout + logs.stderr)
+    failed = sum(int(x) for x in re.findall(r"Failed=(\d+)", logs.stdout + logs.stderr))
+    names = sorted({f.split("/")[-1].split(":")[0] for f in found})
+    rows.append({"ok": not failed, "t": "Mises à jour d'images (Watchtower)", "r": str(len(found)),
+                 "s": (", ".join(names[:10]) + (f" + {len(names) - 10}" if len(names) > 10 else "") if names else "Aucune cette semaine")
+                      + (f" · {failed} échec{'s' if failed > 1 else ''}" if failed else "")})
+    running = sum(1 for _, s, _ in states if s == "running")
+    rows.append({"ok": not broken and not unhealthy, "t": f"{running} conteneurs en marche", "r": str(running),
+                 "s": f"{len(states)} au total · {sum(1 for *_, st in states if '(healthy)' in st)} avec healthcheck OK"})
+    return {"h": "Docker", "sub": "État des conteneurs, redémarrages, mises à jour", "rows": rows}
+
+
+def certs_section():
+    import base64
+    acme = json.load(open(ACME, encoding="utf-8"))
+    certs = []
+    for resolver in acme.values():
+        for c in (resolver or {}).get("Certificates") or []:
+            pem = base64.b64decode(c["certificate"])
+            end = subprocess.run(["openssl", "x509", "-noout", "-enddate"], input=pem, capture_output=True, timeout=10).stdout.decode()
+            m = re.search(r"notAfter=(.+)", end)
+            if m:
+                exp = datetime.strptime(m.group(1).strip(), "%b %d %H:%M:%S %Y %Z").replace(tzinfo=timezone.utc)
+                certs.append((c["domain"]["main"], (exp - datetime.now(timezone.utc)).days))
+    certs.sort(key=lambda x: x[1])
+    rows = [{"ok": False, "t": d, "r": f"{n} j", "s": "Expire bientôt (Traefik renouvelle à 30 j : à vérifier)"} for d, n in certs if n < 21]
+    if certs:
+        rows.append({"ok": True, "t": f"{len(certs)} certificats Let's Encrypt", "r": str(len(certs)),
+                     "s": "Les plus proches : " + ", ".join(f"{d} {n} j" for d, n in certs[:3])})
+    return {"h": "Certificats", "sub": "Expiration des certificats HTTPS", "rows": rows}
+
+
+def dns_section():
+    con = ro("/opt/docker/pihole/pihole/pihole-FTL.db")
+    blocked = "status in (1,4,5,6,7,8,9,10,11,15,16,17)"
+    top_b = con.execute(f"select domain,count(*) c from queries where timestamp>=? and {blocked} group by domain order by c desc limit 5", (W0,)).fetchall()
+    top_c = con.execute("select client,count(*) c, sum(" + blocked + ") from queries where timestamp>=? group by client order by c desc limit 5", (W0,)).fetchall()
+    names = dict(con.execute("select ip,name from network_addresses where name is not null and name<>''").fetchall())
+    names.update({ip: n for ip, n in con.execute("select ip,name from client_by_id where name is not null and name<>''")})
+    rows = [{"ok": True, "t": "Domaines les plus bloqués", "r": "",
+             "s": " · ".join(f"{d} {c:,}".replace(",", " ") for d, c in top_b)}] if top_b else []
+    for ip, c, b in top_c:
+        rows.append({"ok": True, "t": names.get(ip, ip) + (f" ({ip})" if ip in names else ""), "r": f"{c:,}".replace(",", " "),
+                     "s": f"{pct(b or 0, c)} bloquées"})
+    return {"h": "DNS (Pi-hole)", "sub": "Domaines bloqués et appareils les plus actifs", "rows": rows}
+
+
+def dev_section():
+    rows = []
+    for repo, txt in safe(dev_journal, []):
+        rows.append({"ok": not txt.startswith(("bloqué", "reproduit")), "t": repo, "s": txt, "r": ""})
+    try:
+        jw = json.load(open(f"{DIGEST}/jarvis-weekly.json", encoding="utf-8"))
+    except (OSError, ValueError):
+        jw = {}
+    if jw and jw.get("generated", "") >= (TODAY - timedelta(days=1)).date().isoformat():
+        prs = jw.get("prs") or {}
+        total = sum(len(v) for v in prs.values())
+        if total:
+            rows.append({"ok": True, "t": "PR fusionnées", "r": str(total),
+                         "s": " · ".join(f"{r} {len(v)}" for r, v in prs.items())})
+            for r, v in list(prs.items())[:4]:
+                rows.append({"ok": True, "t": r, "r": str(len(v)),
+                             "s": " · ".join(f"#{p['n']} {p['t']}" for p in v[:4]) + (f" · + {len(v) - 4}" if len(v) > 4 else "")})
+        for f in jw.get("cronFailures") or []:
+            rows.append({"ok": False, "t": f"Cron Jarvis « {f['name']} »", "r": f"{f['fails']}/{f['runs']}",
+                         "s": f"Dernier échec {f['last']} · {f['msg']}"})
+        if not jw.get("cronFailures"):
+            rows.append({"ok": True, "t": "Crons Jarvis", "r": "", "s": "Aucun échec cette semaine"})
+    return {"h": "Dev et Jarvis", "sub": "Jardinier, repro Koe, PR fusionnées, crons Jarvis", "rows": rows}
+
+
+def umami_week():
+    """Visiteurs, visites et pages vues par site, semaine en cours et précédente."""
+    q = ("select w.name, w.domain,"
+         " count(distinct e.session_id) filter (where e.created_at >= to_timestamp({w0})),"
+         " count(distinct e.visit_id) filter (where e.created_at >= to_timestamp({w0})),"
+         " count(*) filter (where e.created_at >= to_timestamp({w0}) and e.event_type = 1),"
+         " count(distinct e.session_id) filter (where e.created_at < to_timestamp({w0})),"
+         " count(*) filter (where e.created_at < to_timestamp({w0}) and e.event_type = 1)"
+         " from website w left join website_event e on e.website_id = w.website_id and e.created_at >= to_timestamp({p0})"
+         " where w.deleted_at is null group by w.name, w.domain order by 3 desc").format(w0=int(W0), p0=int(P0))
+    out = {}
+    for l in sh("docker", "exec", "umami-db", "psql", "-U", "umami", "-d", "umami", "-AtF", "|", "-c", q).splitlines():
+        name, dom, vis, visits, pv, pvis, ppv = l.split("|")
+        out[dom] = {"name": name, "visitors": int(vis), "visits": int(visits), "pv": int(pv), "pvisitors": int(pvis), "ppv": int(ppv)}
+    refq = ("select w.domain, e.referrer_domain, count(distinct e.visit_id) c from website_event e join website w using (website_id)"
+            f" where e.created_at >= to_timestamp({int(W0)}) and e.referrer_domain <> '' and e.referrer_domain <> w.domain"
+            " group by 1, 2 order by 1, 3 desc")
+    for l in sh("docker", "exec", "umami-db", "psql", "-U", "umami", "-d", "umami", "-AtF", "|", "-c", refq).splitlines():
+        dom, ref, c = l.split("|")
+        if dom in out:
+            out[dom].setdefault("refs", []).append((ref, int(c)))
+    return out
+
+
+def traefik_errors():
+    """Erreurs 5xx et 4xx (hors 401/404) par hôte sur 7 jours, d'après le journal d'accès Traefik."""
+    since = datetime.fromtimestamp(W0, timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")
+    out = {}
+    for path in TRAEFIK_LOGS:
+        if not os.path.exists(path):
+            continue
+        with open(path, errors="replace") as fh:
+            for line in fh:
+                if '"DownstreamStatus":5' not in line and '"DownstreamStatus":40' not in line and '"DownstreamStatus":42' not in line:
+                    continue
+                try:
+                    r = json.loads(line)
+                except ValueError:
+                    continue
+                if r.get("StartUTC", "")[:19] < since:
+                    continue
+                code = r.get("DownstreamStatus", 0)
+                h = out.setdefault(r.get("RequestHost", ""), {"5xx": 0, "4xx": 0})
+                if code >= 500:
+                    h["5xx"] += 1
+                elif code not in (401, 404):
+                    h["4xx"] += 1
+    return out
+
+
+def battistella_section(kw):
+    um = safe(umami_week, {})
+    errs = safe(traefik_errors, {})
+    kuma_by_host = {k["host"]: k for k in kw}
+    hosts = list(um) + [h for h in EXTRA_PRODUCTS if h not in um]
+    rows = []
+    for host in hosts:
+        u, k, e = um.get(host), kuma_by_host.get(host), errs.get(host, {})
+        parts = []
+        if u:
+            parts.append(f"{plural(u['visitors'], 'visiteur')} ({evo(u['visitors'], u['pvisitors']) or '='}) · {plural(u['visits'], 'visite')} · {plural(u['pv'], 'page')} vue{'s' if u['pv'] > 1 else ''}")
+            if u.get("refs"):
+                parts.append("Sources : " + ", ".join(f"{r} {c}" for r, c in u["refs"][:3]))
+        if k:
+            parts.append(f"Dispo {pct(k['up'], k['n'])}" + (f", {k['incidents']} incident{'s' if k['incidents'] > 1 else ''}" if k["incidents"] else "")
+                         + (f" · {k['ping']} ms" if k["ping"] else ""))
+        if e.get("5xx") or e.get("4xx"):
+            parts.append(f"Erreurs : {e.get('5xx', 0)} en 5xx, {e.get('4xx', 0)} en 4xx (hors 401/404)")
+        ok = (not k or kuma_ok(k)) and not e.get("5xx")
+        rows.append({"ok": ok, "t": (u or {}).get("name") or (k or {}).get("name") or host, "r": str(u["visitors"]) if u else "",
+                     "s": " · ".join(parts) or "Aucune donnée"})
+    return {"h": "Services Battistella", "sub": "Fréquentation (Umami), disponibilité (Kuma) et erreurs (Traefik) sur 7 jours", "rows": rows}
+
+
+def details():
+    """Sections de la page de Damien. Chacune est indépendante : une source en panne n'efface que la sienne."""
+    kw = safe(kuma_week, [])
+    sections = [safe(lambda: battistella_section(kw), None)]
+    tech = [safe(lambda: kuma_section(kw), None) if kw else None, safe(backups_section, None), safe(disks_section, None),
+            safe(docker_section, None), safe(certs_section, None), safe(dns_section, None), safe(dev_section, None)]
+    return {"services": sections[0], "tech": [s for s in tech if s and s["rows"]]}
+
+
 def main():
     kpis, events = [], []
 
@@ -443,6 +779,17 @@ def main():
                        "s": " · ".join(f"{t} {n}" for t, n in notes[:6]) + (f" · + {len(notes) - 6} autres" if len(notes) > 6 else ""),
                        "r": str(total)})
 
+    pil = safe(piles, "")
+    if pil:
+        events.append({"only": "damien", "icon": "bell", "t": "Piles à changer", "s": pil, "r": str(sum(len(x.split(":", 1)[1].split(",")) for x in pil.rstrip(".").split(". ") if ":" in x))})
+
+    dev = safe(dev_journal, [])
+    if dev:
+        bad = [r for r, t in dev if t.startswith(("bloqué", "corrigé", "reproduit"))]
+        events.append({"only": "damien", "icon": "check", "t": "Code (jardinier, repro Koe)",
+                       "s": " · ".join(f"{r} : {t.split(' — ')[0]}" for r, t in dev[-8:]),
+                       "r": str(len(dev))})
+
     bdays, drift = safe(entourage, ([], []))
     agenda = safe(agenda_auto, [])
     projects = safe(projets, [])
@@ -471,6 +818,7 @@ def main():
         "projects": projects,
         "fiches": fiches_maj,  # retiré des pages autres que celle de Damien (publish.py)
         "tech": {"warnings": warnings, "rows": rows, "meters": safe(disk_meters, [])},
+        "detail": details(),  # retiré des pages autres que celle de Damien (publish.py)
         "status": {"ok": not warnings, "text": "Tout est en ordre" if not warnings else f"{warnings} point{'s' if warnings > 1 else ''} à surveiller"},
     }
     print(json.dumps(out, ensure_ascii=False, indent=1))
