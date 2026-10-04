@@ -215,7 +215,17 @@ class Bridge:
                 time.sleep(5)
 
     def run(self):
-        self.client.connect(MQTT_HOST, MQTT_PORT, 60)
+        # Au boot de la VM, le broker peut démarrer après nous : on attend
+        # au lieu de crasher (9 redémarrages en 32 s le 2026-10-03).
+        delay = 2
+        while True:
+            try:
+                self.client.connect(MQTT_HOST, MQTT_PORT, 60)
+                break
+            except OSError as exc:
+                log.warning("broker MQTT injoignable (%s), nouvel essai dans %d s", exc, delay)
+                time.sleep(delay)
+                delay = min(delay * 2, 60)
         self.client.loop_start()
         threading.Thread(target=self.watchdog, daemon=True).start()
         self.stream()
