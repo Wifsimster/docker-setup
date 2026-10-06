@@ -1799,6 +1799,38 @@
       piece: toutes
       volume: 45
   mode: single
+- id: enfants_temps_tv
+  alias: Enfants - Temps TV
+  description: 'Après le brossage des dents (19h00), Léo peut aller regarder la TV
+    jusqu''à la coupure de 19h30. Jours : lun, mar, jeu, ven. Pas le mercredi (judo :
+    dents à 19h55 et temps calme à 20h00, pas de créneau TV). Annonce uniquement
+    dans la chambre de Léo (Anna ne regarde pas la TV). Ajoutée le 2026-10-06.'
+  triggers:
+  - trigger: time
+    at: '19:05:00'
+  conditions:
+  - condition: time
+    weekday:
+    - mon
+    - tue
+    - thu
+    - fri
+  - alias: Aujourd'hui n'est pas férié (il y avait école)
+    condition: state
+    entity_id: binary_sensor.jour_non_ferie
+    state: 'on'
+  - alias: Hors vacances scolaires
+    condition: state
+    entity_id: input_boolean.vacances_scolaires
+    state: 'off'
+  actions:
+  - action: script.annonce
+    data:
+      message: Léo, dents finies ? Tu peux aller regarder la télé jusqu'à sept heures
+        et demie.
+      piece: leo
+      volume: 45
+  mode: single
 - id: '1789274000015'
   alias: Enfants - Pyjama
   description: 'Pyjama enfilé juste après la douche, pas le soir au coucher. Jours
