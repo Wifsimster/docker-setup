@@ -1394,6 +1394,11 @@
     entity_id: input_boolean.maison_absente
     state: 'off'
   actions:
+  - alias: Ouvrir le volet de Léo (réveil, avant l'ouverture groupée de 07h20)
+    action: cover.open_cover
+    target:
+      entity_id: cover.volet_roulant_chambre_leo
+    continue_on_error: true
   - choose:
     - alias: 'Enceinte joignable : réveil en musique, puis consigne'
       conditions:
@@ -2133,7 +2138,7 @@
     entity_id: input_boolean.maison_absente
     state: 'off'
   actions:
-  - alias: Ouvrir les 6 volets (groupe cover.tous_les_volets)
+  - alias: Ouvrir tous les volets (groupe cover.tous_les_volets, 7 volets)
     action: cover.open_cover
     target:
       entity_id: cover.tous_les_volets
