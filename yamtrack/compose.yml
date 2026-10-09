@@ -16,6 +16,10 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+    # Plex (network_mode: host) envoie ses webhooks ici en direct, sans passer par
+    # Traefik. Lié à 127.0.0.1 uniquement : rien n'est exposé au LAN ni à Internet.
+    ports:
+      - "127.0.0.1:8010:8000"
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:8000/"]
       interval: 30s
