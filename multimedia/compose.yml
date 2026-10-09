@@ -416,56 +416,6 @@ services:
     networks:
       lan:
 
-  tautulli:
-    image: ghcr.io/linuxserver/tautulli:latest
-    container_name: tautulli
-    restart: unless-stopped
-    security_opt:
-      - no-new-privileges:true
-    deploy:
-      resources:
-        limits:
-          memory: 256M
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
-    environment:
-      - PUID=${PUID}
-      - PGID=${PGID}
-      - TZ=${TZ}
-      - UMASK=002
-    volumes:
-      - ${TAUTULLI_CONFIG_PATH}:/config
-      - ${PLEX_CONFIG_PATH}/Library/Application Support/Plex Media Server/Logs:/logs:ro
-    healthcheck:
-      test: ["CMD", "curl", "-ILfs", "http://localhost:8181/status"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
-    labels:
-      - "traefik.enable=true"
-
-      # Entrypoint
-      - "traefik.http.routers.tautulli.entrypoints=websecure"
-
-      # Router
-      - "traefik.http.routers.tautulli.rule=Host(`tautulli.${DOMAIN}`)"
-
-      # Service
-      - "traefik.http.services.tautulli.loadBalancer.server.port=8181"
-
-      # Auth middleware (tinyauth) — added 2026-05-03 after audit (http_password was empty)
-      - "traefik.http.routers.tautulli.middlewares=tinyauth@docker"
-
-      # Watchtower automatic update
-      - "com.centurylinklabs.watchtower.enable=true"
-
-    networks:
-      lan:
-
 networks:
   lan:
     external: true
