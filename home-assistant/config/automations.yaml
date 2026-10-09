@@ -1960,13 +1960,20 @@
     entity_id: input_boolean.maison_absente
     state: 'off'
   actions:
-  - action: script.annonce
-    data:
-      message: '{% if now().weekday() == 2 %}Huit heures. Vous êtes en retard : Léo
-        au centre aéré.{% else %}Huit heures. Vous êtes en retard : Anna chez nounou,
-        Léo à l''école.{% endif %}'
-      piece: toutes
-      volume: 40
+  - alias: Annonce du retard seulement si Christelle est encore à la maison (sinon
+      tout le monde est déjà parti)
+    if:
+    - condition: state
+      entity_id: person.christelle
+      state: home
+    then:
+    - action: script.annonce
+      data:
+        message: '{% if now().weekday() == 2 %}Huit heures. Vous êtes en retard : Léo
+          au centre aéré.{% else %}Huit heures. Vous êtes en retard : Anna chez nounou,
+          Léo à l''école.{% endif %}'
+        piece: toutes
+        volume: 40
   - alias: Couper la musique sur les enceintes qui jouent (liste vide = aucune action,
       pas d'erreur)
     action: media_player.media_pause
