@@ -50,7 +50,7 @@ docker-setup/
 ├── pihole/compose.yml         # DNS ad-blocking
 ├── gramps/compose.yml         # Genealogy (+ Redis, Celery worker)
 ├── stirling/compose.yml       # PDF tools
-├── personal-blog/compose.yml  # Blog (wifsimster/wifsimster-blog) + GoatCounter analytics
+├── personal-blog/compose.yml  # Blog (wifsimster/wifsimster-blog) — audience mesurée par Umami
 ├── resume/compose.yml         # Online resume (wifsimster/resume)
 ├── birthday-invitation/compose.yml
 ├── copro-pilot/compose.yml    # Co-ownership app (+ Postgres)
