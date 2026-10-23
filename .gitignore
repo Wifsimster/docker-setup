@@ -11,6 +11,7 @@
 !CLAUDE.md
 !AGENTS.md
 !docs/*.md
+!docs/adr/*.md
 !home-assistant/config/automations.yaml
 !home-assistant/config/scripts.yaml
 !home-assistant/config/scenes.yaml
@@ -48,6 +49,11 @@
 !dev-agents/requirements.txt
 !dev-agents/dashboard.html
 !paperless-ngx/protonmail-bridge/Dockerfile
+# gh-runners : scripts et doc, jamais secrets/ ni .env
+!gh-runners/README.md
+!gh-runners/.env.example
+!gh-runners/runner-entrypoint.sh
+!gh-runners/token-broker.sh
 
 # Explicitly exclude homepage config containing secrets
 homepage/config/services.yaml

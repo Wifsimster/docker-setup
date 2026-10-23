@@ -241,6 +241,8 @@ Follow the pattern in `paperless-ngx/compose.yml` or `the-box/compose.yml`:
 
 ## GitHub Actions Runners
 
+> **CI des repos privés** : runners éphémères en conteneur (stack `gh-runners/`, label `homelab-ci`, DinD isolé, PAT visible du seul broker). Voir `docs/adr/0001-runners-github-ephemeres.md` et `gh-runners/README.md`. Les runners systemd ci-dessous restent dédiés aux déploiements (`runs-on: self-hosted`).
+
 6 self-hosted runners are installed in `/opt/actions-runner/`, one per repo. They share a single set of binaries via **hardlinks** to save ~3.5 Go of disk space.
 
 ### Architecture
