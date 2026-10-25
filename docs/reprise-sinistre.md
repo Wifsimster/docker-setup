@@ -308,6 +308,14 @@ for sub in paperless immich the-box copro-pilot infisical \
 done
 ```
 
+### Redirection HTTP vers HTTPS
+
+```bash
+# Doit répondre 308 avec le même chemin. Un 301 vers /index.php/...? signifie
+# que la redirection du port 80 manque sur l'USG (voir docs/traefik.md).
+curl -sI "http://paperless.${DOMAIN}/test" | grep -iE '^(HTTP|location)'
+```
+
 ### Certificats TLS
 
 ```bash
