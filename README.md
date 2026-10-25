@@ -242,6 +242,7 @@ graph LR
 | 📊 **GoatCounter** | Analytics web léger (sans cookie) | `goatcounter.example.com` |
 | 🗺️ **TileServer GL** | Serveur de tuiles cartographiques | `tiles.example.com` |
 | 🐟 **SeaweedFS** | Stockage objet S3-compatible | _interne_ |
+| 📦 **Registry** | Registre Docker local des images construites par les runners (battistella-pro) | `127.0.0.1:5000` |
 
 ---
 

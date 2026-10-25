@@ -1,0 +1,41 @@
+name: registry
+
+# Local Docker registry for the images built by the self-hosted runners
+# (battistella-pro first): the release builds no longer depend on GitHub-hosted
+# runners or GHCR. Published on the loopback only, so it is reachable from this
+# host (runners, `docker compose pull`) and from nowhere else; Docker trusts
+# `localhost` registries over plain HTTP, no TLS or auth needed.
+
+services:
+  registry:
+    container_name: registry
+    image: registry:3
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    environment:
+      - TZ=Europe/Paris
+      # Lets old tags be deleted, then reclaimed with `registry garbage-collect`.
+      - REGISTRY_STORAGE_DELETE_ENABLED=true
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:5000/v2/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    ports:
+      - "127.0.0.1:5000:5000"
+    volumes:
+      - ./data:/var/lib/registry
+    labels:
+      # Watchtower automatic update
+      - com.centurylinklabs.watchtower.enable=true
