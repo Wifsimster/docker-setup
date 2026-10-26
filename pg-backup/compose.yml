@@ -46,7 +46,6 @@ services:
       yamtrack_backend:
       racontine_default:
       umami_backend:
-      ghostfolio_backend:
       infisical_backend:
       litellm_backend:
 
@@ -86,9 +85,6 @@ networks:
   umami_backend:
     external: true
     name: umami_backend
-  ghostfolio_backend:
-    external: true
-    name: ghostfolio_backend
   infisical_backend:
     external: true
     name: infisical_backend

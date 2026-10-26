@@ -64,7 +64,6 @@ docker-setup/
 ├── digest/compose.yml         # Static site (nginx:alpine)
 ├── discord-bridge/compose.yml # Built locally (build: .)
 ├── seaweedfs/compose.yml      # SeaweedFS (chrislusf/seaweedfs)
-├── ghostfolio/compose.yml     # Ghostfolio (+ Postgres, Redis)
 ├── downtify/compose.yml       # henriquesebastiao/downtify
 ├── metube/compose.yml         # alexta69/metube
 ├── koe/compose.yml            # wifsimster/koe-server (+ Postgres)
