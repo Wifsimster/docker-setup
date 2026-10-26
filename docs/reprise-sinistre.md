@@ -187,11 +187,6 @@ docker exec -i umami-db pg_restore \
   -U umami -d umami --clean --if-exists \
   < pg-backup/backups/umami_YYYY-MM-DD_HHMMSS.dump
 
-# Ghostfolio (nom de base avec tiret)
-docker exec -i ghostfolio-postgres pg_restore \
-  -U ghostfolio -d ghostfolio-db --clean --if-exists \
-  < pg-backup/backups/ghostfolio-db_YYYY-MM-DD_HHMMSS.dump
-
 # Koe / Toko / WAWPTN / Yamtrack — même schéma :
 #   docker exec -i <conteneur> pg_restore -U <user> -d <base> --clean --if-exists < <dump>
 ```

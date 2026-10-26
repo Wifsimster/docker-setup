@@ -31,7 +31,6 @@ koe-db|koe|koe|KOE_DB_PASSWORD
 yamtrack-postgres|yamtrack|yamtrack|YAMTRACK_DB_PASSWORD
 racontine-db|racontine|racontine|RACONTINE_DB_PASSWORD
 umami-db|umami|umami|UMAMI_DB_PASSWORD
-ghostfolio-postgres|ghostfolio|ghostfolio-db|GHOSTFOLIO_DB_PASSWORD
 infisical-db|infisical|infisical|INFISICAL_DB_PASSWORD
 litellm-db|litellm|litellm|LITELLM_DB_PASSWORD
 "
