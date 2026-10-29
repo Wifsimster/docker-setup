@@ -265,7 +265,6 @@ details.tech[open] .chev { transform: rotate(180deg); }
 <div class="tip" id="tip" role="tooltip" hidden></div>
 
 <script>
-/* ===== Données fictives : le générateur réel remplacera uniquement cet objet ===== */
 const DATA = /*DATA_START*/{
   range: "Semaine du 28 septembre au 4 octobre 2026",
   generated: "dimanche 4 octobre à 20:00",
@@ -319,7 +318,6 @@ const DATA = /*DATA_START*/{
   preview: true
 }/*DATA_END*/;
 
-/* ===== Petits utilitaires (aucune donnée injectée via innerHTML) ===== */
 const NS = "http://www.w3.org/2000/svg";
 const fr = n => n.toLocaleString("fr-FR");
 const fr1 = n => n.toLocaleString("fr-FR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
@@ -359,7 +357,6 @@ function icon(name, w = 1.9) {
   return s;
 }
 
-/* ===== Infobulle : survol souris et focus clavier ===== */
 const tip = document.getElementById("tip");
 function showTip(cx, cy, title, rows) {
   tip.replaceChildren(h("div", { class: "ttl" }, title));
@@ -380,7 +377,6 @@ function showTip(cx, cy, title, rows) {
 const hideTip = () => { tip.hidden = true; };
 function centerOf(elm) { const r = elm.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; }
 
-/* ===== En-tête, statut, héros ===== */
 function hideCard(id) { const e = document.getElementById(id); if (e) (e.closest('.card') || e).hidden = true; }
 function renderTop() {
   if (!DATA.preview) document.getElementById('ribbon').remove();
@@ -408,7 +404,6 @@ function renderTop() {
     "Meilleur jour : " + DATA.daysLong[bestDay].split(" ")[0] + " · " + (diff >= 0 ? "+" : "−") + Math.abs(diff) + " vs semaine dernière";
 }
 
-/* ===== Tuiles de chiffres avec mini-courbe ===== */
 function sparkline(vals) {
   const w = 100, hgt = 22, pad = 3;
   const s = svg("svg", { viewBox: `0 0 ${w} ${hgt}`, class: "spark", preserveAspectRatio: "none", "aria-hidden": "true" });
@@ -436,7 +431,6 @@ function renderKpis() {
   });
 }
 
-/* ===== Carte de chaleur : présence (séquentiel, un seul ton) ===== */
 const BUCKETS = [[0, 8], [8, 12], [12, 16], [16, 20], [20, 25]];
 const bucketOf = v => BUCKETS.findIndex(([a, b]) => v >= a && v < b) + 1;
 function renderPresence() {
@@ -467,7 +461,6 @@ function renderPresence() {
     DATA.days.map((d, i) => [DATA.daysLong[i], ...DATA.presence.hours.map(a => a[i])]));
 }
 
-/* ===== Courbes : températures (deux séries, un seul axe) ===== */
 function niceTicks(mn, mx, step) { const t = []; for (let v = Math.floor(mn / step) * step; v <= mx + 1e-9; v += step) t.push(v); return t; }
 function renderTemps() {
   const host = document.getElementById("temps");
@@ -528,7 +521,6 @@ function renderTemps() {
   fillTable("temps-tbl", ["Jour", "Maison (°C)", "Dehors (°C)"], DATA.days.map((d, i) => [DATA.daysLong[i], fr1(series[0].vals[i]), fr1(series[1].vals[i])]));
 }
 
-/* ===== Colonnes : photos par jour (mise en avant d’un seul jour) ===== */
 function topRounded(x, y, w, hgt, r) {
   r = Math.min(r, w / 2, hgt);
   return `M${x},${y + hgt}V${y + r}Q${x},${y} ${x + r},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${y + hgt}Z`;
@@ -562,7 +554,6 @@ function renderPhotos() {
   fillTable("photos-tbl", ["Jour", "Photos et vidéos"], vals.map((v, i) => [DATA.daysLong[i], v]));
 }
 
-/* ===== Vue tableau : le jumeau accessible de chaque graphique ===== */
 function fillTable(id, cols, rows) {
   const t = h("table", { class: "data" });
   t.append(h("thead", {}, h("tr", {}, ...cols.map((c, i) => h("th", i ? { class: "n" } : {}, c)))));
@@ -578,7 +569,6 @@ document.querySelectorAll(".tbl-btn").forEach(b => b.addEventListener("click", (
   if (id === "temps") document.getElementById("temps-legend").hidden = on;
 }));
 
-/* ===== Listes, jauge internet, bloc technique ===== */
 function renderLists() {
   const fill = (id, rows, withIcon) => {
     const ul = document.getElementById(id);
@@ -617,7 +607,6 @@ function srows(body, rows, sort = true) {
 }
 function renderTech() {
   const T = DATA.tech, w = T.warnings, D = DATA.detail;
-  /* Page sans détail technique (Christelle) : le statut de l'en-tête suffit. */
   if (!T.rows.length && !D) { document.getElementById("tech").hidden = true; return; }
   if (D && D.services && D.services.rows.length) {
     document.getElementById("bat-card").hidden = false;
@@ -659,7 +648,6 @@ function renderFoot() {
   f.append(ar);
 }
 
-/* ===== Lancement + redimensionnement ===== */
 renderTop(); renderKpis(); renderLists(); renderTech(); renderFoot();
 const charts = () => { renderPresence(); renderTemps(); renderPhotos(); };
 charts();

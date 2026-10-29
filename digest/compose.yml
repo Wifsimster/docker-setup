@@ -31,7 +31,6 @@ services:
       - "traefik.http.routers.digest.rule=Host(`digest.${DOMAIN}`)"
       - "traefik.http.services.digest.loadBalancer.server.port=80"
       - "traefik.http.routers.digest.middlewares=tinyauth@docker"
-      # Liens secrets par personne (/s/<jeton>/), sans connexion. Le reste du site reste derriere tinyauth.
       - "traefik.http.routers.digest-share.entrypoints=websecure"
       - "traefik.http.routers.digest-share.rule=Host(`digest.${DOMAIN}`) && PathPrefix(`/s/`)"
       - "traefik.http.routers.digest-share.priority=100"

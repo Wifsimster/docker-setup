@@ -60,16 +60,12 @@ services:
     labels:
       - "traefik.enable=true"
 
-      # Entrypoint
       - "traefik.http.routers.litellm.entrypoints=websecure"
 
-      # Router
       - "traefik.http.routers.litellm.rule=Host(`litellm.${DOMAIN}`)"
 
-      # Service
       - "traefik.http.services.litellm.loadBalancer.server.port=4000"
 
-      # Watchtower automatic update
       - "com.centurylinklabs.watchtower.enable=true"
 
     networks:

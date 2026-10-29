@@ -29,21 +29,17 @@ services:
       - PUID=1000
       - PGID=1000
 
-      # Application
       - SECRET=${SECRET}
       - URLS=https://yamtrack.${DOMAIN}
 
-      # Database
       - DB_HOST=yamtrack-postgres
       - DB_NAME=${DB_NAME:-yamtrack}
       - DB_USER=${DB_USER:-yamtrack}
       - DB_PASSWORD=${DB_PASSWORD:-yamtrack}
       - DB_PORT=5432
 
-      # Redis
       - REDIS_URL=redis://yamtrack-redis:6379
 
-      # API Keys (optional)
       - TMDB_API=${TMDB_API:-}
       - MAL_API=${MAL_API:-}
       - IGDB_ID=${IGDB_ID:-}
@@ -58,17 +54,13 @@ services:
     labels:
       - "traefik.enable=true"
 
-      # Entrypoint
       - "traefik.http.routers.yamtrack.entrypoints=websecure"
 
-      # Router
       - "traefik.http.routers.yamtrack.rule=Host(`yamtrack.${DOMAIN}`)"
 
-      # Service
       - "traefik.http.services.yamtrack.loadBalancer.server.port=8000"
       - "traefik.http.routers.yamtrack.middlewares=tinyauth@docker"
 
-      # Watchtower automatic update
       - com.centurylinklabs.watchtower.enable=true
 
     networks:

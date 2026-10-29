@@ -25,30 +25,23 @@ services:
     env_file:
       - .env
     environment:
-      # System
       - TZ=Europe/Paris
       - NODE_ENV=production
       - PORT=80
       
-      # Database & Cache (REQUIRED)
       - DATABASE_URL=postgresql://${DB_USER:-thebox}:${DB_PASSWORD:-thebox}@the-box-postgres:5432/${DB_NAME:-thebox}
       - REDIS_URL=redis://the-box-redis:6379
       
-      # Authentication (REQUIRED - Generate with: openssl rand -base64 32)
       - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
       
-      # URLs (REQUIRED)
       - API_URL=https://the-box.${DOMAIN}
       - CORS_ORIGIN=https://the-box.${DOMAIN}
       
-      # Email (Optional - for password reset)
       - RESEND_API_KEY=${RESEND_API_KEY:-}
       - EMAIL_FROM=${EMAIL_FROM:-noreply@battistella.ovh}
       
-      # RAWG API (Optional - for game imports)
       - RAWG_API_KEY=${RAWG_API_KEY:-}
 
-      # Stripe
       - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
       - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
       - STRIPE_PRICE_MONTHLY=${STRIPE_PRICE_MONTHLY}
@@ -63,13 +56,10 @@ services:
     labels:
       - "traefik.enable=true"
 
-      # Entrypoint
       - "traefik.http.routers.the-box.entrypoints=websecure"
 
-      # Router
       - "traefik.http.routers.the-box.rule=Host(`the-box.${DOMAIN}`)"
 
-      # Service
       - "traefik.http.services.the-box.loadBalancer.server.port=80"
 
     networks:

@@ -24,7 +24,6 @@ services:
       - UMASK=002
     volumes:
       - ${CLEANUPARR_CONFIG_PATH}:/config
-      # Needed for the hardlink / orphaned-file checks — same paths as the arrs see
       - ${DOWNLOADS_LOCATION}:/data/downloads
       - ${MUSIC_LOCATION}:/data/music
       - ${TV_SHOWS_LOCATION}:/data/tv-shows
@@ -38,17 +37,13 @@ services:
     labels:
       - "traefik.enable=true"
 
-      # Entrypoint
       - "traefik.http.routers.cleanuparr.entrypoints=websecure"
 
-      # Router
       - "traefik.http.routers.cleanuparr.rule=Host(`cleanuparr.${DOMAIN}`)"
 
-      # Service
       - "traefik.http.services.cleanuparr.loadBalancer.server.port=11011"
       - "traefik.http.routers.cleanuparr.middlewares=tinyauth@docker"
 
-      # Watchtower automatic update
       - "com.centurylinklabs.watchtower.enable=true"
 
     networks:
@@ -87,17 +82,13 @@ services:
     labels:
       - "traefik.enable=true"
 
-      # Entrypoint
       - "traefik.http.routers.lidarr.entrypoints=websecure"
 
-      # Router
       - "traefik.http.routers.lidarr.rule=Host(`lidarr.${DOMAIN}`)"
 
-      # Service
       - "traefik.http.services.lidarr.loadBalancer.server.port=8686"
       - "traefik.http.routers.lidarr.middlewares=tinyauth@docker"
 
-      # Watchtower automatic update
       - "com.centurylinklabs.watchtower.enable=true"
 
     networks:
@@ -134,16 +125,12 @@ services:
     labels:
       - "traefik.enable=true"
 
-      # Entrypoint
       - "traefik.http.routers.seerr.entrypoints=websecure"
 
-      # Router
       - "traefik.http.routers.seerr.rule=Host(`seerr.${DOMAIN}`)"
 
-      # Service
       - "traefik.http.services.seerr.loadBalancer.server.port=5055"
 
-      # Watchtower automatic update
       - "com.centurylinklabs.watchtower.enable=true"
 
     networks:
@@ -153,7 +140,7 @@ services:
     image: ghcr.io/linuxserver/plex:latest
     container_name: plex
     restart: unless-stopped
-    network_mode: host  # Container joins host's network stack
+    network_mode: host
     logging:
       driver: json-file
       options:
@@ -169,9 +156,9 @@ services:
     security_opt:
       - no-new-privileges:true
     devices:
-      - /dev/dri:/dev/dri  # For hardware transcoding
+      - /dev/dri:/dev/dri
     tmpfs:
-      - /transcode:size=8g  # RAM-based temp storage for transcoding
+      - /transcode:size=8g
     volumes:
       - ${PLEX_CONFIG_PATH}:/config
       - ${TV_SHOWS_LOCATION}:/data/tv:ro
@@ -189,11 +176,7 @@ services:
           memory: 12G
           cpus: "8.0"
     labels:
-      # Watchtower automatic update
       - "com.centurylinklabs.watchtower.enable=true"
-
-    # networks:
-    #   lan:
 
   prowlarr:
     image: ghcr.io/linuxserver/prowlarr:latest
@@ -226,17 +209,13 @@ services:
     labels:
       - "traefik.enable=true"
 
-      # Entrypoint
       - "traefik.http.routers.prowlarr.entrypoints=websecure"
 
-      # Router
       - "traefik.http.routers.prowlarr.rule=Host(`indexer.${DOMAIN}`)"
 
-      # Service
       - "traefik.http.services.prowlarr.loadBalancer.server.port=9696"
       - "traefik.http.routers.prowlarr.middlewares=tinyauth@docker"
 
-      # Watchtower automatic update
       - "com.centurylinklabs.watchtower.enable=true"
 
     networks:
@@ -247,7 +226,6 @@ services:
     container_name: qbittorrent
     hostname: qbittorrent.internal
     restart: unless-stopped
-    # Note: no-new-privileges not set — NET_ADMIN required for VPN tunnel
     deploy:
       resources:
         limits:
@@ -264,7 +242,6 @@ services:
       - TZ=${TZ}
       - WEBUI_PORTS=${WEBUI_PORTS}
       - LIBTORRENT=${LIBTORRENT}
-      # VPN Configuration
       - VPN_ENABLED=${VPN_ENABLED}
       - VPN_CONF=${VPN_CONF}
       - VPN_PROVIDER=${VPN_PROVIDER}
@@ -293,19 +270,14 @@ services:
     labels:
       - "traefik.enable=true"
 
-      # Entrypoint
       - "traefik.http.routers.qbittorrent.entrypoints=websecure"
 
-      # Router
       - "traefik.http.routers.qbittorrent.rule=Host(`qbittorrent.${DOMAIN}`)"
 
-      # Service
       - "traefik.http.services.qbittorrent.loadBalancer.server.port=8080"
 
-      # Auth middleware (tinyauth) — added 2026-05-03 after qBit RCE incident
       - "traefik.http.routers.qbittorrent.middlewares=tinyauth@docker"
 
-      # Watchtower automatic update
       - "com.centurylinklabs.watchtower.enable=true"
     healthcheck:
       test: wget --no-verbose --tries=1 --spider http://localhost:8080 || exit 1
@@ -351,17 +323,13 @@ services:
     labels:
       - "traefik.enable=true"
 
-      # Entrypoint
       - "traefik.http.routers.radarr.entrypoints=websecure"
 
-      # Router
       - "traefik.http.routers.radarr.rule=Host(`radarr.${DOMAIN}`)"
 
-      # Service
       - "traefik.http.services.radarr.loadBalancer.server.port=7878"
       - "traefik.http.routers.radarr.middlewares=tinyauth@docker"
 
-      # Watchtower automatic update
       - "com.centurylinklabs.watchtower.enable=true"
 
     networks:
@@ -400,17 +368,13 @@ services:
     labels:
       - "traefik.enable=true"
 
-      # Entrypoint
       - "traefik.http.routers.sonarr.entrypoints=websecure"
 
-      # Router
       - "traefik.http.routers.sonarr.rule=Host(`sonarr.${DOMAIN}`)"
 
-      # Service
       - "traefik.http.services.sonarr.loadBalancer.server.port=8989"
       - "traefik.http.routers.sonarr.middlewares=tinyauth@docker"
 
-      # Watchtower automatic update
       - "com.centurylinklabs.watchtower.enable=true"
 
     networks:
@@ -448,19 +412,14 @@ services:
     labels:
       - "traefik.enable=true"
 
-      # Entrypoint
       - "traefik.http.routers.tautulli.entrypoints=websecure"
 
-      # Router
       - "traefik.http.routers.tautulli.rule=Host(`tautulli.${DOMAIN}`)"
 
-      # Service
       - "traefik.http.services.tautulli.loadBalancer.server.port=8181"
 
-      # Auth middleware (tinyauth) — added 2026-05-03 after audit (http_password was empty)
       - "traefik.http.routers.tautulli.middlewares=tinyauth@docker"
 
-      # Watchtower automatic update
       - "com.centurylinklabs.watchtower.enable=true"
 
     networks:

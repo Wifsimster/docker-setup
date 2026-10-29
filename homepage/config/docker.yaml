@@ -1,9 +1,4 @@
 ---
-# For configuration options and examples, please see:
-# https://gethomepage.dev/configs/docker/
 
 my-docker:
   socket: /var/run/docker.sock
-
-# my-docker:
-#   socket: /var/run/docker.sock

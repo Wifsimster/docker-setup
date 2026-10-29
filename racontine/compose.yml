@@ -1,5 +1,3 @@
-# Déploiement homelab : images tirées de GHCR (aucun build ici).
-# Mise à jour automatique via le self-hosted runner (.github/workflows/deploy.yml).
 name: racontine
 
 services:
