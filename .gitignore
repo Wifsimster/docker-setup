@@ -1,7 +1,5 @@
-# Ignore everything
 *
 
-# But not these
 !.gitignore
 !*/
 !**/compose.yml
@@ -23,8 +21,6 @@
 !pg-backup/backup.sh
 !pg-backup/crontab
 
-# Backup / maintenance scripts. No secrets in them — they source credentials
-# from /root/.borg-photos.env and /root/.borg-discord-webhook at runtime.
 !photos-backup.sh
 !state-backup.sh
 !borg-check.sh
@@ -33,7 +29,6 @@
 !disk-cleanup.sh
 !disk-guard.sh
 !backup-watch.sh
-# digest: publish.py et send-mail.py restent hors git (adresses de la famille).
 !digest/collect.py
 !digest/orbite.py
 !digest/template.html
@@ -49,11 +44,8 @@
 !dev-agents/dashboard.html
 !paperless-ngx/protonmail-bridge/Dockerfile
 
-# Explicitly exclude homepage config containing secrets
 homepage/config/services.yaml
 
-# Nested application checkouts — each has its own git remote, not ours to
-# vendor. Their .env files are still protected offsite by state-backup.sh.
 the-box/repo/
 printcast/
 battistella-pro/

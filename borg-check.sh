@@ -1,19 +1,4 @@
 #!/bin/bash
-# =============================================================================
-# borg-check.sh — monthly integrity check of the Hetzner borg repository.
-#
-# A backup you cannot read is not a backup. borg detects silent corruption
-# (bit-rot on the remote, a truncated upload) only if something actually reads
-# the chunks back, which no normal `borg create` run does.
-#
-# --verify-data is deliberately NOT used: it re-downloads every chunk (~230 GB)
-# and would take hours on a home uplink every month. The repository + archive
-# structural check catches the realistic failure modes; the annual proof that
-# the data itself is good is the restore drill (see docs/reprise-sinistre.md).
-#
-# Shares /var/lock/state-backup.lock with state-backup.sh so the two never hold
-# the repo at once. Installed via root crontab: 30 5 1 * *.
-# =============================================================================
 set -euo pipefail
 
 ENV_FILE="/root/.borg-photos.env"
@@ -23,8 +8,6 @@ log() { echo "${LOG_PREFIX} $*"; }
 
 notify() {
     local colour="$1" title="$2" msg="$3" url=""
-    # 2026-10-03 : succès muets et rien la nuit (23h-08h Paris) ; backup-watch.sh
-    # (07:15 UTC) signale échecs, retards et avertissements + bilan du dimanche.
     [ "${colour}" = 3066993 ] && return 0
     local h; h="$(TZ=Europe/Paris date +%-H)"
     { [ "${h}" -ge 23 ] || [ "${h}" -lt 8 ]; } && return 0

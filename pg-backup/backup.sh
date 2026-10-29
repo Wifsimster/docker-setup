@@ -1,16 +1,4 @@
 #!/bin/sh
-# =============================================================================
-# pg-backup — nightly pg_dump of every Postgres database on the host (03:00).
-#
-# Dumps land in /backups (-> /opt/docker/pg-backup/backups on the host). That
-# directory sits on the SAME disk as the databases it protects, so it is only
-# half a backup: /opt/docker/state-backup.sh runs at 04:45 and pushes the
-# dumps to the NAS and to the Hetzner borg repo. If you add a database here,
-# you get the offsite copy for free.
-#
-# NOT covered here (SQLite, handled by state-backup.sh): vaultwarden,
-# solopilot, birthday-invitation, home-assistant zigbee.db.
-# =============================================================================
 set -e
 
 DATE=$(date +%Y-%m-%d_%H%M%S)
@@ -18,7 +6,6 @@ BACKUP_DIR="/backups"
 RETENTION_DAYS=7
 ERRORS=""
 
-# Database definitions: host|user|dbname|password_env_var
 DATABASES="
 paperless-db|paperless|paperless|PAPERLESS_DB_PASSWORD
 immich_postgres|postgres|immich|IMMICH_DB_PASSWORD
@@ -58,13 +45,11 @@ for entry in $DATABASES; do
   fi
 done
 
-# Cleanup old backups
 echo "--- Removing backups older than ${RETENTION_DAYS} days..."
 find "$BACKUP_DIR" -name "*.dump" -mtime +${RETENTION_DAYS} -delete
 
 echo "=== PostgreSQL backup finished at $(date) ==="
 
-# Send Discord alert on failure
 if [ -n "$ERRORS" ] && [ -n "$DISCORD_WEBHOOK_URL" ]; then
   PAYLOAD=$(printf '{"content":"⚠️ **pg-backup failure** — %s\\nFailed databases:\\n%s"}' "$(date +%Y-%m-%d)" "$ERRORS")
   wget -q --header="Content-Type: application/json" --post-data="$PAYLOAD" "$DISCORD_WEBHOOK_URL" -O /dev/null 2>&1 || echo "    WARNING: Failed to send Discord alert"

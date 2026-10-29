@@ -19,19 +19,15 @@ services:
     volumes:
       - ./data:/data
       - /var/run/docker.sock:/var/run/docker.sock
-    # Note: healthcheck disabled — scratch image has no shell or utilities
     healthcheck:
       disable: true
     labels:
       - "traefik.enable=true"
 
-      # Entrypoint
       - "traefik.http.routers.portainer.entrypoints=websecure"
 
-      # Router
       - "traefik.http.routers.portainer.rule=Host(`portainer.${DOMAIN}`)"
 
-      # Service
       - "traefik.http.services.portainer.loadBalancer.server.port=9000"
       - "traefik.http.routers.portainer.middlewares=tinyauth@docker"
 

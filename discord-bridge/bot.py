@@ -29,16 +29,11 @@ class JarvisClient(discord.Client):
         self.tree = discord.app_commands.CommandTree(self)
 
     async def setup_hook(self):
-        # Vue persistante : les boutons survivent a un redemarrage du bot
         self.add_view(JarvisView())
 
 
 client = JarvisClient()
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Mise en forme
-# ─────────────────────────────────────────────────────────────────────────────
 
 def split_message(text: str, limit: int = DISCORD_LIMIT):
     """Split a long reply into Discord-sized chunks on natural boundaries."""
@@ -54,7 +49,6 @@ def split_message(text: str, limit: int = DISCORD_LIMIT):
         if current:
             chunks.append(current)
             current = ""
-        # Le bloc seul depasse encore la limite : on redecoupe ligne par ligne
         for line in block.split("\n"):
             candidate = line if not current else current + "\n" + line
             if len(candidate) <= limit:
@@ -104,10 +98,6 @@ def build_embeds(cards):
         embeds.append(embed)
     return embeds
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Appels n8n
-# ─────────────────────────────────────────────────────────────────────────────
 
 async def call_agent(payload: dict, timeout: int = 180):
     """Call the media agent. Returns (data, error_message)."""
@@ -173,16 +163,10 @@ def build_payload(*, session_id, channel, author, content, is_thread, is_new_thr
     }
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Rendu de la reponse
-# ─────────────────────────────────────────────────────────────────────────────
-
 async def render_answer(placeholder: discord.Message, dest, data: dict):
     """Edit the placeholder with the answer, then post the rest + embeds + buttons."""
     reply = (data.get("reply") or "").strip()
     embeds = build_embeds(data.get("cards"))
-    # Les boutons ne servent que sous une recommandation : pas de « autre suggestion »
-    # ni de pouce sous une réponse de conversation courante.
     view = JarvisView() if embeds else None
     chunks = split_message(reply)
 
@@ -223,10 +207,6 @@ async def run_exchange(dest, author, content, *, is_new_thread=False, message_id
 
     await render_answer(placeholder, dest, data)
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Boutons
-# ─────────────────────────────────────────────────────────────────────────────
 
 async def last_question_in(channel, before_message) -> str:
     """Find the most recent human message in the thread, used as feedback context."""
@@ -283,10 +263,6 @@ class JarvisView(discord.ui.View):
         else:
             await interaction.followup.send("C'est noté.", ephemeral=True)
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Slash commands
-# ─────────────────────────────────────────────────────────────────────────────
 
 async def start_thread_exchange(interaction: discord.Interaction, header: str, question: str):
     """Open a thread from a slash command and run the exchange inside it."""
@@ -391,10 +367,6 @@ async def cmd_help(interaction: discord.Interaction):
     await interaction.response.send_message(embed=embed, ephemeral=True)
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Evenements
-# ─────────────────────────────────────────────────────────────────────────────
-
 @client.event
 async def on_ready():
     log.info(f"Bot connecte : {client.user} (id={client.user.id})")
@@ -446,12 +418,10 @@ async def on_message(message: discord.Message):
 
     channel_id = get_parent_channel_id(message.channel)
 
-    # Route #dev -> dev-agents (fire-and-forget, long-running)
     if channel_id == CHANNEL_DEV and DEV_AGENTS_URL:
         await forward_to_dev_agents(message)
         return
 
-    # Route #general -> n8n media agent (read-only multimedia)
     if channel_id == CHANNEL_GENERAL and N8N_GENERAL_WEBHOOK_URL:
         is_thread = isinstance(message.channel, discord.Thread)
         mentioned = client.user.mentioned_in(message) and not message.mention_everyone
@@ -473,7 +443,6 @@ async def on_message(message: discord.Message):
                                message_id=message.id, guild_id=message.guild.id if message.guild else None)
             return
 
-        # Message racine dans le salon : on ouvre un fil dedie
         try:
             thread = await message.create_thread(name=content[:90], auto_archive_duration=1440)
         except discord.HTTPException as e:
@@ -502,7 +471,7 @@ async def forward_to_dev_agents(message: discord.Message):
         async with aiohttp.ClientSession() as session:
             async with session.post(DEV_AGENTS_URL, json=payload, timeout=aiohttp.ClientTimeout(total=5)) as resp:
                 if resp.status in (200, 201, 202):
-                    await message.add_reaction("\U0001f680")  # rocket
+                    await message.add_reaction("\U0001f680")
                     log.info(f"Dev task forwarded from {message.author.name}: {message.content[:80]}")
                 else:
                     await message.reply("dev-agents indisponible", mention_author=False)

@@ -68,12 +68,10 @@ services:
     labels:
       - "traefik.enable=true"
 
-      # Single router — auth is handled inside koe (ADMIN_AUTH_MODE=password).
       - "traefik.http.routers.koe.entrypoints=websecure"
       - "traefik.http.routers.koe.rule=Host(`koe.${DOMAIN}`)"
       - "traefik.http.routers.koe.service=koe"
 
-      # ---- Shared service
       - "traefik.http.services.koe.loadBalancer.server.port=8787"
 
     networks:

@@ -19,8 +19,6 @@ services:
     volumes:
       - beszel_data:/beszel_data
     healthcheck:
-      # `beszel health` exige --url : sans lui il sort en 1 et le conteneur
-      # reste unhealthy en permanence (2871 échecs consécutifs constatés).
       test: ["CMD", "/beszel", "health", "--url", "http://localhost:8090"]
       interval: 30s
       timeout: 10s
@@ -29,17 +27,13 @@ services:
     labels:
       - "traefik.enable=true"
 
-      # Entrypoint
       - "traefik.http.routers.beszel.entrypoints=websecure"
 
-      # Router
       - "traefik.http.routers.beszel.rule=Host(`beszel.${DOMAIN}`)"
 
-      # Service
       - "traefik.http.services.beszel.loadBalancer.server.port=8090"
       - "traefik.http.routers.beszel.middlewares=tinyauth@docker"
 
-      # Watchtower automatic update
       - "com.centurylinklabs.watchtower.enable=true"
     networks:
       lan:
@@ -66,7 +60,6 @@ services:
       PORT: 45876
       KEY: "${BESZEL_AGENT_KEY}"
     labels:
-      # Watchtower automatic update
       - "com.centurylinklabs.watchtower.enable=true"
 
 volumes:

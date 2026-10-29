@@ -3,10 +3,6 @@ name: pg-backup
 services:
   pg-backup:
     container_name: pg-backup
-    # pg_dump reads OLDER servers but refuses NEWER ones, so this image must
-    # track the highest Postgres major running on the host (racontine-db is 17).
-    # Bump it before upgrading any database, or that database's dump starts
-    # failing with "aborting because of server version mismatch".
     image: postgres:17-alpine
     restart: unless-stopped
     security_opt:
@@ -30,7 +26,6 @@ services:
     labels:
       - "traefik.enable=false"
 
-      # Watchtower automatic update
       - "com.centurylinklabs.watchtower.enable=true"
 
     networks:

@@ -38,7 +38,7 @@ def ro(path):
 def safe(fn, default):
     try:
         return fn()
-    except Exception as e:  # une source en panne ne doit pas bloquer le résumé
+    except Exception as e:
         print(f"[collect] {fn.__name__}: {e}", flush=True, file=__import__("sys").stderr)
         return default
 
@@ -57,7 +57,6 @@ def short_day(d):
     return f"{d.day if d.day > 1 else '1er'} {MON_ABBR[d.month - 1]}"
 
 
-# ---------- Home Assistant ----------
 HA = ro("/opt/docker/home-assistant/config/home-assistant_v2.db")
 
 
@@ -149,7 +148,6 @@ def music_hours(bl):
     return per
 
 
-# ---------- Immich ----------
 def photos():
     sql = ("select (\"createdAt\" at time zone 'Europe/Paris')::date, type, count(*) from asset "
            "where \"createdAt\" >= now() - interval '15 days' and \"deletedAt\" is null group by 1,2")
@@ -167,7 +165,6 @@ def photos():
     return {"perDay": [per[d.date().isoformat()] for d in DAYS], "images": imgs, "videos": vids, "prev": prev}
 
 
-# ---------- Sonarr / Radarr ----------
 def parse_utc(s):
     return datetime.strptime(s[:19], "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
 
@@ -218,14 +215,12 @@ def media():
     return {"items": items, "perDay": per, "total": sum(per), "prev": per_prev}
 
 
-# ---------- Pi-hole ----------
 def dns():
     con = ro("/opt/docker/pihole/pihole/pihole-FTL.db")
     total, blocked = con.execute("select count(*), coalesce(sum(status in (1,4,5,6,7,8,9,10,11,15,16,17)),0) from queries where timestamp>=?", (W0,)).fetchone()
     return {"total": total, "blocked": int(blocked)}
 
 
-# ---------- Uptime Kuma ----------
 def kuma_rows():
     con = ro("/opt/docker/uptime-kuma/data/kuma.db")
     rows = []
@@ -241,9 +236,8 @@ def kuma_rows():
     return rows
 
 
-# ---------- Sauvegardes (journaux des jobs cron, voir backup-watch.sh) ----------
 LOG_LINE = re.compile(r"^\[(\S+) (\d{4}-\d\d-\d\d \d\d:\d\d)\] (.*)$")
-BACKUP_JOBS = [  # libellé, journal, réussite, attendu par semaine
+BACKUP_JOBS = [
     ("état des services", "state-backup", lambda m: m.startswith("Done"), 7),
     ("photos", "photos-backup", lambda m: m.startswith("Done"), 1),
     ("arbre Gramps", "gramps-backup", lambda m: m.endswith("Done."), 1),
@@ -282,7 +276,6 @@ def backups():
     return {"ok": not bad, "t": "Sauvegardes" + (f" — à vérifier : {', '.join(bad)}" if bad else ""), "s": " · ".join(parts)}
 
 
-# ---------- Notifications Home Assistant de la semaine ----------
 def notifications():
     """Notifications envoyées par HA (pushs et notifications persistantes), regroupées par titre.
     Lu dans les événements call_service ; un envoi au groupe all_mobiles et sa copie par téléphone comptent une fois."""
@@ -304,7 +297,6 @@ def notifications():
     return sorted(per.items(), key=lambda kv: -kv[1])
 
 
-# ---------- Piles faibles (publiées par HA le dimanche à 7h, événement piles_hebdo) ----------
 def piles():
     import time
     sql = ("select json_extract(d.shared_data,'$.message') from events e "
@@ -314,7 +306,7 @@ def piles():
     return (row[0] or "").strip() if row else ""
 
 
-DEV_JOURNAL = "/opt/docker/digest/dev-journal.md"  # copié chaque matin depuis codedev (birthday-push.sh)
+DEV_JOURNAL = "/opt/docker/digest/dev-journal.md"
 
 
 def dev_journal():
@@ -339,8 +331,7 @@ def disk_meters():
     return out
 
 
-# ---------- Orbite (entourage) et agenda Jarvis ----------
-AGENDA_AUTO = "/opt/docker/digest/agenda-auto.md"  # copié chaque matin depuis codedev (birthday-push.sh)
+AGENDA_AUTO = "/opt/docker/digest/agenda-auto.md"
 
 
 def entourage():
@@ -369,7 +360,7 @@ def agenda_auto():
     return out
 
 
-PROJETS = "/opt/docker/digest/projets-maison-journal.md"  # copié chaque matin depuis codedev (birthday-push.sh)
+PROJETS = "/opt/docker/digest/projets-maison-journal.md"
 
 
 def projets():
@@ -395,7 +386,7 @@ def projets():
     return [x for _, x in sorted(due, key=lambda t: t[0])] + journal[::-1]
 
 
-ENTOURAGE_JOURNAL = "/opt/docker/digest/entourage-journal.md"  # copié chaque matin depuis codedev (birthday-push.sh)
+ENTOURAGE_JOURNAL = "/opt/docker/digest/entourage-journal.md"
 
 
 def fiches():
@@ -410,13 +401,11 @@ def fiches():
     return out[::-1]
 
 
-# ---------- Détails techniques et services Battistella (page de Damien seulement, voir publish.py) ----------
-# Chaque section : {"h": titre, "sub": sous-titre, "rows": [{"ok", "t", "s", "r"}]} ; une source en panne retire sa section.
 DIGEST = "/opt/docker/digest"
 KUMA_DB = "/opt/docker/uptime-kuma/data/kuma.db"
-TRAEFIK_LOGS = ("/opt/docker/traefik/logs/access.json.1", "/opt/docker/traefik/logs/access.json")  # 4xx/5xx seulement
+TRAEFIK_LOGS = ("/opt/docker/traefik/logs/access.json.1", "/opt/docker/traefik/logs/access.json")
 ACME = "/opt/docker/traefik/acme/letsencrypt.json"
-EXTRA_PRODUCTS = ("wawptn.battistella.ovh", "copro-pilot.battistella.ovh")  # produits sans site Umami
+EXTRA_PRODUCTS = ("wawptn.battistella.ovh", "copro-pilot.battistella.ovh")
 
 
 def sh(*cmd, timeout=60):
@@ -466,7 +455,7 @@ def fr_dur(sec):
 
 
 def kuma_ok(k):
-    return k["n"] and k["up"] / k["n"] >= 0.999  # moins de 10 min hors ligne sur la semaine
+    return k["n"] and k["up"] / k["n"] >= 0.999
 
 
 def kuma_section(kw):
@@ -813,12 +802,12 @@ def main():
         "mediaMore": f"+ {len(med['items']) - 5} autres" if len(med["items"]) > 5 else "",
         "dns": dns_d,
         "birthdays": bdays,
-        "drifting": drift,  # retiré des pages autres que celle de Damien (publish.py)
+        "drifting": drift,
         "agenda": agenda,
         "projects": projects,
-        "fiches": fiches_maj,  # retiré des pages autres que celle de Damien (publish.py)
+        "fiches": fiches_maj,
         "tech": {"warnings": warnings, "rows": rows, "meters": safe(disk_meters, [])},
-        "detail": details(),  # retiré des pages autres que celle de Damien (publish.py)
+        "detail": details(),
         "status": {"ok": not warnings, "text": "Tout est en ordre" if not warnings else f"{warnings} point{'s' if warnings > 1 else ''} à surveiller"},
     }
     print(json.dumps(out, ensure_ascii=False, indent=1))

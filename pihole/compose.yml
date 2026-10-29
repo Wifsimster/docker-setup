@@ -16,7 +16,6 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
-    # For DHCP it is recommended to remove these ports and instead add: network_mode: "host"
     ports:
       - "53:53/tcp"
       - "53:53/udp"
@@ -25,10 +24,8 @@ services:
       - SYS_NICE
     environment:
       - TZ=Europe/Paris
-      # Pi-hole v6: WEBPASSWORD is deprecated, use FTLCONF_webserver_api_password
       - FTLCONF_webserver_api_password=${PIHOLE_PASSWORD:-}
       - FTLCONF_dns_listeningMode=all
-    # Volumes store your data between container upgrades
     volumes:
       - "./pihole:/etc/pihole"
     healthcheck:
@@ -40,17 +37,13 @@ services:
     labels:
       - "traefik.enable=true"
 
-      # Entrypoint
       - "traefik.http.routers.pihole.entrypoints=websecure"
 
-      # Router
       - "traefik.http.routers.pihole.rule=Host(`pihole.${DOMAIN}`)"
 
-      # Service
       - "traefik.http.services.pihole.loadBalancer.server.port=80"
       - "traefik.http.routers.pihole.middlewares=tinyauth@docker"
 
-      # Watchtower automatic update
       - com.centurylinklabs.watchtower.enable=true
 
     networks:

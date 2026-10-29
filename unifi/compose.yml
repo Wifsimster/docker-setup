@@ -24,13 +24,13 @@ services:
       retries: 5
       start_period: 120s
     ports:
-      - 3478:3478/udp # STUN
-      - 5514:5514/udp # Remote logging
-      - 6789:6789/tcp # Speed test
-      - 8080:8080/tcp # Device communication
-      - 8443:8443/tcp # Controller GUI/API
-      - 10001:10001/udp # AP discovery
-      - 1900:1900/udp # L2 discovery
+      - 3478:3478/udp
+      - 5514:5514/udp
+      - 6789:6789/tcp
+      - 8080:8080/tcp
+      - 8443:8443/tcp
+      - 10001:10001/udp
+      - 1900:1900/udp
     environment:
       - PUID=1000
       - PGID=1000
@@ -40,19 +40,15 @@ services:
     labels:
       - "traefik.enable=true"
 
-      # Entrypoint
       - "traefik.http.routers.unifi.entrypoints=websecure"
 
-      # Router
       - "traefik.http.routers.unifi.rule=Host(`unifi.${DOMAIN}`)"
 
-      # Service — Unifi uses HTTPS internally on port 8443
       - "traefik.http.services.unifi.loadBalancer.server.port=8443"
       - "traefik.http.services.unifi.loadBalancer.server.scheme=https"
       - "traefik.http.services.unifi.loadBalancer.serversTransport=unifi@file"
       - "traefik.http.routers.unifi.middlewares=tinyauth@docker"
 
-      # Watchtower automatic update
       - "com.centurylinklabs.watchtower.enable=true"
 
     networks:

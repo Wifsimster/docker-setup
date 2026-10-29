@@ -18,8 +18,8 @@ services:
       retries: 3
       start_period: 30s
     volumes:
-      - ./config:/app/config # Make sure your local config directory exists
-      - /var/run/docker.sock:/var/run/docker.sock:ro # optional, for docker integrations
+      - ./config:/app/config
+      - /var/run/docker.sock:/var/run/docker.sock:ro
     deploy:
       resources:
         limits:
@@ -33,19 +33,14 @@ services:
     labels:
       - "traefik.enable=true"
 
-      # Entrypoint
       - "traefik.http.routers.homepage.entrypoints=websecure"
 
-      # Router
       - "traefik.http.routers.homepage.rule=Host(`homepage.${DOMAIN}`)"
 
-      # Middlewares — authenticated via Tinyauth forwardAuth (see /opt/docker/tinyauth)
       - "traefik.http.routers.homepage.middlewares=tinyauth@docker"
 
-      # Service
       - "traefik.http.services.homepage.loadBalancer.server.port=3000"
 
-      # Watchtower automatic update
       - com.centurylinklabs.watchtower.enable=true
 
     networks:
