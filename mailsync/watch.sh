@@ -2,7 +2,7 @@
 # watch.sh — alerte Discord #infra si la collecte du mail pro s'arrête.
 # Lancé par cron en semaine à 18:30 (Paris). Silencieux quand tout va bien.
 # Vérifie : conteneur mailsync sain, au moins un mail reçu aujourd'hui,
-# et (si codedev a déjà fait une reprise) une reprise de moins de 36 h.
+# et (si codedev a déjà fait une reprise) une reprise de moins de 3 h.
 set -uo pipefail
 
 MAILDIR=/srv/mailsync/Maildir
@@ -20,7 +20,7 @@ sent_today=$(find "$MAILDIR/.Sent/cur" -maxdepth 1 -type f -newermt "$TODAY 00:0
 
 if [ -e "$PICKUP_STAMP" ]; then
     age_h=$(( ( $(date +%s) - $(stat -c %Y "$PICKUP_STAMP") ) / 3600 ))
-    [ "$age_h" -lt 36 ] || problems+=("pas de reprise par codedev depuis ${age_h} h")
+    [ "$age_h" -lt 3 ] || problems+=("pas de reprise par codedev depuis ${age_h} h (attendue toutes les heures)")
 fi
 
 echo "$(date -Is) reçus=${received_today} envoyés=${sent_today} état=${state} problèmes=${#problems[@]}"
