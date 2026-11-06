@@ -1,0 +1,56 @@
+name: mailsync
+
+# Reçoit de Power Automate les EN-TÊTES des mails pro (jamais le corps) et les
+# dépose en Maildir dans /srv/mailsync/Maildir (reçus = racine, envoyés = .Sent).
+# codedev le récupère en rsync (compte deploy, groupe deploy en lecture) puis
+# lance `msgvault import-maildir`. Alerte : /opt/docker/mailsync/watch.sh.
+# Pas de Tinyauth : Power Automate s'authentifie par jeton Bearer (MAILSYNC_TOKEN).
+
+services:
+  mailsync:
+    container_name: mailsync
+    image: python:3.12-alpine
+    restart: unless-stopped
+    command: ["python", "-u", "/app/server.py"]
+    user: "1000:1001"
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+    deploy:
+      resources:
+        limits:
+          memory: 64M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    environment:
+      - TZ=Europe/Paris
+      - MAILSYNC_TOKEN=${MAILSYNC_TOKEN}
+      - MAILSYNC_SPOOL=/spool
+    volumes:
+      - ./app:/app:ro
+      - /srv/mailsync:/spool
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://127.0.0.1:8080/healthz',timeout=3)"]
+      interval: 60s
+      timeout: 5s
+      retries: 3
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.mailsync.entrypoints=websecure"
+      - "traefik.http.routers.mailsync.rule=Host(`mailsync.${DOMAIN}`) && PathPrefix(`/v1/`)"
+      - "traefik.http.routers.mailsync.middlewares=mailsync-ratelimit@docker,secHeaders@docker"
+      - "traefik.http.middlewares.mailsync-ratelimit.ratelimit.average=5"
+      - "traefik.http.middlewares.mailsync-ratelimit.ratelimit.burst=30"
+      - "traefik.http.middlewares.mailsync-ratelimit.ratelimit.period=1s"
+      - "traefik.http.services.mailsync.loadBalancer.server.port=8080"
+      - "com.centurylinklabs.watchtower.enable=true"
+    networks:
+      lan:
+
+networks:
+  lan:
+    external: true
