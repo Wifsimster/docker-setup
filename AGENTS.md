@@ -28,7 +28,7 @@ docker-setup/
 ├── traefik/compose.yml        # Core: reverse proxy, TLS, Let's Encrypt (OVH DNS) — point d'entrée de toute l'infrastructure
 ├── multimedia/                # Unified media stack (single compose project)
 │   ├── compose.yml            # Plex, Sonarr, Radarr, Lidarr, Prowlarr,
-│   │                          # qBittorrent (VPN), Seerr, Tautulli, Cleanuparr (Bazarr retiré)
+│   │                          # qBittorrent (VPN), Seerr, Cleanuparr (Bazarr et Tautulli retirés)
 │   └── README.md
 ├── home-assistant/compose.yml # Home Assistant + Mosquitto MQTT + Matter Server
 ├── immich-app/                # Photo/video management with ML
