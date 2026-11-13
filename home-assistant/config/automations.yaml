@@ -101,6 +101,20 @@
     data: {}
     target:
       entity_id: switch.eclairage_exterieur
+    continue_on_error: true
+  - alias: Annoncer l'allumage seulement s'il a vraiment eu lieu (au moment de l'allumage,
+      pas à l'extinction)
+    if:
+    - condition: state
+      entity_id: switch.eclairage_exterieur
+      state: 'on'
+    then:
+    - action: script.annonce
+      data:
+        message: L'éclairage extérieur s'est allumé.
+        piece: salon
+        volume: 40
+        nuit: false
   - choose:
     - conditions:
       - condition: trigger
@@ -135,12 +149,6 @@
   - action: input_boolean.turn_off
     target:
       entity_id: input_boolean.eclairage_exterieur_auto
-  - action: script.annonce
-    data:
-      message: L'éclairage extérieur s'est allumé.
-      piece: salon
-      volume: 40
-      nuit: false
   mode: restart
 - id: '1727634762012'
   alias: 'Volet roulant sud - Sécurité : désactiver descente si montée active'
