@@ -1,0 +1,270 @@
+# Runners GitHub Actions éphémères pour la CI des repos privés.
+# Conception et risques : docs/adr/0001-runners-github-ephemeres.md
+# Procédure d'application et de retour arrière : gh-runners/README.md
+#
+# Un trio par repo : <repo> (runner) + <repo>-dind (démon Docker isolé),
+# sur un réseau dédié. Le broker est le seul à voir le PAT ; les runners ne
+# reçoivent qu'un token d'enregistrement de leur propre repo (valide 1 h).
+#
+# Les runners n'ont PAS le label `self-hosted` (--no-default-labels) : les jobs
+# de déploiement existants (`runs-on: self-hosted`) restent sur les runners
+# systemd de /opt/actions-runner et ne peuvent pas atterrir ici.
+
+name: gh-runners
+
+x-runner-image: &runner-image myoung34/github-runner:ubuntu-noble@sha256:6c5c6251ce5985595a7129af2f73cfe64efa8d5a235ab0d628af7f9ff7435eb5
+x-dind-image: &dind-image docker:29-dind@sha256:9e79b879b177fbd72c34376a3dd3d91747da5db49e1f560f76aea59561471977
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+# Démon Docker isolé : jamais le socket de l'hôte. Privilégié par nécessité
+# (DinD), écoute uniquement sur 127.0.0.1 dans le netns partagé avec son runner.
+x-dind: &dind
+  image: *dind-image
+  restart: unless-stopped
+  privileged: true
+  logging: *logging
+  environment:
+    - DOCKER_TLS_CERTDIR=
+  command:
+    - dockerd
+    - --host=tcp://127.0.0.1:2375
+    - --tls=false
+    - --bip=10.232.0.1/24
+    - --default-address-pool=base=10.233.0.0/16,size=24
+  dns:
+    - 1.1.1.1
+    - 9.9.9.9
+  cpu_shares: 256
+  oom_score_adj: 800
+  healthcheck:
+    test: ["CMD", "docker", "-H", "tcp://127.0.0.1:2375", "info"]
+    interval: 10s
+    timeout: 5s
+    retries: 12
+  labels:
+    - "com.centurylinklabs.watchtower.enable=false"
+
+x-runner: &runner
+  image: *runner-image
+  restart: unless-stopped
+  entrypoint: ["/bin/bash", "/gh-runners/runner-entrypoint.sh"]
+  command: ["./bin/Runner.Listener", "run", "--startuptype", "service"]
+  logging: *logging
+  # Pas de no-new-privileges : `sudo npx playwright install-deps` en a besoin.
+  cpu_shares: 256
+  oom_score_adj: 800
+  environment: &runner-env
+    TZ: Europe/Paris
+    DOCKER_HOST: tcp://127.0.0.1:2375
+    RUNNER_SCOPE: repo
+    EPHEMERAL: "1"
+    DISABLE_AUTO_UPDATE: "1"
+    NO_DEFAULT_LABELS: "1"
+    LABELS: homelab-ci
+    UNSET_CONFIG_VARS: "true"
+    RUNNER_WORKDIR_ROOT: /_work
+  labels:
+    - "com.centurylinklabs.watchtower.enable=false"
+
+services:
+  # ---------------------------------------------------------------- broker
+  broker:
+    container_name: gh-runners-broker
+    image: *runner-image
+    restart: unless-stopped
+    entrypoint: ["/bin/bash", "/gh-runners/token-broker.sh"]
+    logging: *logging
+    read_only: true
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 64M
+    environment:
+      GITHUB_OWNER: Wifsimster
+      # Un fichier token par volume /tokens/<repo> ; chaque runner ne monte que le sien.
+      BROKER_REPOS: copro-pilot orbite battistella-pro
+    secrets:
+      - github_pat
+    volumes:
+      - ./token-broker.sh:/gh-runners/token-broker.sh:ro
+      - token-copro-pilot:/tokens/copro-pilot
+      - token-orbite:/tokens/orbite
+      - token-battistella-pro:/tokens/battistella-pro
+    networks:
+      - broker
+    healthcheck:
+      test: ["CMD", "bash", "-c", "find /tokens -name token -mmin -45 | grep -q ."]
+      interval: 60s
+      timeout: 5s
+      retries: 3
+    labels:
+      - "com.centurylinklabs.watchtower.enable=false"
+
+  # ----------------------------------------------------------- copro-pilot
+  copro-pilot-dind:
+    <<: *dind
+    container_name: gh-runners-copro-pilot-dind
+    deploy:
+      resources:
+        limits:
+          cpus: "2.5"
+          memory: 2560M
+          pids: 4096
+    memswap_limit: 2560M
+    volumes:
+      - dind-copro-pilot:/var/lib/docker
+      - work-copro-pilot:/_work
+    networks:
+      - copro-pilot
+
+  copro-pilot:
+    <<: *runner
+    container_name: gh-runners-copro-pilot
+    network_mode: service:copro-pilot-dind
+    depends_on:
+      broker:
+        condition: service_started
+      copro-pilot-dind:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 2560M
+          pids: 4096
+    memswap_limit: 2560M
+    environment:
+      <<: *runner-env
+      REPO_URL: https://github.com/Wifsimster/copro-pilot
+      RUNNER_NAME_PREFIX: homelab-copro-pilot
+    volumes:
+      - ./runner-entrypoint.sh:/gh-runners/runner-entrypoint.sh:ro
+      - token-copro-pilot:/run/gh-runner-token:ro
+      - work-copro-pilot:/_work
+
+  # ---------------------------------------------------------------- orbite
+  orbite-dind:
+    <<: *dind
+    container_name: gh-runners-orbite-dind
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 2G
+          pids: 4096
+    memswap_limit: 2G
+    volumes:
+      - dind-orbite:/var/lib/docker
+      - work-orbite:/_work
+    networks:
+      - orbite
+
+  orbite:
+    <<: *runner
+    container_name: gh-runners-orbite
+    network_mode: service:orbite-dind
+    depends_on:
+      broker:
+        condition: service_started
+      orbite-dind:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 1536M
+          pids: 4096
+    memswap_limit: 1536M
+    environment:
+      <<: *runner-env
+      REPO_URL: https://github.com/Wifsimster/orbite
+      RUNNER_NAME_PREFIX: homelab-orbite
+    volumes:
+      - ./runner-entrypoint.sh:/gh-runners/runner-entrypoint.sh:ro
+      - token-orbite:/run/gh-runner-token:ro
+      - work-orbite:/_work
+
+  # ------------------------------------------------------- battistella-pro
+  battistella-pro-dind:
+    <<: *dind
+    container_name: gh-runners-battistella-pro-dind
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 1G
+          pids: 4096
+    memswap_limit: 1G
+    volumes:
+      - dind-battistella-pro:/var/lib/docker
+      - work-battistella-pro:/_work
+    networks:
+      - battistella-pro
+
+  battistella-pro:
+    <<: *runner
+    container_name: gh-runners-battistella-pro
+    network_mode: service:battistella-pro-dind
+    depends_on:
+      broker:
+        condition: service_started
+      battistella-pro-dind:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 1G
+          pids: 4096
+    memswap_limit: 1G
+    environment:
+      <<: *runner-env
+      REPO_URL: https://github.com/Wifsimster/battistella-pro
+      RUNNER_NAME_PREFIX: homelab-battistella-pro
+    volumes:
+      - ./runner-entrypoint.sh:/gh-runners/runner-entrypoint.sh:ro
+      - token-battistella-pro:/run/gh-runner-token:ro
+      - work-battistella-pro:/_work
+
+secrets:
+  github_pat:
+    file: ${GH_RUNNERS_PAT_FILE:?GH_RUNNERS_PAT_FILE manquant, voir .env.example}
+
+# Un réseau par repo, sans `lan` ni réseau backend d'une autre stack.
+networks:
+  broker:
+    ipam:
+      config:
+        - subnet: 10.230.0.0/24
+  copro-pilot:
+    ipam:
+      config:
+        - subnet: 10.230.1.0/24
+  orbite:
+    ipam:
+      config:
+        - subnet: 10.230.2.0/24
+  battistella-pro:
+    ipam:
+      config:
+        - subnet: 10.230.3.0/24
+
+volumes:
+  token-copro-pilot:
+  token-orbite:
+  token-battistella-pro:
+  dind-copro-pilot:
+  dind-orbite:
+  dind-battistella-pro:
+  work-copro-pilot:
+  work-orbite:
+  work-battistella-pro:
