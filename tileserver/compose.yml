@@ -22,16 +22,12 @@ services:
     labels:
       - "traefik.enable=true"
 
-      # Entrypoint
       - "traefik.http.routers.tileserver.entrypoints=websecure"
 
-      # Router
       - "traefik.http.routers.tileserver.rule=Host(`tiles.${DOMAIN}`)"
 
-      # Service
       - "traefik.http.services.tileserver.loadBalancer.server.port=8080"
 
-      # Watchtower automatic update
       - "com.centurylinklabs.watchtower.enable=true"
 
     networks:

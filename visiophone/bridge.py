@@ -36,8 +36,6 @@ T_RAW = f"{BASE}/brut"
 T_AVAIL = f"{BASE}/status"
 T_CMD_DOOR = f"{BASE}/commande/ouvrir_porte"
 
-# Au-delà, on considère l'appel terminé même si la platine n'a rien dit :
-# un Stop manquant laisserait le binary_sensor coincé sur "on" indéfiniment.
 CALL_TIMEOUT = 120
 
 DEVICE = {
@@ -105,7 +103,6 @@ class Bridge:
         self.client.on_connect = self.on_connect
         self.client.on_message = self.on_message
 
-    # -- MQTT ---------------------------------------------------------------
     def on_connect(self, client, userdata, flags, reason_code, properties=None):
         log.info("MQTT connecté (%s)", reason_code)
         for topic, payload in discovery_payloads():
@@ -130,7 +127,6 @@ class Bridge:
             self.call_since = time.time() if active else None
         self.client.publish(T_CALL, "ON" if active else "OFF", retain=True)
 
-    # -- Platine ------------------------------------------------------------
     def open_door(self, channel=1):
         url = (
             f"http://{VTO_HOST}/cgi-bin/accessControl.cgi"
@@ -188,8 +184,6 @@ class Bridge:
                     r.raise_for_status()
                     log.info("flux d'événements attaché à %s", VTO_HOST)
                     header, buf = None, []
-                    # decode_unicode=True ne sert à rien ici : la réponse est un
-                    # multipart sans charset, donc requests renverrait des bytes.
                     for raw in r.iter_lines():
                         line = (raw or b"").decode("utf-8", "replace").strip()
                         if header is not None:
@@ -215,8 +209,6 @@ class Bridge:
                 time.sleep(5)
 
     def run(self):
-        # Au boot de la VM, le broker peut démarrer après nous : on attend
-        # au lieu de crasher (9 redémarrages en 32 s le 2026-10-03).
         delay = 2
         while True:
             try:

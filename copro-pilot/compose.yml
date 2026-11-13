@@ -37,13 +37,10 @@ services:
     labels:
       - "traefik.enable=true"
 
-      # Entrypoint
       - "traefik.http.routers.copro-pilot.entrypoints=websecure"
 
-      # Router
       - "traefik.http.routers.copro-pilot.rule=Host(`copro-pilot.${DOMAIN}`)"
 
-      # Service
       - "traefik.http.services.copro-pilot.loadBalancer.server.port=3001"
     volumes:
       - uploads:/app/apps/backend/uploads

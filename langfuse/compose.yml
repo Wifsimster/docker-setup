@@ -67,16 +67,12 @@ services:
     labels:
       - "traefik.enable=true"
 
-      # Entrypoint
       - "traefik.http.routers.langfuse.entrypoints=websecure"
 
-      # Router
       - "traefik.http.routers.langfuse.rule=Host(`langfuse.${DOMAIN}`)"
 
-      # Service
       - "traefik.http.services.langfuse.loadBalancer.server.port=3000"
 
-      # Watchtower automatic update
       - "com.centurylinklabs.watchtower.enable=true"
 
     networks:

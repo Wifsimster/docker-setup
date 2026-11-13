@@ -14,7 +14,8 @@ Traefik est le **proxy inverse** de la plateforme. Il remplit trois fonctions :
 
 ```mermaid
 graph LR
-    Internet((Internet)) -->|Port 80/443| Traefik[Traefik v3.6]
+    Internet((Internet)) -->|Port 80/443| USG[UniFi Security Gateway]
+    USG -->|Redirection de port vers 192.168.0.237| Traefik[Traefik v3.6]
     Traefik -->|Labels Docker| Conteneurs([~65 conteneurs])
     Traefik -->|Provider fichier| Plex[Plex - host network]
     LetsEncrypt[Let's Encrypt] -.->|Certificats TLS| Traefik
@@ -30,7 +31,25 @@ Traefik découvre automatiquement les services via les **labels Docker**. Chaque
 | `web` | 80 | HTTP — redirige vers HTTPS |
 | `websecure` | 443 | HTTPS — point d'entrée principal |
 
-Toutes les requêtes HTTP sont automatiquement redirigées vers HTTPS.
+Toutes les requêtes HTTP sont automatiquement redirigées vers HTTPS (308, même chemin).
+
+## Redirections de port sur la passerelle
+
+Le trafic Internet arrive sur l'IP publique de la **UniFi Security Gateway** (USG, `192.168.0.1`). Traefik ne reçoit une requête que si une redirection de port l'envoie vers l'hôte Docker. Elles se gèrent dans le contrôleur UniFi : *Settings → Routing & Firewall → Port Forwarding*.
+
+| Nom | Port WAN | Destination | Rôle |
+|---|---|---|---|
+| Docker services | 443 | `192.168.0.237:443` | HTTPS vers Traefik |
+| Docker services HTTP | 80 | `192.168.0.237:80` | HTTP vers Traefik, qui redirige vers HTTPS |
+
+> **Piège** — Sans la redirection du port 80, c'est l'interface web de l'USG qui répond sur le port 80 de l'IP publique. Elle renvoie un `301` vers `https://<hôte>/index.php/<chemin>?`, une URL qui n'existe sur aucun service (`404`). Signature : en-tête `Server: Server` et absence de `Content-Length`, là où Traefik répond `308` avec le chemin intact.
+
+Vérification depuis le réseau local (le NAT en épingle de l'USG applique les mêmes redirections) :
+
+```bash
+curl -sI http://pro.battistella.ovh/ondes/confidentialite
+# Attendu : 308, Location: https://pro.battistella.ovh/ondes/confidentialite
+```
 
 ## Certificats TLS
 

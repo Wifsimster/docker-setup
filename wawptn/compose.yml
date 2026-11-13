@@ -31,11 +31,6 @@ services:
       - DISCORD_BOT_API_SECRET=${DISCORD_BOT_API_SECRET}
       - DISCORD_BOT_TOKEN=${DISCORD_BOT_TOKEN}
       - ADMIN_STEAM_ID=${ADMIN_STEAM_ID}
-      # Discord posting opted out (2026-07-20): DISCORD_BOT_HTTP_URL removed
-      # so isBotClientEnabled() short-circuits to false and the backend never
-      # posts vote start/close messages to the linked channel. Re-enable by
-      # restoring the line below.
-      # - DISCORD_BOT_HTTP_URL=http://wawptn-discord:3001
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
       interval: 30s
@@ -48,18 +43,14 @@ services:
     labels:
       - "traefik.enable=true"
 
-      # Entrypoint
       - "traefik.http.routers.wawptn.entrypoints=websecure"
 
-      # Router
       - "traefik.http.routers.wawptn.rule=Host(`wawptn.${DOMAIN}`)"
 
-      # TLS
       - "traefik.docker.network=lan"
       - "traefik.http.routers.wawptn.tls=true"
       - "traefik.http.routers.wawptn.tls.certresolver=letsencrypt"
 
-      # Service
       - "traefik.http.services.wawptn.loadBalancer.server.port=8080"
 
     cap_drop:
@@ -94,10 +85,6 @@ services:
       - DISCORD_APPLICATION_ID=${DISCORD_APPLICATION_ID}
       - DISCORD_BOT_API_SECRET=${DISCORD_BOT_API_SECRET}
       - BACKEND_URL=http://wawptn:8080
-      # Bind the internal HTTP API on all interfaces so the backend container
-      # can reach it over the compose network. The default 127.0.0.1 only
-      # accepts connections from inside this container, which makes the
-      # backend -> bot link unreachable and silently drops vote messages.
       - DISCORD_BOT_HTTP_HOST=0.0.0.0
       - DISCORD_BOT_HTTP_PORT=3001
     command: ["node", "packages/discord/dist/index.js"]

@@ -22,9 +22,7 @@ services:
     environment:
       - TZ=Europe/Paris
     volumes:
-      # SQLite save of the persistent world (players, collections, firsts).
       - ./data:/data
-      # Live gauntlet progress page, editable between rounds without rebuilding.
       - ./progress:/app/dist/progress:ro
     labels:
       - "traefik.enable=true"

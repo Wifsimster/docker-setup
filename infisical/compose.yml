@@ -31,16 +31,12 @@ services:
     labels:
       - "traefik.enable=true"
 
-      # Entrypoint
       - "traefik.http.routers.infisical.entrypoints=websecure"
 
-      # Router
       - "traefik.http.routers.infisical.rule=Host(`infisical.${DOMAIN}`)"
 
-      # Service
       - "traefik.http.services.infisical.loadBalancer.server.port=8080"
       
-      # Watchtower automatic update
       - com.centurylinklabs.watchtower.enable=true
 
   redis:

@@ -50,7 +50,7 @@ docker-setup/
 ├── pihole/compose.yml         # DNS ad-blocking
 ├── gramps/compose.yml         # Genealogy (+ Redis, Celery worker)
 ├── stirling/compose.yml       # PDF tools
-├── personal-blog/compose.yml  # Blog (wifsimster/wifsimster-blog) + GoatCounter analytics
+├── personal-blog/compose.yml  # Blog (wifsimster/wifsimster-blog) — audience mesurée par Umami
 ├── resume/compose.yml         # Online resume (wifsimster/resume)
 ├── birthday-invitation/compose.yml
 ├── copro-pilot/compose.yml    # Co-ownership app (+ Postgres)
@@ -64,7 +64,6 @@ docker-setup/
 ├── digest/compose.yml         # Static site (nginx:alpine)
 ├── discord-bridge/compose.yml # Built locally (build: .)
 ├── seaweedfs/compose.yml      # SeaweedFS (chrislusf/seaweedfs)
-├── ghostfolio/compose.yml     # Ghostfolio (+ Postgres, Redis)
 ├── downtify/compose.yml       # henriquesebastiao/downtify
 ├── metube/compose.yml         # alexta69/metube
 ├── koe/compose.yml            # wifsimster/koe-server (+ Postgres)
@@ -241,6 +240,8 @@ Follow the pattern in `paperless-ngx/compose.yml` or `the-box/compose.yml`:
 
 ## GitHub Actions Runners
 
+> **CI des repos privés** : runners éphémères en conteneur (stack `gh-runners/`, label `homelab-ci`, DinD isolé, PAT visible du seul broker). Voir `docs/adr/0001-runners-github-ephemeres.md` et `gh-runners/README.md`. Les runners systemd ci-dessous restent dédiés aux déploiements (`runs-on: self-hosted`).
+
 6 self-hosted runners are installed in `/opt/actions-runner/`, one per repo. They share a single set of binaries via **hardlinks** to save ~3.5 Go of disk space.
 
 ### Architecture
@@ -326,3 +327,7 @@ sudo /opt/docker/disk-cleanup.sh
 sudo docker system df
 sudo du -sh /opt/actions-runner/*/ /var/lib/docker/ /var/log/
 ```
+
+## No comments in code
+
+Never write a comment in any code file. Comments go stale and mislead agents; the why goes in the commit message and the PR description. Only behaviour-changing tool directives stay: `eslint-disable*`, `oxlint-disable*`, `@ts-expect-error` / `@ts-ignore` / `@ts-nocheck`, `/// <reference`, shebangs, `//go:build`, `# syntax=` in Dockerfiles, `# shellcheck`, `# noqa`, `# type: ignore`, `/* webpackChunkName */`, `@vite-ignore`, `prettier-ignore`, `biome-ignore`, `istanbul` / `c8 ignore`, `@vitest-environment`, `@jsx` / `@jsxImportSource`, `/*!` and `@license` headers. Generated files (lockfiles, `*.gen.ts`, migrations and their `meta/`) stay as their generator writes them; Markdown is not code.

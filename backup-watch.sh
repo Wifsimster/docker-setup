@@ -1,20 +1,4 @@
 #!/bin/bash
-# =============================================================================
-# backup-watch.sh — the only voice of the backup jobs in Discord #backups.
-#
-# Since 2026-10-03 the jobs themselves (state-backup, photos-backup, borg-check)
-# no longer post a 🟢 on every success and stay silent during quiet hours
-# (23:00-08:00 Europe/Paris) — they all run in that window. This script reads
-# their logs once a day, outside quiet hours, and:
-#   - posts 🔴 if a job failed or MISSED its run (no success in the expected
-#     window: state 26 h, weekly jobs 8 days), with the last error line;
-#   - posts 🟠 if the last state-backup run logged warnings;
-#   - otherwise says nothing. The weekly summary lives in the Sunday house
-#     digest (digest/collect.py, "Sauvegardes" row), not in Discord.
-#
-# Read-only on the logs. Installed via root crontab: 15 7 * * * (07:15 UTC =
-# 08:15/09:15 Paris, after borg-check's 05:30 slot).
-# =============================================================================
 set -uo pipefail
 
 WEBHOOK_FILE="/root/.borg-discord-webhook"
@@ -30,7 +14,6 @@ notify() {
         -H "Content-Type: application/json" -d "${payload}" "${url}" || true
 }
 
-# Prints "<colour>\t<title>\t<message>" or nothing. Log timestamps are UTC (VM TZ).
 REPORT="$(python3 - <<'PY'
 import re, os
 from datetime import datetime, timezone

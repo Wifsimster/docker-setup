@@ -22,21 +22,16 @@ services:
     environment:
       - TZ=Europe/Paris
     volumes:
-      # Live progress page, editable between rounds without rebuilding.
       - ./progress:/usr/share/nginx/html/progress:ro
     labels:
       - "traefik.enable=true"
 
-      # Entrypoint
       - "traefik.http.routers.coffre.entrypoints=websecure"
 
-      # Router
       - "traefik.http.routers.coffre.rule=Host(`coffre.${DOMAIN}`)"
 
-      # Service
       - "traefik.http.services.coffre.loadBalancer.server.port=80"
 
-      # Security headers, shared middleware defined on the Traefik container
       - "traefik.http.routers.coffre.middlewares=secHeaders@docker"
 
     networks:

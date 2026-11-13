@@ -187,11 +187,6 @@ docker exec -i umami-db pg_restore \
   -U umami -d umami --clean --if-exists \
   < pg-backup/backups/umami_YYYY-MM-DD_HHMMSS.dump
 
-# Ghostfolio (nom de base avec tiret)
-docker exec -i ghostfolio-postgres pg_restore \
-  -U ghostfolio -d ghostfolio-db --clean --if-exists \
-  < pg-backup/backups/ghostfolio-db_YYYY-MM-DD_HHMMSS.dump
-
 # Koe / Toko / WAWPTN / Yamtrack — même schéma :
 #   docker exec -i <conteneur> pg_restore -U <user> -d <base> --clean --if-exists < <dump>
 ```
@@ -306,6 +301,14 @@ for sub in paperless immich the-box copro-pilot infisical \
   STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://${sub}.${DOMAIN}")
   echo "${sub}: ${STATUS}"
 done
+```
+
+### Redirection HTTP vers HTTPS
+
+```bash
+# Doit répondre 308 avec le même chemin. Un 301 vers /index.php/...? signifie
+# que la redirection du port 80 manque sur l'USG (voir docs/traefik.md).
+curl -sI "http://paperless.${DOMAIN}/test" | grep -iE '^(HTTP|location)'
 ```
 
 ### Certificats TLS

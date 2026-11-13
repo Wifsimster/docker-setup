@@ -1,16 +1,13 @@
-# Loads default set of integrations. Do not remove.
 default_config:
 
 homeassistant:
   packages: !include_dir_named packages
 
-# Load frontend themes from the themes folder
 frontend:
   themes: !include_dir_merge_named themes
 
 automation: !include automations.yaml
 
-# n8n AI agent webhook
 rest_command:
   n8n_domotique:
     url: "https://n8n.battistella.ovh/webhook/domotique"
@@ -23,29 +20,17 @@ scene: !include scenes.yaml
 http:
   use_x_forwarded_for: true
   trusted_proxies:
-    - 172.18.0.0/16  # lanv6 network entire subnet
-    - 172.26.0.0/16  # lan network entire subnet
+    - 172.18.0.0/16
+    - 172.26.0.0/16
 
 bluetooth:
 
-# Notification groups
 notify:
   - name: all_mobiles
     platform: group
     services:
-      # 2026-09-17 : les 3 anciens (21081111rg, 2306epn60g, mi_8) ne rapportaient
-      # plus rien depuis 12 jours — remplaces par les 2 telephones actifs.
       - service: mobile_app_telephone_damien
       - service: mobile_app_telephone_christelle
-  # Journal silencieux des alertes "device stale/zombie" (capteurs figes, appareils
-  # hors ligne) : plus de push/son, consolide dans le rapport du dimanche puis vide.
-  # 2026-10-03 : desactive, la plateforme YAML "file" n'existe plus (HA 2026.7) ->
-  # les 3 automatisations utilisent persistent_notification.create.
-  # - name: devices_watch_log
-  #   platform: file
-  #   filename: devices_watch_log.jsonl
-# Homelab: puissance des équipements non mesurés individuellement
-# = compteur baie (tasmota) - somme des prises mesurées
 template:
   - sensor:
       - name: "Homelab autres non mesurés"

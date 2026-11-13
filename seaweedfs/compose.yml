@@ -39,27 +39,23 @@ services:
     labels:
       - "traefik.enable=true"
 
-      # Filer Web UI (main user-facing interface)
       - "traefik.http.routers.seaweedfs.entrypoints=websecure"
       - "traefik.http.routers.seaweedfs.rule=Host(`seaweedfs.${DOMAIN}`)"
       - "traefik.http.routers.seaweedfs.service=seaweedfs"
       - "traefik.http.services.seaweedfs.loadBalancer.server.port=8888"
       - "traefik.http.routers.seaweedfs.middlewares=tinyauth@docker"
 
-      # Master UI on a separate subdomain
       - "traefik.http.routers.seaweedfs-master.entrypoints=websecure"
       - "traefik.http.routers.seaweedfs-master.rule=Host(`seaweedfs-master.${DOMAIN}`)"
       - "traefik.http.routers.seaweedfs-master.service=seaweedfs-master"
       - "traefik.http.services.seaweedfs-master.loadBalancer.server.port=9333"
       - "traefik.http.routers.seaweedfs-master.middlewares=tinyauth@docker"
 
-      # S3 API endpoint (no tinyauth — uses S3 signature auth or anonymous depending on config)
       - "traefik.http.routers.seaweedfs-s3.entrypoints=websecure"
       - "traefik.http.routers.seaweedfs-s3.rule=Host(`s3.${DOMAIN}`)"
       - "traefik.http.routers.seaweedfs-s3.service=seaweedfs-s3"
       - "traefik.http.services.seaweedfs-s3.loadBalancer.server.port=8333"
 
-      # Watchtower automatic update
       - "com.centurylinklabs.watchtower.enable=true"
 
     networks:

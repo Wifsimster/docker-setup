@@ -22,28 +22,21 @@ services:
     environment:
       - TZ=Europe/Paris
     volumes:
-      # Live progress page, editable between rounds without rebuilding.
       - ./progress:/usr/share/nginx/html/progress:ro
     labels:
       - "traefik.enable=true"
 
-      # Entrypoint
       - "traefik.http.routers.tribu.entrypoints=websecure"
 
-      # Router
       - "traefik.http.routers.tribu.rule=Host(`tribu.${DOMAIN}`)"
 
-      # Service
       - "traefik.http.services.tribu.loadBalancer.server.port=80"
 
-      # Security headers, shared middleware defined on the Traefik container
       - "traefik.http.routers.tribu.middlewares=secHeaders@docker"
 
     networks:
       lan:
 
-  # Le voisinage : instantanés publics des tribus, servis sous /api du même
-  # hôte (donc pas de CORS). Le jeu reste jouable si ce service est éteint.
   api:
     build:
       context: /home/wifsimster/tribu-src
@@ -69,18 +62,13 @@ services:
     labels:
       - "traefik.enable=true"
 
-      # Entrypoint
       - "traefik.http.routers.tribu-api.entrypoints=websecure"
 
-      # Router : même hôte que le jeu, mais le préfixe /api l'emporte
-      # (priorité supérieure à la règle Host seule du site statique).
       - "traefik.http.routers.tribu-api.rule=Host(`tribu.${DOMAIN}`) && PathPrefix(`/api`)"
       - "traefik.http.routers.tribu-api.priority=100"
 
-      # Service
       - "traefik.http.services.tribu-api.loadBalancer.server.port=8080"
 
-      # Security headers, shared middleware defined on the Traefik container
       - "traefik.http.routers.tribu-api.middlewares=secHeaders@docker"
 
     networks:

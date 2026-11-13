@@ -48,18 +48,14 @@ services:
     labels:
       - "traefik.enable=true"
 
-      # Entrypoint
       - "traefik.http.routers.toko.entrypoints=websecure"
 
-      # Router
       - "traefik.http.routers.toko.rule=Host(`toko.${DOMAIN}`)"
 
-      # TLS
       - "traefik.docker.network=lan"
       - "traefik.http.routers.toko.tls=true"
       - "traefik.http.routers.toko.tls.certresolver=letsencrypt"
 
-      # Service
       - "traefik.http.services.toko.loadBalancer.server.port=8080"
 
     cap_drop:

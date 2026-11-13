@@ -35,16 +35,12 @@ services:
     labels:
       - "traefik.enable=true"
 
-      # Entrypoint
       - "traefik.http.routers.ntfy.entrypoints=websecure"
 
-      # Router
       - "traefik.http.routers.ntfy.rule=Host(`ntfy.${DOMAIN}`)"
 
-      # Service
       - "traefik.http.services.ntfy.loadBalancer.server.port=80"
 
-      # Watchtower automatic update
       - "com.centurylinklabs.watchtower.enable=true"
 
     networks:
