@@ -53,6 +53,7 @@ docker-setup/
 ├── personal-blog/compose.yml  # Blog (wifsimster/wifsimster-blog) — audience mesurée par Umami
 ├── resume/compose.yml         # Online resume (wifsimster/resume)
 ├── birthday-invitation/compose.yml
+├── liste-noel/compose.yml     # Liste de Noël (wifsimster/liste-noel, build local) + sidecar backup SQLite
 ├── copro-pilot/compose.yml    # Co-ownership app (+ Postgres)
 ├── the-box/compose.yml        # Game management app (+ Postgres, Redis)
 ├── unifi/compose.yml          # Network controller

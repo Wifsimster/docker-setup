@@ -89,6 +89,7 @@ snapshot_sqlite zigbee       /opt/docker/home-assistant/config/zigbee.db
 snapshot_sqlite birthday     /var/lib/docker/volumes/birthday-invitation_birthday_db/_data/rsvp.db
 snapshot_sqlite actual       /opt/docker/actual/data/server-files/account.sqlite
 snapshot_sqlite orbite       /var/lib/docker/volumes/orbite-data/_data/orbite.sqlite
+snapshot_sqlite liste-noel   /var/lib/docker/volumes/liste-noel-data/_data/liste-noel.db
 
 if [ -d /opt/docker/actual/data/user-files ]; then
     tar -czf "${STAGING}/sqlite/actual-user-files.tar.gz" \
