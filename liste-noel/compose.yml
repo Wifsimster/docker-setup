@@ -1,0 +1,86 @@
+name: liste-noel
+
+services:
+  liste-noel:
+    build: .
+    image: liste-noel:local
+    container_name: liste-noel
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    environment:
+      - NODE_ENV=production
+      - TZ=Europe/Paris
+      - PORT=3000
+      - DATA_DIR=/data
+      - PUBLIC_BASE_URL=${PUBLIC_BASE_URL:-https://noel.${DOMAIN}}
+      - TRUST_PROXY=${TRUST_PROXY:-1}
+    volumes:
+      - liste-noel-data:/data
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.liste-noel.entrypoints=websecure"
+      - "traefik.http.routers.liste-noel.rule=Host(`noel.${DOMAIN}`)"
+      - "traefik.http.routers.liste-noel.middlewares=secHeaders@docker"
+      - "traefik.http.services.liste-noel.loadBalancer.server.port=3000"
+    networks:
+      lan:
+
+  backup:
+    build:
+      context: .
+      target: backup
+    image: liste-noel-backup:local
+    container_name: liste-noel-backup
+    restart: unless-stopped
+    user: "1000:1000"
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    environment:
+      - DB_PATH=/data/liste-noel.db
+      - BACKUP_DIR=/backup
+      - BACKUP_KEEP=${BACKUP_KEEP:-14}
+      - BACKUP_INTERVAL=${BACKUP_INTERVAL:-86400}
+    volumes:
+      - liste-noel-data:/data:ro
+      - liste-noel-backups:/backup
+    networks:
+      lan:
+
+volumes:
+  liste-noel-data:
+    name: liste-noel-data
+  liste-noel-backups:
+    name: liste-noel-backups
+
+networks:
+  lan:
+    external: true
