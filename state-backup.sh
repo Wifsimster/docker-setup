@@ -91,6 +91,12 @@ snapshot_sqlite actual       /opt/docker/actual/data/server-files/account.sqlite
 snapshot_sqlite orbite       /var/lib/docker/volumes/orbite-data/_data/orbite.sqlite
 snapshot_sqlite liste-noel   /var/lib/docker/volumes/liste-noel-data/_data/liste-noel.db
 
+if [ -d /var/lib/docker/volumes/liste-noel-data/_data/images ]; then
+    tar -czf "${STAGING}/sqlite/liste-noel-images.tar.gz" \
+        -C /var/lib/docker/volumes/liste-noel-data/_data images 2>/dev/null || \
+        warn "tar des images liste-noel a échoué."
+fi
+
 if [ -d /opt/docker/actual/data/user-files ]; then
     tar -czf "${STAGING}/sqlite/actual-user-files.tar.gz" \
         -C /opt/docker/actual/data user-files 2>/dev/null || \
