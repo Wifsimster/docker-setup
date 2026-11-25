@@ -6,6 +6,8 @@
 !**/hwaccel.*.yml
 !visiophone/Dockerfile
 !visiophone/bridge.py
+!mailsync/app/server.py
+!mailsync/watch.sh
 !.github/workflows/*.yml
 !CLAUDE.md
 !AGENTS.md
