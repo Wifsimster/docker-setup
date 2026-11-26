@@ -176,12 +176,15 @@ annonce:
   icon: mdi:bullhorn
   description: 'Diffuse un message en français (tts.piper) sur les enceintes Sonos
     via l''API AudioClip : l''annonce se superpose à la musique en cours et le volume
-    de l''enceinte n''est PAS modifié (le champ volume ne s''applique qu''au clip).
-    Silencieux pendant les heures calmes (21h45-07h00) sauf si nuit: true. Cibles
-    : media_player.sonos_salon, media_player.sonos_chambre_leo. `anna` inerte tant
-    que la 3e enceinte n''existe pas.'
+    de l''enceinte n''est PAS modifié (le volume ne s''applique qu''au clip, rien
+    à restaurer). Silencieux pendant les heures calmes (21h45-07h00) sauf si nuit:
+    true. Volume adapté le soir et selon ce qui joue dans la pièce (voir le champ
+    volume), sauf nuit: true (alertes, sécurité) ou volume_fixe: true. Chaque diffusion
+    est notée dans le journal avec le volume choisi. Cibles : media_player.sonos_salon,
+    media_player.sonos_chambre_leo. `anna` inerte tant que la 3e enceinte n''existe
+    pas.'
   mode: queued
-  max: 5
+  max: 10
   fields:
     message:
       name: Message
@@ -201,10 +204,15 @@ annonce:
           - leo
           - anna
           - salon
+          - leo_salon
           - toutes
     volume:
       name: Volume
-      description: Volume de diffusion en %
+      description: 'Volume de diffusion en %. Avant 19h : tel quel. 19h00-20h30 :
+        -15 (min 20). Après 20h30 : -30 (min 25). Jamais au-dessus de cette valeur,
+        sauf si un média joue dans la pièce après 19h (Sonos en lecture, TV du salon)
+        : volume du média + 10, entre 20 et 60 ; TV allumée sans volume lisible : cette
+        valeur. Règle du 2026-10-20 (Jarvis).'
       default: 45
       selector:
         number:
@@ -212,9 +220,16 @@ annonce:
           max: 100
           step: 5
           unit_of_measurement: '%'
+    volume_fixe:
+      name: Volume fixe
+      description: Diffuser exactement au volume demandé (pas d'adaptation du soir)
+      default: false
+      selector:
+        boolean:
     nuit:
       name: Forcer la nuit
-      description: Diffuser même pendant les heures calmes (21h45 - 07h00)
+      description: Diffuser même pendant les heures calmes (21h45 - 07h00). Ces annonces
+        (alertes, sécurité) gardent aussi leur volume.
       default: false
       selector:
         boolean:
@@ -225,21 +240,116 @@ annonce:
       today_at(''21:45'')) }}'
   - variables:
       cibles: '{% set p = piece | default(''toutes'') %}{% set table = {''leo'': [''media_player.sonos_chambre_leo''],''anna'':
-        [''media_player.sonos_chambre_anna''],''salon'': [''media_player.sonos_salon'']}
+        [''media_player.sonos_chambre_anna''],''salon'': [''media_player.sonos_salon''],''leo_salon'': [''media_player.sonos_chambre_leo'',''media_player.sonos_salon'']}
         %}{% set t = table.get(p, [''media_player.sonos_chambre_leo'',''media_player.sonos_chambre_anna'',''media_player.sonos_salon''])
         %}{{ t | select(''has_value'') | list }}'
   - alias: 'Aucune enceinte joignable : on sort sans erreur'
     condition: template
     value_template: '{{ cibles | count > 0 }}'
-  - alias: 'Annonce Sonos (audioclip : se superpose à la musique, ne touche pas au
-      volume de l''enceinte)'
-    action: media_player.play_media
-    target:
-      entity_id: '{{ cibles }}'
+  - alias: 'Anti-répétition : annonces des 5 dernières minutes (clé = pièce + message)'
+    variables:
+      cle: '{{ (((piece | default(''toutes'')) ~ ''|'' ~ message) | md5)[:12] }}'
+      maintenant: '{{ now().timestamp() | int }}'
+      recentes: '{% set ns = namespace(l=[]) %}{% for e in states(''input_text.annonces_recentes'').split('';'')
+        if ''@'' in e and (e.split(''@'')[1] | int(0)) > maintenant - 300 %}{% set ns.l
+        = ns.l + [e] %}{% endfor %}{{ ns.l }}'
+  - alias: 'Même message dans la même pièce il y a moins de 5 min : on ne répète pas'
+    if:
+    - condition: template
+      value_template: '{{ recentes | select(''search'', ''^'' ~ cle ~ ''@'') | list | count > 0 }}'
+    then:
+    - action: logbook.log
+      data:
+        name: Annonce vocale
+        entity_id: script.annonce
+        message: 'ignorée, déjà diffusée il y a moins de 5 min : {{ piece | default(''toutes'')
+          }} - {{ message }}'
+    - stop: Annonce identique (même pièce) il y a moins de 5 min, ignorée
+  - alias: Volume par enceinte selon l'heure et ce qui joue dans la pièce
+    variables:
+      demande: '{{ volume | default(45) | int(45) }}'
+      sans_ajustement: '{{ (volume_fixe | default(false)) or (nuit | default(false)) }}'
+      plan: '{% set mn = now().hour * 60 + now().minute %}{% set demande = volume | default(45)
+        | int(45) %}{% set sans_ajustement = (volume_fixe | default(false)) or (nuit | default(false))
+        %}{% set ns = namespace(l=[]) %}{% for c in cibles %}{% set m = namespace(v=none, src='''',
+        tv_inconnu=false) %}{% if is_state(c, ''playing'') and not is_state_attr(c, ''is_volume_muted'',
+        true) and state_attr(c, ''volume_level'') is number %}{% set m.v = (state_attr(c, ''volume_level'')
+        * 100) | round(0) | int %}{% set m.src = ''Sonos '' ~ m.v %}{% endif %}{% if c == ''media_player.sonos_salon''
+        %}{% set tv = ''media_player.tv_salon'' %}{% set tv_allumee = states(tv) in [''on'',
+        ''playing'', ''paused''] or states(''sensor.prise_television_puissance'') | float(0)
+        > 40 %}{% if tv_allumee %}{% if states(tv) in [''on'', ''playing''] and state_attr(tv,
+        ''volume_level'') is number and not is_state_attr(tv, ''is_volume_muted'', true) %}{%
+        set tvv = (state_attr(tv, ''volume_level'') * 100) | round(0) | int %}{% if m.v is none
+        or tvv > m.v %}{% set m.v = tvv %}{% set m.src = ''TV '' ~ tvv %}{% endif %}{% elif
+        m.v is none %}{% set m.tv_inconnu = true %}{% endif %}{% endif %}{% endif %}{% if sans_ajustement
+        %}{% set v = demande %}{% set r = ''volume gardé (alerte ou volume fixe)'' %}{% elif
+        mn < 19 * 60 %}{% set v = demande %}{% set r = ''journée'' %}{% elif m.v is not none
+        %}{% set v = [60, [20, m.v + 10] | max] | min %}{% set r = m.src ~ '' en cours, +10''
+        %}{% elif m.tv_inconnu %}{% set v = demande %}{% set r = ''TV allumée, volume inconnu''
+        %}{% elif mn >= 20 * 60 + 30 %}{% set v = [demande, [25, demande - 30] | max] | min
+        %}{% set r = ''après 20h30, -30'' %}{% else %}{% set v = [demande, [20, demande - 15]
+        | max] | min %}{% set r = ''soir, -15'' %}{% endif %}{% set ns.l = ns.l + [{''entity_id'':
+        c, ''volume'': v, ''raison'': r}] %}{% endfor %}{{ ns.l }}'
+  - alias: 'Annonce Sonos : toutes les enceintes visées en parallèle (plus de décalage entre pièces, 2026-11-09). Audioclip : se superpose à la musique, ne touche pas au volume de l''enceinte'
+    parallel:
+    - if:
+      - condition: template
+        value_template: '{{ plan | selectattr(''entity_id'', ''eq'', ''media_player.sonos_chambre_leo'') | list | count > 0 }}'
+      then:
+      - action: media_player.play_media
+        continue_on_error: true
+        target:
+          entity_id: media_player.sonos_chambre_leo
+        data:
+          media_content_type: music
+          media_content_id: media-source://tts/tts.piper?message={{ message | urlencode }}&language=fr_FR
+          announce: true
+          extra:
+            volume: '{{ (plan | selectattr(''entity_id'', ''eq'', ''media_player.sonos_chambre_leo'') | list)[0].volume | int(45) }}'
+    - if:
+      - condition: template
+        value_template: '{{ plan | selectattr(''entity_id'', ''eq'', ''media_player.sonos_chambre_anna'') | list | count > 0 }}'
+      then:
+      - action: media_player.play_media
+        continue_on_error: true
+        target:
+          entity_id: media_player.sonos_chambre_anna
+        data:
+          media_content_type: music
+          media_content_id: media-source://tts/tts.piper?message={{ message | urlencode }}&language=fr_FR
+          announce: true
+          extra:
+            volume: '{{ (plan | selectattr(''entity_id'', ''eq'', ''media_player.sonos_chambre_anna'') | list)[0].volume | int(45) }}'
+    - if:
+      - condition: template
+        value_template: '{{ plan | selectattr(''entity_id'', ''eq'', ''media_player.sonos_salon'') | list | count > 0 }}'
+      then:
+      - action: media_player.play_media
+        continue_on_error: true
+        target:
+          entity_id: media_player.sonos_salon
+        data:
+          media_content_type: music
+          media_content_id: media-source://tts/tts.piper?message={{ message | urlencode }}&language=fr_FR
+          announce: true
+          extra:
+            volume: '{{ (plan | selectattr(''entity_id'', ''eq'', ''media_player.sonos_salon'') | list)[0].volume | int(45) }}'
+  - action: logbook.log
     data:
-      media_content_type: music
-      media_content_id: media-source://tts/tts.piper?message={{ message | urlencode
-        }}&language=fr_FR
-      announce: true
-      extra:
-        volume: '{{ volume | default(45) | int(45) }}'
+      name: Annonce vocale
+      entity_id: script.annonce
+      message: '{{ piece | default(''toutes'') }}, demandé {{ demande }} : {% for p in plan
+        %}{{ p.entity_id.split(''.'')[1] }} {{ p.volume }} ({{ p.raison }}){{ '', '' if
+        not loop.last else '''' }}{% endfor %} - {{ message }}'
+  - alias: Mémoriser l'annonce (10 dernières, 5 min)
+    action: input_text.set_value
+    target:
+      entity_id: input_text.annonces_recentes
+    data:
+      value: '{{ ((recentes + [cle ~ ''@'' ~ maintenant])[-10:]) | join('';'') }}'
+  - alias: 'Pas de chevauchement : le clip Sonos rend la main tout de suite, on attend
+      la durée estimée du message (voix siwis ≈ 20 caractères/s, + 2 s de marge) avant
+      l''annonce suivante de la file'
+    delay:
+      seconds: '{{ [ (2 + (message | string | length) / 18) | round(0, ''ceil'') | int,
+        30 ] | min }}'

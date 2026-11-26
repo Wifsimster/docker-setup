@@ -16,9 +16,9 @@
   - action: light.toggle
     target:
       entity_id: light.yeelight_color_0x52bf405
-  - action: switch.toggle
+  - action: light.toggle
     target:
-      entity_id: switch.lumiere_tv
+      entity_id: light.lampe_salon_tv
   mode: single
   max_exceeded: warning
 - id: '1707492898414'
@@ -102,19 +102,6 @@
     target:
       entity_id: switch.eclairage_exterieur
     continue_on_error: true
-  - alias: Annoncer l'allumage seulement s'il a vraiment eu lieu (au moment de l'allumage,
-      pas à l'extinction)
-    if:
-    - condition: state
-      entity_id: switch.eclairage_exterieur
-      state: 'on'
-    then:
-    - action: script.annonce
-      data:
-        message: L'éclairage extérieur s'est allumé.
-        piece: salon
-        volume: 40
-        nuit: false
   - choose:
     - conditions:
       - condition: trigger
@@ -127,9 +114,14 @@
       - condition: not
         conditions:
         - condition: time
-          after: '07:00:00'
-          before: '08:30:00'
-          weekday: [mon, tue, wed, thu, fri]
+          after: 07:00:00
+          before: 08:30:00
+          weekday:
+          - mon
+          - tue
+          - wed
+          - thu
+          - fri
       then:
       - action: notify.all_mobiles
         data:
@@ -187,39 +179,133 @@
   mode: single
   max_exceeded: warning
 - id: '1742635828110'
-  alias: Chauffage salle d'eau - Allumage automatique à 06:00
-  description: Allume automatiquement le chauffage de la salle d'eau à 06:00 d'octobre
-    à avril pour préparer la salle de bain
+  alias: Salle d'eau - Sèche-serviette le matin (allumage)
+  description: 'Allume le sèche-serviette de la salle d''eau (module fil pilote) en
+    mode Confort si la pièce est sous 21 °C : 06:00 du lundi au vendredi hors jour
+    férié (réveil parents 06:40, douche vers 06:45-07:05, vacances scolaires comprises
+    car le réveil de 06:40 sonne aussi), 08:30 le week-end et les jours fériés (volets
+    09:00, douche 09:15-10:15). Se rallume aussi si la pièce passe sous 21 °C pendant
+    ces créneaux. Extinction par « Salle d''eau - Sèche-serviette le matin (extinction)
+    ». Modifié le 2026-10-18 à la demande de Damien (ancien 06:00, octobre-avril,
+    sans mode : le module restait en hors-gel).'
   triggers:
   - trigger: time
     at: 06:00:00
+    id: semaine
+  - trigger: time
+    at: 08:30:00
+    id: repos
+  - trigger: numeric_state
+    entity_id: sensor.sonoff_snzb_02d_temperature_2
+    below: 21
+    id: froid
   conditions:
-  - condition: template
-    value_template: '{{ now().month in [10, 11, 12, 1, 2, 3, 4] }}'
+  - alias: Salle d'eau sous 21 °C
+    condition: numeric_state
+    entity_id: sensor.sonoff_snzb_02d_temperature_2
+    below: 21
+  - condition: or
+    conditions:
+    - alias: 06:00 en semaine, hors jour férié
+      condition: and
+      conditions:
+      - condition: trigger
+        id: semaine
+      - condition: time
+        weekday:
+        - mon
+        - tue
+        - wed
+        - thu
+        - fri
+      - condition: not
+        conditions:
+        - condition: state
+          entity_id: binary_sensor.jour_non_ferie
+          state: 'off'
+    - alias: 08:30 le week-end ou un jour férié
+      condition: and
+      conditions:
+      - condition: trigger
+        id: repos
+      - condition: or
+        conditions:
+        - condition: time
+          weekday:
+          - sat
+          - sun
+        - condition: state
+          entity_id: binary_sensor.jour_non_ferie
+          state: 'off'
+    - alias: Passage sous 21 °C pendant un créneau du matin
+      condition: and
+      conditions:
+      - condition: trigger
+        id: froid
+      - condition: or
+        conditions:
+        - condition: and
+          conditions:
+          - condition: time
+            after: 06:00:00
+            before: 07:15:00
+            weekday:
+            - mon
+            - tue
+            - wed
+            - thu
+            - fri
+          - condition: not
+            conditions:
+            - condition: state
+              entity_id: binary_sensor.jour_non_ferie
+              state: 'off'
+        - condition: and
+          conditions:
+          - condition: time
+            after: 08:30:00
+            before: '10:00:00'
+          - condition: or
+            conditions:
+            - condition: time
+              weekday:
+              - sat
+              - sun
+            - condition: state
+              entity_id: binary_sensor.jour_non_ferie
+              state: 'off'
   actions:
   - action: switch.turn_on
-    metadata: {}
-    data: {}
     target:
-      device_id: 852421e6505f033cf42ad76f60150dac
+      entity_id: switch.chauffage_fil_pilote
+  - alias: Mode Confort (le module était resté en hors-gel)
+    action: select.select_option
+    target:
+      entity_id: select.chauffage_fil_pilote_mode_du_fil_pilote
+    data:
+      option: Comfort
   mode: single
   max_exceeded: warning
 - id: '1742635905860'
-  alias: Chauffage salle d'eau - Extinction automatique à 07:15
-  description: Éteint automatiquement le chauffage de la salle d'eau à 07:15 après
-    utilisation matinale (octobre à avril uniquement)
+  alias: Salle d'eau - Sèche-serviette le matin (extinction)
+  description: 'Éteint le sèche-serviette de la salle d''eau à 08:00 (après le départ
+    de 07:50 en semaine) et à 10:30 (week-end, jours fériés), toute l''année et sans
+    condition. Sécurité supplémentaire : extinction s''il reste allumé 3 h d''affilée.
+    Modifié le 2026-10-18 (ancien 07:15, octobre-avril).'
   triggers:
   - trigger: time
-    at: 07:15:00
-  conditions:
-  - condition: template
-    value_template: '{{ now().month in [10, 11, 12, 1, 2, 3, 4] }}'
+    at: 08:00:00
+  - trigger: time
+    at: '10:30:00'
+  - trigger: state
+    entity_id: switch.chauffage_fil_pilote
+    to: 'on'
+    for: 03:00:00
+  conditions: []
   actions:
   - action: switch.turn_off
-    metadata: {}
-    data: {}
     target:
-      device_id: 852421e6505f033cf42ad76f60150dac
+      entity_id: switch.chauffage_fil_pilote
   mode: single
   max_exceeded: warning
 - id: '1742719565025'
@@ -357,8 +443,8 @@
   - condition: not
     conditions:
     - condition: time
-      after: '06:30:00'
-      before: '08:30:00'
+      after: 06:30:00
+      before: 08:30:00
       weekday: thu
   - action: switch.turn_on
     target:
@@ -418,9 +504,14 @@
     - condition: not
       conditions:
       - condition: time
-        after: '07:00:00'
-        before: '08:30:00'
-        weekday: [mon, tue, wed, thu, fri]
+        after: 07:00:00
+        before: 08:30:00
+        weekday:
+        - mon
+        - tue
+        - wed
+        - thu
+        - fri
   actions:
   - action: notify.all_mobiles
     data:
@@ -437,12 +528,6 @@
         ttl: 0
         channel: alarm_stream
         importance: high
-  - action: script.annonce
-    data:
-      message: 'Attention : présence détectée à l''extérieur.'
-      piece: salon
-      volume: 60
-      nuit: true
   mode: single
   max_exceeded: warning
 - id: '1709300000002'
@@ -472,8 +557,8 @@
   - condition: not
     conditions:
     - condition: time
-      after: '06:30:00'
-      before: '08:30:00'
+      after: 06:30:00
+      before: 08:30:00
       weekday: thu
   - action: notify.all_mobiles
     data:
@@ -496,7 +581,7 @@
     (depart vers 08h15). A 08h30, ferme le portail s'il est encore ouvert.
   triggers:
   - trigger: time
-    at: '08:30:00'
+    at: 08:30:00
   conditions:
   - condition: time
     weekday: thu
@@ -549,23 +634,24 @@
   max_exceeded: warning
 - id: '1709300000004'
   alias: Batterie faible - Annonce capteurs
-  description: Une seule annonce par jour (18h30, salon) listant les capteurs à pile
-    faible (<20 %) ou vide (<5 %, ou injoignable depuis 24 h), avec leur pièce. Remplace
-    l'ancienne notif mobile + annonce générique + alerte n8n <5 %. Filtre sur device_class
-    battery (les entités Zigbee s'appellent *_batterie), téléphones mobile_app exclus.
+  description: Le dimanche à 7h, publie (événement piles_hebdo, sans annonce ni push)
+    la liste des capteurs à pile faible (<20 %) ou vide (<5 %, ou injoignable depuis
+    24 h) et le résumé du dimanche (digest) la reprend. Plus d'annonce Sonos quotidienne
+    (décision de Damien 2026-10-03, rien de non urgent hors rapport hebdo). Filtre
+    sur device_class battery, téléphones mobile_app exclus.
   triggers:
   - trigger: time
-    at: '18:30:00'
+    at: 07:00:00
   conditions:
+  - condition: time
+    weekday:
+    - sun
   - condition: template
     value_template: '{{ message | length > 0 }}'
   actions:
-  - action: script.annonce
-    data:
+  - event: piles_hebdo
+    event_data:
       message: '{{ message }}'
-      piece: salon
-      volume: 40
-      nuit: false
   variables:
     message: "{%- set mobiles = integration_entities('mobile_app') -%}\n{%- set ns
       = namespace(vides=[], faibles=[]) -%}\n{%- for s in states.sensor | selectattr('attributes.device_class',
@@ -617,6 +703,7 @@
   max_exceeded: warning
 - id: '1709300000006'
   alias: Réveil - Simulation lever de soleil chambre parentale
+  initial_state: false
   description: Allume progressivement la lumière de la chambre parentale pendant 20
     minutes avant 07h00 en semaine pour simuler un lever de soleil
   triggers:
@@ -677,8 +764,8 @@
   max_exceeded: warning
 - id: broadlink_rm4_health_alert
   alias: Alerte - Broadlink RM4 disponibilité
-  description: Journalise (sans push/son) quand la télécommande RF/IR Broadlink
-    RM4 passe hors ligne ou revient ; repris dans le rapport du dimanche.
+  description: Journalise (sans push/son) quand la télécommande RF/IR Broadlink RM4
+    passe hors ligne ou revient ; repris dans le rapport du dimanche.
   triggers:
   - platform: state
     entity_id: remote.universal_remote
@@ -759,7 +846,7 @@
 - id: ventilateur_bureau_vitesse_selon_temperature
   alias: Ventilateur bureau — vitesse selon température
   description: Calcule la vitesse cible (0-6) selon la température du bureau et la
-    pousse dans l'input_number (mai-sept, si auto activé).
+    pousse dans l'input_number (toute l'année, si auto activé).
   triggers:
   - trigger: state
     entity_id: sensor.thermometre_temperature
@@ -772,8 +859,6 @@
   - condition: state
     entity_id: input_boolean.ventilation_auto_bureau
     state: 'on'
-  - condition: template
-    value_template: '{{ now().month in [5,6,7,8,9] }}'
   - condition: template
     value_template: '{{ states(''sensor.thermometre_temperature'') not in [''unknown'',''unavailable'',''none'']
       }}'
@@ -841,9 +926,9 @@
     pas: '{{ (ti - ci) % 3 }}'
 - id: alerte_capteur_temperature_fige
   alias: Alerte — Capteur de température figé/muet
-  description: Journalise (sans push/son) si un thermometre Zigbee ne met plus a
-    jour sa valeur depuis > 12 h (device muet alors qu'il peut rester joignable) ;
-    repris dans le rapport du dimanche.
+  description: Journalise (sans push/son) si un thermometre Zigbee ne met plus a jour
+    sa valeur depuis > 12 h (device muet alors qu'il peut rester joignable) ; repris
+    dans le rapport du dimanche.
   triggers:
   - trigger: time_pattern
     hours: /6
@@ -860,8 +945,8 @@
       message: '{{ stale }}
 
 
-        Vérifié le {{ now().strftime("%d/%m %H:%M") }}. Probable reporting Zigbee cassé
-        → pile + reconfigure ZHA + réveil bouton.'
+        Vérifié le {{ now().strftime("%d/%m %H:%M") }}. Probable reporting Zigbee
+        cassé → pile + reconfigure ZHA + réveil bouton.'
   mode: single
   variables:
     stale: '{% set ns = namespace(items=[]) %}{% for e in integration_entities(''zha'')
@@ -1009,10 +1094,14 @@
     for:
       minutes: 10
   conditions:
-  - alias: Tout le foyer est absent (les deux personnes not_home)
-    condition: template
-    value_template: '{{ states(''person.wifsimster'') == ''not_home'' and states(''person.christelle'')
-      == ''not_home'' }}'
+  - alias: Tout le foyer est absent depuis 10 min (les deux personnes not_home)
+    condition: state
+    entity_id:
+    - person.wifsimster
+    - person.christelle
+    state: not_home
+    for:
+      minutes: 10
   - condition: state
     entity_id: input_boolean.maison_absente
     state: 'off'
@@ -1182,9 +1271,8 @@
 - id: alerte_volet_hors_ligne
   alias: Alerte - Volet hors ligne
   description: Journalise (sans push/son) quand un volet roulant cesse de repondre
-    (module Zigbee/HomeKit injoignable) ou revient ; repris dans le rapport du
-    dimanche. Cree le 2026-09-13 apres 3 jours de panne silencieuse du volet Salon
-    Sud.
+    (module Zigbee/HomeKit injoignable) ou revient ; repris dans le rapport du dimanche.
+    Cree le 2026-09-13 apres 3 jours de panne silencieuse du volet Salon Sud.
   triggers:
   - trigger: state
     entity_id:
@@ -1217,8 +1305,8 @@
   actions:
   - action: persistent_notification.create
     data:
-      notification_id: 'devices_watch_{{ trigger.entity_id }}'
-      title: 'Volet {{ trigger.to_state.name }}'
+      notification_id: devices_watch_{{ trigger.entity_id }}
+      title: Volet {{ trigger.to_state.name }}
       message: '{{ "Hors ligne" if trigger.id == "offline" else "Reconnecté" }} depuis
         {{ now().strftime("%d/%m %H:%M") }}.'
   mode: queued
@@ -1243,10 +1331,6 @@
     - thu
     - fri
     - sun
-  - alias: Hors vacances scolaires
-    condition: state
-    entity_id: input_boolean.vacances_scolaires
-    state: 'off'
   actions:
   - alias: Mettre la TV en veille avant de couper
     if:
@@ -1266,6 +1350,7 @@
   mode: single
 - id: '1789274000002'
   alias: Salon - TV rallumée pour les parents (20h30)
+  initial_state: false
   description: 'Rallume la PRISE TV à 20h30 les soirs où elle a été coupée (dim, lun,
     mar, mer, jeu, ven). JAMAIS avant 20h30. Coupée aussi la veille d''un jour férié
     (décision 2026-09-23) : les vacances scolaires sont la SEULE exception. Rallumer
@@ -1373,17 +1458,29 @@
   - trigger: time
     at: '19:25:00'
   conditions:
-  - condition: time
-    weekday:
-    - mon
-    - tue
-    - thu
-    - fri
-    - sun
-  - alias: Hors vacances scolaires
+  - alias: Léo pas privé de télé (input_boolean.leo_prive_tv, demande de Damien 2026-11-12)
     condition: state
-    entity_id: input_boolean.vacances_scolaires
+    entity_id: input_boolean.leo_prive_tv
     state: 'off'
+  - condition: or
+    conditions:
+    - condition: time
+      weekday:
+      - mon
+      - tue
+      - thu
+      - fri
+      - sun
+    - alias: Mercredi en vacances (pas de judo) = comme les autres soirs (demande
+        de Damien 2026-10-21)
+      condition: and
+      conditions:
+      - condition: time
+        weekday:
+        - wed
+      - condition: state
+        entity_id: input_boolean.vacances_scolaires
+        state: 'on'
   actions:
   - action: script.annonce
     data:
@@ -1420,6 +1517,10 @@
     entity_id: input_boolean.maison_absente
     state: 'off'
   actions:
+  - alias: Attendre jusqu'à 3 min que l'enceinte de Léo soit joignable
+    wait_template: '{{ has_value(''media_player.sonos_chambre_leo'') }}'
+    timeout: 00:03:00
+    continue_on_timeout: true
   - choose:
     - alias: 'Enceinte joignable : réveil en musique, puis consigne'
       conditions:
@@ -1574,11 +1675,12 @@
   mode: single
 - id: '1789274000008'
   alias: Enfants - Préparation au coucher
-  description: 'Prévient 10 min avant le coucher, dans la chambre de Léo. Dents faites
-    à 19h00, pyjama mis à 18h25 : simple compte à rebours. Adressée nommément à Léo,
-    volume doux (2026-09-17). Vendredi soir = soir de semaine comme les autres (décision
-    2026-09-23) ; tourne aussi la veille d''un férié, seules les vacances scolaires
-    l''arrêtent.'
+  description: 'Tourne aussi pendant les vacances scolaires (demande de Damien 2026-10-18).
+    Prévient 10 min avant le coucher, dans la chambre de Léo. Dents faites à 19h00,
+    pyjama mis à 18h25 : simple compte à rebours. Adressée nommément à Léo, volume
+    doux (2026-09-17). Vendredi soir = soir de semaine comme les autres (décision
+    2026-09-23) ; tourne aussi la veille d''un férié, les vacances scolaires ne l''arrêtent
+    plus.'
   triggers:
   - trigger: time
     at: '20:20:00'
@@ -1591,10 +1693,6 @@
     - thu
     - fri
     - sun
-  - alias: Hors vacances scolaires
-    condition: state
-    entity_id: input_boolean.vacances_scolaires
-    state: 'off'
   actions:
   - action: script.annonce
     data:
@@ -1604,12 +1702,13 @@
   mode: single
 - id: '1789274000009'
   alias: Enfants - Coucher
-  description: 'Coucher de Léo à 20h30, annonce dans sa chambre uniquement, adressée
-    nommément, volume doux. Même calendrier que la routine du soir. (Extinction auto
-    de la lumière retirée le 2026-09-17 : l''ampoule Yeelight a été remplacée par
-    un ventilateur de plafond CREATE WIND CALM, pas encore intégré à HA — voir project_wind_calm_fan.)
+  description: 'Tourne aussi pendant les vacances scolaires (demande de Damien 2026-10-18).
+    Coucher de Léo à 20h30, annonce dans sa chambre uniquement, adressée nommément,
+    volume doux. Même calendrier que la routine du soir. (Extinction auto de la lumière
+    retirée le 2026-09-17 : l''ampoule Yeelight a été remplacée par un ventilateur
+    de plafond CREATE WIND CALM, pas encore intégré à HA — voir project_wind_calm_fan.)
     Vendredi soir = soir de semaine comme les autres (décision 2026-09-23) ; tourne
-    aussi la veille d''un férié, seules les vacances scolaires l''arrêtent.'
+    aussi la veille d''un férié, les vacances scolaires ne l''arrêtent plus.'
   triggers:
   - trigger: time
     at: '20:30:00'
@@ -1622,10 +1721,6 @@
     - thu
     - fri
     - sun
-  - alias: Hors vacances scolaires
-    condition: state
-    entity_id: input_boolean.vacances_scolaires
-    state: 'off'
   actions:
   - action: script.annonce
     data:
@@ -1635,9 +1730,11 @@
   mode: single
 - id: '1789274000010'
   alias: Enfants - Arrivée et douche
-  description: 'Routine du soir, étape de 18:20. Jours : lun, mar, jeu, ven, dim (dimanche ajouté le 2026-09-27 ; mercredi
-    = judo). Mercredi : même étape décalée à 19:15 (judo 18h-19h, retour vers 19h15),
-    le coucher de 20h30 restant fixe — c''est le temps TV qui absorbe le décalage.'
+  description: 'Tourne aussi pendant les vacances scolaires (demande de Damien 2026-10-18).
+    Routine du soir, étape de 18:20. Jours : lun, mar, jeu, ven, dim (dimanche ajouté
+    le 2026-09-27 ; mercredi = judo). Mercredi : même étape décalée à 19:15 (judo
+    18h-19h, retour vers 19h15), le coucher de 20h30 restant fixe — c''est le temps
+    TV qui absorbe le décalage.'
   triggers:
   - trigger: time
     at: '18:20:00'
@@ -1666,14 +1763,26 @@
       - condition: time
         weekday:
         - wed
+      - alias: Mercredi hors vacances (jour de judo)
+        condition: state
+        entity_id: input_boolean.vacances_scolaires
+        state: 'off'
+    - alias: Mercredi en vacances (pas de judo) = horaire des autres soirs (demande
+        de Damien 2026-10-21)
+      condition: and
+      conditions:
+      - condition: trigger
+        id: ecole
+      - condition: time
+        weekday:
+        - wed
+      - condition: state
+        entity_id: input_boolean.vacances_scolaires
+        state: 'on'
   - alias: Aujourd'hui n'est pas férié (il y avait école)
     condition: state
     entity_id: binary_sensor.jour_non_ferie
     state: 'on'
-  - alias: Hors vacances scolaires
-    condition: state
-    entity_id: input_boolean.vacances_scolaires
-    state: 'off'
   actions:
   - action: script.annonce
     data:
@@ -1684,9 +1793,9 @@
 - id: '1789274000011'
   alias: Enfants - Devoirs
   description: 'Devoirs de 18h30 à 18h45 (15 min max), après douche et pyjama. Jours
-    : lun, mar, jeu, ven, dim (dimanche ajouté le 2026-09-27). Mercredi : même étape décalée à 19:25 (judo 18h-19h, retour
-    vers 19h15), le coucher de 20h30 restant fixe — c''est le temps TV qui absorbe
-    le décalage.'
+    : lun, mar, jeu, ven, dim (dimanche ajouté le 2026-09-27). Mercredi : même étape
+    décalée à 19:25 (judo 18h-19h, retour vers 19h15), le coucher de 20h30 restant
+    fixe — c''est le temps TV qui absorbe le décalage.'
   triggers:
   - trigger: time
     at: '18:30:00'
@@ -1732,10 +1841,11 @@
   mode: single
 - id: '1789274000012'
   alias: Enfants - Repas
-  description: 'Enchaînement direct après les devoirs (18h30 -> 18h45), sans temps
-    libre. Jours : lun, mar, jeu, ven. Mercredi : même étape décalée à 19:40 (judo
-    18h-19h, retour vers 19h15), le coucher de 20h30 restant fixe — c''est le temps
-    TV qui absorbe le décalage.'
+  description: 'Tourne aussi pendant les vacances scolaires (demande de Damien 2026-10-18).
+    Enchaînement direct après les devoirs (18h30 -> 18h45), sans temps libre. Jours
+    : lun, mar, jeu, ven. Mercredi : même étape décalée à 19:40 (judo 18h-19h, retour
+    vers 19h15), le coucher de 20h30 restant fixe — c''est le temps TV qui absorbe
+    le décalage.'
   triggers:
   - trigger: time
     at: '18:45:00'
@@ -1763,14 +1873,26 @@
       - condition: time
         weekday:
         - wed
+      - alias: Mercredi hors vacances (jour de judo)
+        condition: state
+        entity_id: input_boolean.vacances_scolaires
+        state: 'off'
+    - alias: Mercredi en vacances (pas de judo) = horaire des autres soirs (demande
+        de Damien 2026-10-21)
+      condition: and
+      conditions:
+      - condition: trigger
+        id: ecole
+      - condition: time
+        weekday:
+        - wed
+      - condition: state
+        entity_id: input_boolean.vacances_scolaires
+        state: 'on'
   - alias: Aujourd'hui n'est pas férié (il y avait école)
     condition: state
     entity_id: binary_sensor.jour_non_ferie
     state: 'on'
-  - alias: Hors vacances scolaires
-    condition: state
-    entity_id: input_boolean.vacances_scolaires
-    state: 'off'
   actions:
   - action: script.annonce
     data:
@@ -1780,9 +1902,10 @@
   mode: single
 - id: '1789274000013'
   alias: Enfants - Brossage des dents
-  description: 'Après le repas (18h40 -> 19h00). Jours : lun, mar, jeu, ven. Mercredi
-    : même étape décalée à 19:55 (judo 18h-19h, retour vers 19h15), le coucher de
-    20h30 restant fixe — c''est le temps TV qui absorbe le décalage.'
+  description: 'Tourne aussi pendant les vacances scolaires (demande de Damien 2026-10-18).
+    Après le repas (18h40 -> 19h00). Jours : lun, mar, jeu, ven. Mercredi : même étape
+    décalée à 19:55 (judo 18h-19h, retour vers 19h15), le coucher de 20h30 restant
+    fixe — c''est le temps TV qui absorbe le décalage.'
   triggers:
   - trigger: time
     at: '19:00:00'
@@ -1810,14 +1933,26 @@
       - condition: time
         weekday:
         - wed
+      - alias: Mercredi hors vacances (jour de judo)
+        condition: state
+        entity_id: input_boolean.vacances_scolaires
+        state: 'off'
+    - alias: Mercredi en vacances (pas de judo) = horaire des autres soirs (demande
+        de Damien 2026-10-21)
+      condition: and
+      conditions:
+      - condition: trigger
+        id: ecole
+      - condition: time
+        weekday:
+        - wed
+      - condition: state
+        entity_id: input_boolean.vacances_scolaires
+        state: 'on'
   - alias: Aujourd'hui n'est pas férié (il y avait école)
     condition: state
     entity_id: binary_sensor.jour_non_ferie
     state: 'on'
-  - alias: Hors vacances scolaires
-    condition: state
-    entity_id: input_boolean.vacances_scolaires
-    state: 'off'
   actions:
   - action: script.annonce
     data:
@@ -1827,42 +1962,66 @@
   mode: single
 - id: enfants_temps_tv
   alias: Enfants - Temps TV
-  description: 'Après le brossage des dents (19h00), Léo peut aller regarder la TV
-    jusqu''à la coupure de 19h30. Jours : lun, mar, jeu, ven. Pas le mercredi (judo :
-    dents à 19h55 et temps calme à 20h00, pas de créneau TV). Annonce uniquement
-    dans la chambre de Léo (Anna ne regarde pas la TV). Ajoutée le 2026-10-06.'
+  description: 'Tourne aussi pendant les vacances scolaires (demande de Damien 2026-10-18).
+    Après le brossage des dents (19h00), Léo peut aller regarder la TV jusqu''à la
+    coupure de 19h30. Jours : lun, mar, jeu, ven. Pas le mercredi (judo : dents à
+    19h55 et temps calme à 20h00, pas de créneau TV). Annonce dans la chambre de Léo
+    et au salon (ajout du salon le 2026-10-12), pas chez Anna (elle ne regarde pas
+    la TV). Ajoutée le 2026-10-06.'
   triggers:
   - trigger: time
     at: '19:05:00'
   conditions:
-  - condition: time
-    weekday:
-    - mon
-    - tue
-    - thu
-    - fri
+  - condition: or
+    conditions:
+    - condition: time
+      weekday:
+      - mon
+      - tue
+      - thu
+      - fri
+    - alias: Mercredi en vacances (pas de judo) = comme les autres soirs (demande
+        de Damien 2026-10-21)
+      condition: and
+      conditions:
+      - condition: time
+        weekday:
+        - wed
+      - condition: state
+        entity_id: input_boolean.vacances_scolaires
+        state: 'on'
   - alias: Aujourd'hui n'est pas férié (il y avait école)
     condition: state
     entity_id: binary_sensor.jour_non_ferie
     state: 'on'
-  - alias: Hors vacances scolaires
-    condition: state
-    entity_id: input_boolean.vacances_scolaires
-    state: 'off'
   actions:
-  - action: script.annonce
-    data:
-      message: Léo, dents finies ? Tu peux aller regarder la télé jusqu'à sept heures
-        et demie.
-      piece: leo
-      volume: 45
+  - if:
+    - alias: Léo privé de télé (input_boolean.leo_prive_tv, demande de Damien 2026-11-12) = temps calme tout de suite
+      condition: state
+      entity_id: input_boolean.leo_prive_tv
+      state: 'on'
+    then:
+    - action: script.annonce
+      data:
+        message: Léo, temps calme.
+        piece: toutes
+        volume: 30
+    else:
+    - alias: Chambre de Léo et salon en même temps (Léo peut être à table ou aux dents, salon ajouté le 2026-10-12 ; une seule annonce pour éviter le décalage, 2026-11-09)
+      action: script.annonce
+      data:
+        message: Léo, dents finies ? Tu peux aller regarder la télé jusqu'à sept heures
+          et demie.
+        piece: leo_salon
+        volume: 45
   mode: single
 - id: '1789274000015'
   alias: Enfants - Pyjama
-  description: 'Pyjama enfilé juste après la douche, pas le soir au coucher. Jours
-    : lun, mar, jeu, ven, dim (dimanche ajouté le 2026-09-27). Mercredi : même étape décalée à 19:20 (judo 18h-19h, retour
-    vers 19h15), le coucher de 20h30 restant fixe — c''est le temps TV qui absorbe
-    le décalage.'
+  description: 'Tourne aussi pendant les vacances scolaires (demande de Damien 2026-10-18).
+    Pyjama enfilé juste après la douche, pas le soir au coucher. Jours : lun, mar,
+    jeu, ven, dim (dimanche ajouté le 2026-09-27). Mercredi : même étape décalée à
+    19:20 (judo 18h-19h, retour vers 19h15), le coucher de 20h30 restant fixe — c''est
+    le temps TV qui absorbe le décalage.'
   triggers:
   - trigger: time
     at: '18:25:00'
@@ -1891,14 +2050,26 @@
       - condition: time
         weekday:
         - wed
+      - alias: Mercredi hors vacances (jour de judo)
+        condition: state
+        entity_id: input_boolean.vacances_scolaires
+        state: 'off'
+    - alias: Mercredi en vacances (pas de judo) = horaire des autres soirs (demande
+        de Damien 2026-10-21)
+      condition: and
+      conditions:
+      - condition: trigger
+        id: ecole
+      - condition: time
+        weekday:
+        - wed
+      - condition: state
+        entity_id: input_boolean.vacances_scolaires
+        state: 'on'
   - alias: Aujourd'hui n'est pas férié (il y avait école)
     condition: state
     entity_id: binary_sensor.jour_non_ferie
     state: 'on'
-  - alias: Hors vacances scolaires
-    condition: state
-    entity_id: input_boolean.vacances_scolaires
-    state: 'off'
   actions:
   - action: script.annonce
     data:
@@ -1908,12 +2079,13 @@
   mode: single
 - id: '1789274000016'
   alias: Enfants - Temps calme
-  description: 'Temps calme après la coupure de la TV. Mercredi EXCLU : judo 18h-19h,
-    retour vers 19h15, le dîner tombe précisément à cette heure-là. Mercredi : même
-    étape décalée à 20:00. Volume abaissé à 30% le 2026-09-17 (palier intermédiaire
-    entre les annonces de la soirée à 45% et le coucher à 15%, pour une transition
-    plus douce). Vendredi soir = soir de semaine comme les autres (décision 2026-09-23)
-    ; tourne aussi la veille d''un férié, seules les vacances scolaires l''arrêtent.'
+  description: 'Tourne aussi pendant les vacances scolaires (demande de Damien 2026-10-18).
+    Temps calme après la coupure de la TV. Mercredi EXCLU : judo 18h-19h, retour vers
+    19h15, le dîner tombe précisément à cette heure-là. Mercredi : même étape décalée
+    à 20:00. Volume abaissé à 30% le 2026-09-17 (palier intermédiaire entre les annonces
+    de la soirée à 45% et le coucher à 15%, pour une transition plus douce). Vendredi
+    soir = soir de semaine comme les autres (décision 2026-09-23) ; tourne aussi la
+    veille d''un férié, les vacances scolaires ne l''arrêtent plus.'
   triggers:
   - trigger: time
     at: '19:31:00'
@@ -1922,6 +2094,9 @@
     at: '20:00:00'
     id: mercredi
   conditions:
+  - alias: Pas déjà annoncé à 19:05 par Enfants - Temps TV (Léo privé de télé, demande de Damien 2026-11-12)
+    condition: template
+    value_template: "{{ not (is_state('input_boolean.leo_prive_tv', 'on') and state_attr('automation.enfants_temps_tv', 'last_triggered') is not none and (now() - state_attr('automation.enfants_temps_tv', 'last_triggered')).total_seconds() < 3600) }}"
   - condition: or
     conditions:
     - condition: and
@@ -1942,10 +2117,22 @@
       - condition: time
         weekday:
         - wed
-  - alias: Hors vacances scolaires
-    condition: state
-    entity_id: input_boolean.vacances_scolaires
-    state: 'off'
+      - alias: Mercredi hors vacances (jour de judo)
+        condition: state
+        entity_id: input_boolean.vacances_scolaires
+        state: 'off'
+    - alias: Mercredi en vacances (pas de judo) = horaire des autres soirs (demande
+        de Damien 2026-10-21)
+      condition: and
+      conditions:
+      - condition: trigger
+        id: ecole
+      - condition: time
+        weekday:
+        - wed
+      - condition: state
+        entity_id: input_boolean.vacances_scolaires
+        state: 'on'
   actions:
   - action: script.annonce
     data:
@@ -1995,9 +2182,9 @@
     then:
     - action: script.annonce
       data:
-        message: '{% if now().weekday() == 2 %}Huit heures. Vous êtes en retard : Léo
-          au centre aéré.{% else %}Huit heures. Vous êtes en retard : Anna chez nounou,
-          Léo à l''école.{% endif %}'
+        message: '{% if now().weekday() == 2 %}Huit heures. Vous êtes en retard :
+          Léo au centre aéré.{% else %}Huit heures. Vous êtes en retard : Anna chez
+          nounou, Léo à l''école.{% endif %}'
         piece: toutes
         volume: 40
   - alias: Couper la musique sur les enceintes qui jouent (liste vide = aucune action,
@@ -2366,13 +2553,13 @@
   mode: single
 - id: christelle_arrivee_annonce
   alias: Christelle - Annonce de son arrivée
-  description: 'Une seule fois par trajet : quand Christelle repasse sous 8 km de la
-    maison en se rapprochant (Proximity), annonce sur les Sonos « Christelle arrive
+  description: 'Une seule fois par trajet : quand Christelle repasse sous 8 km de
+    la maison en se rapprochant (Proximity), annonce sur les Sonos « Christelle arrive
     dans environ X minutes » si Damien est là et entre 08h00 et 23h00, et push discret
     à Damien (toujours). X = distance / vitesse d''approche entre les deux derniers
-    relevés GPS (45 km/h par défaut). Waze Travel Time n''est pas utilisable (API Waze
-    en 403 depuis HA, 2026-10-03). Réarmée quand Christelle repasse par la maison ou
-    après 2 h. Les trajets de moins de 8 km ne déclenchent rien.'
+    relevés GPS (45 km/h par défaut). Waze Travel Time n''est pas utilisable (API
+    Waze en 403 depuis HA, 2026-10-03). Réarmée quand Christelle repasse par la maison
+    ou après 2 h. Les trajets de moins de 8 km ne déclenchent rien.'
   triggers:
   - trigger: numeric_state
     entity_id: sensor.maison_distance_avec_christelle
@@ -2390,24 +2577,33 @@
     condition: template
     value_template: '{{ (now() - states.person.christelle.last_changed).total_seconds()
       > 300 }}'
-  - alias: Une seule annonce par trajet (réarmée au retour à la maison ou après 2 h)
+  - alias: Une seule annonce par trajet (réarmée au retour à la maison ou après 2
+      h)
     condition: template
     value_template: '{% set lt = this.attributes.last_triggered %}{{ lt is none or
-      states.person.christelle.last_changed > lt or (now() - lt).total_seconds() > 7200
-      }}'
+      states.person.christelle.last_changed > lt or (now() - lt).total_seconds() >
+      7200 }}'
   - alias: Pas déjà annoncée par le SMS Waze pour ce trajet (repli seulement)
     condition: template
     value_template: '{% set w = state_attr(''automation.christelle_annonce_de_son_arrivee_sms_waze'',
-      ''last_triggered'') %}{{ w is none or states.person.christelle.last_changed > w
-      or (now() - w).total_seconds() > 7200 }}'
+      ''last_triggered'') %}{{ w is none or states.person.christelle.last_changed
+      > w or (now() - w).total_seconds() > 7200 }}'
   variables:
-    minutes: "{%- set d = trigger.to_state.state | float(0) / 1000 -%}\n{%- set d0 = trigger.from_state.state
-      | float(0) / 1000 if trigger.from_state else 0 -%}\n{%- set dt = (as_timestamp(trigger.to_state.last_changed)
-      - as_timestamp(trigger.from_state.last_changed)) if trigger.from_state else 0 -%}\n\
-      {%- set v = (d0 - d) / (dt / 60) if dt > 0 and d0 > d else 0 -%}\n{%- set v =
-      v if 0.17 <= v <= 2.2 else 0.75 -%}\n{{ [1, (d / v) | round(0) | int] | max }}"
-    phrase: Christelle arrive dans environ {{ minutes }} minute{{ 's' if minutes | int
-      > 1 else '' }}.
+    minutes: '{%- set d = trigger.to_state.state | float(0) / 1000 -%}
+
+      {%- set d0 = trigger.from_state.state | float(0) / 1000 if trigger.from_state
+      else 0 -%}
+
+      {%- set dt = (as_timestamp(trigger.to_state.last_changed) - as_timestamp(trigger.from_state.last_changed))
+      if trigger.from_state else 0 -%}
+
+      {%- set v = (d0 - d) / (dt / 60) if dt > 0 and d0 > d else 0 -%}
+
+      {%- set v = v if 0.17 <= v <= 2.2 else 0.75 -%}
+
+      {{ [1, (d / v) | round(0) | int] | max }}'
+    phrase: Christelle arrive dans environ {{ minutes }} minute{{ 's' if minutes |
+      int > 1 else '' }}.
   actions:
   - action: notify.mobile_app_telephone_damien
     data:
@@ -2447,32 +2643,33 @@
   mode: single
 - id: christelle_waze_annonce
   alias: Christelle - Annonce de son arrivée (SMS Waze)
-  description: 'Dès que le téléphone de Damien reçoit le SMS Waze de Christelle (« J''utilise
-    Waze pour aller à Domicile, j''arriverai à HH:MM »), via le capteur « Last notification »
-    de l''app compagnon (liste blanche : Messages) : push à Damien (toujours) et annonce
-    Sonos si Damien est à la maison, entre 08h00 et 23h00. L''annonce de proximité
-    (christelle_arrivee_annonce) ne se déclenche plus pour ce trajet.'
+  description: 'Dès que le téléphone de Damien reçoit le SMS Waze de Christelle («
+    J''utilise Waze pour aller à Domicile, j''arriverai à HH:MM »), via le capteur
+    « Last notification » de l''app compagnon (liste blanche : Messages) : push à
+    Damien (toujours) et annonce Sonos si Damien est à la maison, entre 08h00 et 23h00.
+    L''annonce de proximité (christelle_arrivee_annonce) ne se déclenche plus pour
+    ce trajet.'
   triggers:
   - trigger: state
     entity_id: sensor.25069ptebg_last_notification
   conditions:
   - alias: Notification d'un SMS de Christelle
     condition: template
-    value_template: "{{ 'christelle' in (trigger.to_state.attributes.get('android.title')
-      or '') | lower }}"
+    value_template: '{{ ''christelle'' in (trigger.to_state.attributes.get(''android.title'')
+      or '''') | lower }}'
   - alias: Texte de partage de trajet Waze, avec une heure d'arrivée
     condition: template
-    value_template: "{% set t = (trigger.to_state.attributes.get('android.text') or trigger.to_state.state
-      or '') %}{{ t is search('utilise waze|arriverai à', ignorecase=True) and t is
-      search('\\d{1,2}[:h]\\d{2}') }}"
+    value_template: '{% set t = (trigger.to_state.attributes.get(''android.text'')
+      or trigger.to_state.state or '''') %}{{ t is search(''utilise waze|arriverai
+      à'', ignorecase=True) and t is search(''\d{1,2}[:h]\d{2}'') }}'
   variables:
-    texte: "{{ trigger.to_state.attributes.get('android.text') or trigger.to_state.state
-      }}"
-    heure: "{% set m = texte | regex_findall('(\\d{1,2})[:h](\\d{2})') %}{{ '%02d:%02d'
-      | format(m[-1][0] | int, m[-1][1] | int) }}"
-    minutes: "{% set h, mi = heure.split(':') | map('int') | list %}{% set eta = today_at(heure)
-      %}{{ [0, ((eta - now()).total_seconds() / 60) | round(0) | int] | max if eta
-      > now() - timedelta(minutes=5) else 0 }}"
+    texte: '{{ trigger.to_state.attributes.get(''android.text'') or trigger.to_state.state
+      }}'
+    heure: '{% set m = texte | regex_findall(''(\d{1,2})[:h](\d{2})'') %}{{ ''%02d:%02d''
+      | format(m[-1][0] | int, m[-1][1] | int) }}'
+    minutes: '{% set h, mi = heure.split('':'') | map(''int'') | list %}{% set eta
+      = today_at(heure) %}{{ [0, ((eta - now()).total_seconds() / 60) | round(0) |
+      int] | max if eta > now() - timedelta(minutes=5) else 0 }}'
     phrase: Christelle arrive à {{ heure | replace(':', 'h') }}{% if minutes | int
       > 1 %}, dans environ {{ minutes }} minutes{% elif minutes | int == 1 %}, dans
       environ une minute{% endif %}.
@@ -2499,3 +2696,53 @@
         volume: 40
   mode: queued
   max: 3
+- id: temp_reactivation_annonces_leo_20261031
+  alias: TEMP - Réactivation annonces du soir Léo (31/10/2026)
+  description: One-shot créé le 2026-10-23 (demande de Damien, vacances scolaires).
+    Réactive les annonces du soir de Léo le samedi 31/10/2026 à 08:00, puis se désactive.
+    Peut être supprimé ensuite.
+  triggers:
+  - trigger: time
+    at: 08:00:00
+  - trigger: homeassistant
+    event: start
+  conditions:
+  - condition: template
+    value_template: '{{ now() >= as_datetime(''2026-10-31T08:00:00'').replace(tzinfo=now().tzinfo)
+      }}'
+  actions:
+  - action: automation.turn_on
+    target:
+      entity_id:
+      - automation.enfants_arrivee_et_douche
+      - automation.enfants_pyjama
+      - automation.enfants_devoirs
+      - automation.enfants_repas
+      - automation.enfants_brossage_des_dents
+      - automation.enfants_temps_tv
+      - automation.salon_annonce_avant_extinction_tv
+      - automation.enfants_temps_calme
+      - automation.enfants_preparation_au_coucher
+      - automation.enfants_coucher
+  - action: automation.turn_off
+    target:
+      entity_id: automation.temp_reactivation_annonces_du_soir_leo_31_10_2026
+  mode: single
+- id: sonos_rechargement_si_indisponible
+  alias: Sonos - Rechargement si indisponible à 07:00
+  description: Recharge l'intégration Sonos à 07:00 si une enceinte est indisponible, avant le réveil de Léo à 07:15.
+  triggers:
+  - trigger: time
+    at: 07:00:00
+  conditions:
+  - condition: template
+    value_template: '{{ not has_value(''media_player.sonos_chambre_leo'') or not has_value(''media_player.sonos_salon'') }}'
+  actions:
+  - action: homeassistant.reload_config_entry
+    data:
+      entry_id: 01M2PXB9A15C18DHV5RQZXBYY5
+  - action: logbook.log
+    data:
+      name: Sonos
+      message: 'Intégration Sonos rechargée à 07:00 (Léo : {{ states(''media_player.sonos_chambre_leo'') }}, Salon : {{ states(''media_player.sonos_salon'') }})'
+  mode: single
