@@ -1325,16 +1325,37 @@
   mode: single
 - id: '1789274000003'
   alias: Maison - Fermeture des volets le soir
-  description: 'Ferme tous les volets à 19h30, TOUS LES SOIRS, sans condition. INTENTIONNELLEMENT
-    indépendant du soleil/de la clarté dehors (confirmé 2026-09-17) : le but est d''imposer
-    le repère du coucher aux enfants, pas de gérer la lumière naturelle — ne pas caler
-    cet horaire sur le crépuscule/sun.sun, même en été quand il fait encore jour.
-    Découplé du calendrier scolaire le 2026-09-17 : les volets restaient ouverts les
-    nuits de mercredi, vendredi et samedi.'
+  description: 'Ferme tous les volets au coucher du soleil, au plus tard à 19h30,
+    tous les soirs sans condition. 19h30 reste le repère du coucher des enfants (décidé
+    2026-09-17) : en été, quand le soleil se couche après 19h30, la fermeture se fait
+    à 19h30 comme avant. En hiver, elle se fait au coucher du soleil, plus tôt, pour
+    ne pas laisser les volets ouverts sur la nuit (demande Damien 2026-11-25). Une
+    seule fermeture par soir : le déclencheur arrivé en second est ignoré.'
   triggers:
+  - trigger: sun
+    event: sunset
+    id: coucher_soleil
   - trigger: time
     at: '19:30:00'
-  conditions: []
+    id: heure_limite
+  conditions:
+  - condition: or
+    conditions:
+    - alias: Coucher du soleil avant 19h30 (hiver)
+      condition: and
+      conditions:
+      - condition: trigger
+        id: coucher_soleil
+      - condition: template
+        value_template: '{{ now() < today_at(''19:30'') }}'
+    - alias: 19h30 alors que le soleil n'est pas encore couché (été)
+      condition: and
+      conditions:
+      - condition: trigger
+        id: heure_limite
+      - condition: state
+        entity_id: sun.sun
+        state: above_horizon
   actions:
   - action: cover.close_cover
     target:
@@ -2095,14 +2116,16 @@
   mode: single
 - id: '1789274000020'
   alias: Maison - Ouverture des volets le matin
-  description: 'Pendant du 19h30 : rien n''ouvrait les volets, ils restaient donc
-    fermés toute la journée (constat 2026-09-18). Deux horaires pour couvrir TOUS
-    les jours, exactement une fois : 07h20 du lundi au vendredi (juste après le réveil
-    de Léo, mercredi compris depuis le 2026-09-23), 09h00 les jours sans routine (week-end,
-    jours fériés, vacances scolaires) pour ne pas réveiller la maison trop tôt. Comme
-    la fermeture du soir, c''est un repère de rythme, pas une gestion de lumière naturelle
-    : ne pas caler ces horaires sur sun.sun. Ne bouge pas les volets si la maison
-    est vide (même règle que le package climat).'
+  description: 'Ouvre tous les volets une fois par jour, à l''heure de la routine
+    ou au lever du soleil s''il fait encore nuit à cette heure-là. Heure de la routine
+    : 07h20 du lundi au vendredi en période scolaire (juste après le réveil de Léo),
+    09h00 les jours sans routine (week-end, jours fériés, vacances scolaires). En hiver,
+    le soleil se lève après 07h20 : l''ouverture est alors reportée au lever du soleil
+    pour ne pas ouvrir sur la nuit (demande Damien 2026-11-25). Ne bouge pas les volets
+    si la maison est vide (même règle que le package climat).'
+  variables:
+    jour_ecole: '{{ now().weekday() < 5 and is_state(''binary_sensor.jour_non_ferie'',
+      ''on'') and is_state(''input_boolean.vacances_scolaires'', ''off'') }}'
   triggers:
   - trigger: time
     at: 07:20:00
@@ -2110,36 +2133,40 @@
   - trigger: time
     at: 09:00:00
     id: repos
+  - trigger: sun
+    event: sunrise
+    id: lever_soleil
   conditions:
   - condition: or
     conditions:
-    - condition: and
+    - alias: 07h20 un jour d'école, soleil déjà levé
+      condition: and
       conditions:
       - condition: trigger
         id: ecole
-      - condition: time
-        weekday:
-        - mon
-        - tue
-        - wed
-        - thu
-        - fri
-      - alias: Pas un jour férié
-        condition: state
-        entity_id: binary_sensor.jour_non_ferie
-        state: 'on'
-      - alias: Hors vacances scolaires
-        condition: state
-        entity_id: input_boolean.vacances_scolaires
-        state: 'off'
-    - condition: and
+      - condition: template
+        value_template: '{{ jour_ecole }}'
+      - condition: state
+        entity_id: sun.sun
+        state: above_horizon
+    - alias: 09h00 un jour sans routine, soleil déjà levé
+      condition: and
       conditions:
       - condition: trigger
         id: repos
-      - alias: 'Jour sans routine : week-end, férié ou vacances scolaires'
-        condition: template
-        value_template: '{{ now().weekday() in [5, 6] or is_state(''binary_sensor.jour_non_ferie'',
-          ''off'') or is_state(''input_boolean.vacances_scolaires'', ''on'') }}'
+      - condition: template
+        value_template: '{{ not jour_ecole }}'
+      - condition: state
+        entity_id: sun.sun
+        state: above_horizon
+    - alias: Lever du soleil après l'heure de la routine (hiver)
+      condition: and
+      conditions:
+      - condition: trigger
+        id: lever_soleil
+      - condition: template
+        value_template: '{{ now() >= today_at(''07:20'' if jour_ecole else ''09:00'')
+          }}'
   - alias: 'Maison vide : aucun mouvement de volet'
     condition: state
     entity_id: input_boolean.maison_absente
