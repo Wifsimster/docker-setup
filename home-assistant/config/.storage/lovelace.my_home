@@ -220,7 +220,7 @@
               "cards": [
                 {
                   "type": "tile",
-                  "entity": "light.eclairage_exterieur",
+                  "entity": "switch.eclairage_exterieur",
                   "name": "Éclairage extérieur",
                   "icon": "mdi:outdoor-lamp"
                 },
@@ -983,14 +983,9 @@
               "cards": [
                 {
                   "type": "tile",
-                  "entity": "light.eclairage_exterieur",
+                  "entity": "switch.eclairage_exterieur",
                   "name": "Éclairage extérieur",
-                  "icon": "mdi:wall-sconce-flat-outline",
-                  "features": [
-                    {
-                      "type": "light-brightness"
-                    }
-                  ]
+                  "icon": "mdi:wall-sconce-flat-outline"
                 }
               ]
             },
@@ -1024,8 +1019,8 @@
                 },
                 {
                   "type": "tile",
-                  "entity": "switch.lumiere_tv",
-                  "name": "Lumière TV",
+                  "entity": "light.lampe_salon_tv",
+                  "name": "Lampe salon TV",
                   "icon": "mdi:television-ambient-light"
                 },
                 {

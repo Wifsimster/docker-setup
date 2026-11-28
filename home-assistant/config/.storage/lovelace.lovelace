@@ -151,7 +151,7 @@
                 },
                 {
                   "type": "tile",
-                  "entity": "light.eclairage_exterieur",
+                  "entity": "switch.eclairage_exterieur",
                   "name": "Extérieur",
                   "layout_options": {
                     "grid_columns": 4,
@@ -698,14 +698,14 @@
                   "badges": [
                     {
                       "type": "entity",
-                      "entity": "light.eclairage_exterieur",
+                      "entity": "switch.eclairage_exterieur",
                       "color": "amber"
                     }
                   ]
                 },
                 {
                   "type": "tile",
-                  "entity": "light.eclairage_exterieur",
+                  "entity": "switch.eclairage_exterieur",
                   "name": "Éclairage extérieur",
                   "icon": "mdi:outdoor-lamp",
                   "color": "amber",
@@ -958,8 +958,8 @@
                 },
                 {
                   "type": "tile",
-                  "entity": "switch.lumiere_tv",
-                  "name": "Lumière TV",
+                  "entity": "light.lampe_salon_tv",
+                  "name": "Lampe salon TV",
                   "icon": "mdi:floor-lamp-outline",
                   "color": "amber",
                   "layout_options": {
@@ -2330,6 +2330,24 @@
                   "features": [
                     {
                       "type": "target-temperature"
+                    }
+                  ],
+                  "layout_options": {
+                    "grid_columns": 4,
+                    "grid_rows": 2
+                  }
+                },
+                {
+                  "type": "tile",
+                  "entity": "cover.volet_roulant_chambre_leo",
+                  "name": "Volet roulant",
+                  "icon": "mdi:roller-shade",
+                  "features": [
+                    {
+                      "type": "cover-open-close"
+                    },
+                    {
+                      "type": "cover-position"
                     }
                   ],
                   "layout_options": {
